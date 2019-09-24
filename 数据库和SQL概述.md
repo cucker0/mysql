@@ -39,7 +39,7 @@ Structure Query Language
 ```
 
 ## 常见的数据库
->MySQL, Oracle, DB2, SqlServer等
+>MySQL, Oracle, DB2, SqlServer, PostgreSQL, MogodDB, TiDB等
 
 
 # SQL语言概述

@@ -101,9 +101,9 @@ CREATE TABLES 表名 (
 
 * 查看表结构
 ```text
-desc 表名;
+desc[ribe] 表名;
 
-# desc为descript的缩写
+# desc为describe的缩写
 ``` 
 
 * 删除表

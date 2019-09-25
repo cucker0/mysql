@@ -295,7 +295,7 @@ is not null
         FROM employees
         WHERE employee_id >= 100 AND employee_id <= 120;
         
-        -- 
+        -- 与上面的写法等价
         SELECT * 
         FROM employees
         WHERE employee_id BETWEEN 100 AND 120;

@@ -43,7 +43,7 @@ MySQL最早来源于瑞典的MySQL AB公司前身的ISAM与mSQL项目（主要�
     \q
     ```
 
-# Mysql数据库的使用
+# Mysql语法规范
 * 不区分大小写
 * 语句以;或 \g结尾
 * 各子句一般分行写
@@ -51,7 +51,7 @@ MySQL最早来源于瑞典的MySQL AB公司前身的ISAM与mSQL项目（主要�
 * 用缩进提高语句的可读性，建议4个空格
 * 根据标准，关键字建议都大写
 
-## 基本语句
+## 常见命令
 * 列出所有数据库
 >show databases;
 
@@ -64,13 +64,19 @@ MySQL最早来源于瑞典的MySQL AB公司前身的ISAM与mSQL项目（主要�
 * 列出当前数据库中所有的表
 >show tables;
 
+* 列出其他库的所有表
+>SHOW TABLES FROM 库名;
+
 * 建表
 ```text
-create tables 表名(
-id varchar(32),
-age int,
-name varchar(30),
-birthday date
+CREATE TABLES 表名 (
+    id VARCHAR (32),
+    age INT,
+    name VARCHAR (30),
+    birthday DATE,
+    列名 列类型,
+    列名 列类型,
+    ...
 );
 
 ```
@@ -108,6 +114,23 @@ insert into 表名(列名1,列表2, ...) values(列1值,列2, ...);
 ```text
 select id, name, age from customer where age > 21;
 ```
+
+* 查看mysql版本
+```text
+-- 方式1，登入到mysql服务端
+SELECT VERSION();
+
+-- 方式2，未登入服务端
+mysql --version
+或
+mysql -V
+
+```
+
+
+
+  
+  
 
 
 

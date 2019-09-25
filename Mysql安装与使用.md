@@ -60,11 +60,14 @@ MySQL最早来源于瑞典的MySQL AB公司前身的ISAM与mSQL项目（主要�
         注释内容
         ...
         */
+
+        不可嵌套
         ```
         
 * 用缩进、换行提高语句的可读性，建议缩进4个空格
 * 各子句一般分行写
 * 关键字不能缩写
+* 字符与字符串都值用单引号包裹起来
 
 ## 常见命令
 * 列出所有数据库
@@ -147,9 +150,6 @@ mysql -V
 * [Navicat Premium](./NavicatPremium.md)
 
 
-# 测试练习的表关系模型
-[sql 文件](./sql/myemployees.sql)  
-![](./images/myemployees库的表关系模型.png)  
   
 
 

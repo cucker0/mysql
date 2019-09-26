@@ -1,0 +1,75 @@
+# 排序查询
+
+/*
+语法
+select 查询列表
+from 表名
+[where 筛选条件]
+order by 排序列表 [asc |desc]
+
+
+特点：
+asc: 升序
+desc: 降序
+不指定排序方式默认为asc升序
+
+* order by 子句可以支持 单个字段、别名、表达式、函数、多个字段
+* order by 子句放在查询语句的最后面，除了limit子句
+
+*/
+
+-- 按单个字段排序
+SELECT * 
+FROM employees
+ORDER BY salary DESC;
+
+-- 筛选条件过滤后再排序
+# 案例：查询部门编号>=90的员工信息，并按员工编号降序
+SELECT * 
+FROM employees
+WHERE department_id >= 90
+ORDER BY department_id DESC;
+
+
+-- 按表达式排序
+# 案例：查询员工信息 按年薪降序
+SELECT
+    *, (
+        salary * 12 * (1 + IFNULL (commission_pct, 0))
+    ) AS 年薪
+FROM
+    employees
+ORDER BY (salary * 12 * (1 + IFNULL (commission_pct, 0))) DESC;
+
+-- 按别名排序
+# 案例：查询员工信息 按年薪升序
+SELECT
+    *, (
+        salary * 12 * (1 + IFNULL (commission_pct, 0))
+    ) AS 年薪
+FROM
+    employees
+ORDER BY 年薪 DESC;
+
+-- 按函数排序
+# 案例：查询员工名，并且按名字的长度降序
+SELECT first_name, LENGTH(first_name) AS 名字长度
+FROM employees
+ORDER BY LENGTH(first_name) DESC;
+
+
+-- 按多个字段排序
+/*
+按多个字段排序时，
+第一个字段为主排序关键字，后面的为次排序关键字
+先按第一个字段指定的排序方式排序，
+当按第一个字段排序好后，第一个字段相同的记录再按第二个字段排序方式排序，
+依此类推
+
+*/
+
+# 案例：查询员工信息，要求先按工资降序，再按employee_id升序
+SELECT *
+FROM employees
+ORDER BY salary DESC, employee_id ASC;
+

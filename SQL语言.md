@@ -187,7 +187,7 @@ DML数据处理操作语句中的查询操作
     ```text
     like '匹配模式'
     between A and B
-    in(set)
+    in (set)
     is null
     is not null
     ```
@@ -283,7 +283,25 @@ is not null
         FROM employees
         WHERE last_name LIKE '_\_%'; -- 这种转义方式也可以
         ```
-
+    * where子句中使用别名注意事项  
+    示例：选择姓名中有字母 a 和 e 的员工姓名
+        ```text
+        sql是在where后order by前加别名，即生成结果集后加别名，
+        where是在生成结果集前的操作，
+        order by是生成结果集后的操作，
+        因为where要生成结果集，而order by是对结果集的操作。
+        如果非要用别名，那么只能用派生表，即先生成别名再where
+        
+        -- 在where中保用别名会报错，错误代码： 1054, UNKNOWN COLUMN 'fullname' IN 'where clause'
+        SELECT CONCAT(first_name, ' ', last_name) AS fullname
+        FROM employees
+        WHERE fullname LIKE '%a%' AND first_name LIKE '%e%';
+        
+        -- 正确写法
+        SELECT CONCAT(first_name, ' ', last_name) AS 姓名
+        FROM employees
+        WHERE CONCAT(first_name, ' ', last_name) LIKE '%a%' AND first_name LIKE '%e%';
+        ```
 * between A and B
     ```
     字段或变量的取值范围在[A, B]闭区间
@@ -302,9 +320,10 @@ is not null
         ```
 
 
-* in(set)
+* in (set)
     ```
     判断某字段的值是否在集合set中
+    如：in (ele1, ele2, ...)
     注意：
     set表示方式，ele1, ele2,...
     * set集合中的元素类型必须一致或兼容
@@ -323,7 +342,7 @@ is not null
         --
         SELECT job_id, first_name
         FROM employees
-        WHERE job_id IN('IT_PROG', 'AD_VP', 'AD_PRES');
+        WHERE job_id IN ('IT_PROG', 'AD_VP', 'AD_PRES');
         ```
 
 

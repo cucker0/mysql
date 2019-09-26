@@ -77,15 +77,95 @@ FROM
 
 --
 SELECT
-    CONCAT (
-        UPPER (SUBSTR (fname, 1, 1)), LOWER (SUBSTR (fname, 2))
-    ) AS 姓名
+    CONCAT (UPPER(SUBSTR(fname, 1, 1)), LOWER(SUBSTR(fname, 2))) AS 姓名
 FROM
-    (SELECT
-        CONCAT (first_name, ' ', last_name) AS fname
-    FROM
-        employees) employees;
-        
+    (SELECT CONCAT (first_name, ' ', last_name) AS fname FROM employees) employees;
+
+
+-- INSTR(str,substr) 返回子串第一次出现的首地址索引，如果找不到返回0
+/*
+SQL中，0表示false, 1表示true
+
+*/
+SELECT INSTR('上海自来水来自海上,山西运煤车煤运西山,自来水', '自来水'); -- 结果：3
+
+
+-- TRIM(str) 去掉字符串str首尾的空格
+-- TRIM(remstr FROM str) 从字符串str中去掉首尾指定的字符remstr
+SELECT LENGTH(TRIM('    Good    ')); -- 4
+SELECT TRIM('e' FROM 'eeeeeeee张eee教主eeeeeeeeeeeeeeeeeee'); -- 张eee教主
+
+
+-- LPAD(str,len,padstr) 用指定的字符padstr左填充str，保证填充后的字符串长度为len，并返回充后的字符串
+/*
+当len小于str的长度时，会截断右边多余的字符 (保留左边的)
+*/
+SELECT LPAD('2', 3,'0'); -- '002'
+
+SELECT LPAD('中国海军', 2,'c'); -- '中国'
+
+
+-- RPAD(str,len,padstr) 用指定的字符padstr右填充str，保证填充后的字符串长度为len，并返回充后的字符串
+/*
+当len小于str的长度时，会截断右边多余的字符 (保留左边的)
+*/
+
+SELECT RPAD('中国海军', 12,'c'); -- 中国海军cccccccc
+SELECT RPAD('中国海军', 2,'c'); -- '中国'
+
+-- REPLACE(str,from_str,to_str) 把字符串str中所有的from_str字符替换成字符to_str
+SELECT REPLACE('周芷若周芷若周芷若周芷若张无忌爱上了周芷若', '周芷若', '赵敏');
+
+
+-- 数学函数
+--
+
+-- 数值做四舍五入运算
+/*
+ROUND(X) 数X的绝对值做四舍五入运算，精确到个位，符号不变
+ROUND(X,D) 小数X的绝对值做四舍五入运算，精确到第D位小数，符号不变
+*/
+SELECT ROUND(1.55); -- 2
+SELECT ROUND(-1.55); -- 结果：-2
+SELECT ROUND(-3.1415, 3); -- 3.142
+
+-- CEIL(X) 向上取整，返回>= X的最小整数
+SELECT CEIL(2.11); -- 3
+SELECT CEIL(-2.11); -- -2
+
+-- FLOOR(X) 向下取整，返回 <= X的最大整数
+SELECT FLOOR(3.11); -- 3
+SELECT FLOOR(-3.11); -- -4
+
+-- TRUNCATE(X,D) 截断数X小数点后第D位之后所有小数，直接截断，不做四舍五入
+/*
+D必须是整数，
+D为0：表示小数点后所以小数截断不要
+D为负数，表示小数点左边D位内的都取0
+*/
+SELECT TRUNCATE(3.333333, 1); -- 3.3
+SELECT TRUNCATE(3.333333, 0); -- 3
+SELECT TRUNCATE(33, 1); -- 33
+SELECT TRUNCATE(3333, -2); -- 3300
+
+-- MOD(N,M) 取模运算，求余数，数N模以数M
+/*
+MOD(N,M) ==> N - N/M * M
+*/
+SELECT MOD(10, 3); -- 1
+SELECT MOD(10, -3); -- 1
+SELECT MOD(-10, -3); -- -1
+SELECT MOD(-10, 3); -- -1
+SELECT 10 % 3;
+
+
+-- 日期函数
+--
+
+
+
+
+
 
 
 

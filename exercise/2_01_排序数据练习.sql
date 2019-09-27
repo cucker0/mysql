@@ -18,6 +18,7 @@ FROM employees
 WHERE salary NOT BETWEEN 8000 AND 17000
 ORDER BY salary DESC;
 
+IFNULL(
 
 -- 查询邮箱中包含 e 的员工信息，并先按邮箱的字节数降序，再按部门号升序
 SELECT *

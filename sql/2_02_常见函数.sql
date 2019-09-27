@@ -162,6 +162,142 @@ SELECT 10 % 3;
 -- 日期函数
 --
 
+-- NOW()返回服务器当前 日期时间，属于date,也属于time
+SELECT NOW(); -- 2019-09-27 10:31:58
+
+-- CURDATE() 返回服务期系统当前日期，不包括时间
+SELECT CURDATE(); -- 2019-09-27
+
+-- CURTIME() 返回服务期系统当前时间，不包括日期
+SELECT CURTIME(); -- 10:34:07
+
+-- 从指定的日期或时间对象中获取年、月、日、时、分、秒，月份名称
+/*
+now() 获取的日期时间对象，属于date和time类型
+
+YEAR(date) 从日期date中获取年
+MONTH(date) 从日期date中获取月
+DAY(date) 从日期date中获取日
+HOUR(time) 从时间time中获取时
+MINUTE(time) 从时间time中获取分
+SECOND(time) 从时间time中获取秒
+MONTHNAME(date) 从日期date中获取月份名称
+
+*/
+
+SET @now=NOW(); -- 设置局部变量，引用变量 @变量名
+SELECT @now;
+
+SELECT YEAR(@now);
+SELECT YEAR(NOW());
+SELECT YEAR('2008-01-10'); -- 2008
+SELECT YEAR('2008/01/10'); -- 2008
+SELECT YEAR('2008.1.10'); -- 2008
+SELECT YEAR(hiredate) AS 年 FROM employees;
+
+--
+SELECT MONTH(NOW()); 
+SELECT MONTH('2019-06-01')
+
+--
+SELECT MONTHNAME(@now); -- September
+
+-- 
+SELECT DAY(NOW());
+
+--
+SELECT HOUR(NOW());
+SELECT HOUR(CURTIME());
+
+--
+SELECT MINUTE(NOW());
+
+--
+SELECT SECOND(NOW());
+SELECT SECOND('12:00:13');
+
+
+-- STR_TO_DATE(str,format) 根据日期格式format将字符创str转成日期，并返回
+SELECT STR_TO_DATE('1999-12-31', '%Y-%c-%d');
+
+# 示例：查询入职日期为1992-4-3的员工信息
+SELECT * 
+FROM employees
+WHERE hiredate = '1992-4-3';
+--
+SELECT * FROM employees
+WHERE hiredate = STR_TO_DATE('4-3 1992', '%c-%d %Y');
+
+-- DATE_FORMAT(date,format) 格式化date对象，根据日期格式format将日期date转换成字符串，并返回
+SELECT DATE_FORMAT(NOW(), '%Y年%m月%d日'); -- 2019年09月27日
+
+# 查询有奖金的员工名和入职日期(xx月/xx日 xx年)
+SELECT first_name, DATE_FORMAT(hiredate, '%m月/%d日 %y年') AS 入职日期
+FROM employees
+WHERE commission_pct IS NOT NULL;
+
+
+
+-- 其他函数
+--
+
+/*
+SELECT VERSION(); 查看服务端mysql版本
+SELECT DATABASE(); 查看当前连接的库
+SELECT USER(); // 查看当前使用的连接用户
+*/
+SELECT VERSION();
+SELECT DATABASE();
+SELECT USER(); -- root@localhost
+
+
+-- 流程控制函数
+--
+
+-- IF(expr1,expr2,expr3) 如果逻辑表达式expr1为true,则返回表达式expr2，否则返回表达式expr3
+/*
+功能类似三目运算：expr1 ? expr2 : expr3
+
+expr2,expr3的类型要求相同或能兼容
+*/
+
+SELECT IF(2 < 4, '小', '大'); -- 小
+
+SELECT 
+    first_name,
+    commission_pct,
+    IF(commission_pct IS NULL, '无', '有') AS 是否有奖金
+FROM employees;
+
+-- IFNULL(expr1,expr2) 如果表达式expr1为null，则返回expr2, 否则返回expr1
+SELECT IFNULL(commission_pct, '无奖金')
+FROM employees;
+
+-- case
+/*
+java中case
+switch(变量或表达式或枚举类) {
+    case 常量1:
+        语句1;
+        break;
+    case 常量2:
+        语句2;
+        break;
+    ...
+    default:
+        语句n;
+        break;
+}
+
+
+mysql中的case:
+
+
+
+
+*/
+
+
 
 
 

@@ -1067,7 +1067,7 @@ COUNT(DISTINCT expr,[expr...]) 返回列出的字段不全为NULL值的行，再
 
 ## 分组查询
 <details>
-<summary></summary>
+<summary>分组查询</summary>
 
 ### 分组查询语法
 ```text

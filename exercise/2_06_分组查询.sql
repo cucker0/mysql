@@ -4,11 +4,11 @@
 
 /*
 语法：
-select 查询列表
+select 分组函数, 分组字段
 from 表名
 [where 筛选条件]
 group by 分组的字段
-[having 筛选条件]
+[having 分组后的结果集筛选条件]
 [order by 排序的字段];
 
 特点

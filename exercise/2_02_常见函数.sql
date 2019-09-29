@@ -12,7 +12,7 @@
 
 ## 单行函数
 ### 字符函数
-    lenght(str) 获取字符串字节长度(在utf8中一个汉字占3个字节, gbk为2字节)
+    lenght(str) 获取字符串字节长度(在utf8字符集中一个汉字占3个字节, gbk为2字节)
     CONCAT(str1,str2,...) 拼接字符串
     UPPER(str)字符串转大写
     LOWER(str)字符串转小写
@@ -65,23 +65,23 @@
 
 -- lenght(str) 获取字符串字节长度(在utf8中一个汉字占3个字节, gbk为2字节)
 SELECT LENGTH('trip');
-SELECT LENGTH('神功盖世') -- 长度为：12
+SELECT LENGTH('神功盖世'); -- 长度为：12
 
 SHOW VARIABLES LIKE '%char%'; -- 查看服务端使用的字符集
 
 -- CONCAT(str1,str2,...)拼接字符串
 SELECT CONCAT(first_name, ' ', last_name) AS 姓名
-FROM employees
+FROM employees;
 
 -- UPPER(str)字符串转大写
 SELECT UPPER('abcdef');
 
 -- LOWER(str)字符串转小写
-SELECT LOWER('Guang Dong')
+SELECT LOWER('Guang Dong');
 
 # 示例：将姓变大写，名变小写，然后拼接
 SELECT CONCAT(UPPER(first_name), ' ',LOWER(last_name)) 姓名
-FROM employees
+FROM employees;
 
 -- 截取子字符串(SUBSTR、SUBSTRING)
 /*
@@ -167,7 +167,7 @@ SELECT REPLACE('周芷若周芷若周芷若周芷若张无忌爱上了周芷若'
 -- 数学函数
 --
 
--- 数值做四舍五入运算
+-- ROUND数值做四舍五入运算
 /*
 ROUND(X) 数X的绝对值做四舍五入运算，精确到个位，符号不变
 ROUND(X,D) 小数X的绝对值做四舍五入运算，精确到第D位小数，符号不变
@@ -298,7 +298,7 @@ SELECT DATABASE();
 SELECT USER(); -- root@localhost
 
 
--- 流程控制函数
+-- 流程分支控制函数
 --
 
 -- IF(expr1,expr2,expr3) 如果逻辑表达式expr1为true,则返回表达式expr2，否则返回表达式expr3

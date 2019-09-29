@@ -9,7 +9,7 @@ GROUP BY job_id
 ORDER BY job_id ASC;
 
 
-# 查询员工最高工资和最低工资的差距（）
+# 查询员工最高工资和最低工资的差距（别名DIFFERENCE）
 SELECT MAX(salary) - MIN(salary) AS DIFFERENCE
 FROM employees
 

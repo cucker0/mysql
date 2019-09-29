@@ -770,7 +770,7 @@ desc: 降序
     
     --
     SELECT MONTH(NOW()); 
-    SELECT MONTH('2019-06-01')
+    SELECT MONTH('2019-06-01');
     
     --
     SELECT MONTHNAME(@now); -- September
@@ -789,6 +789,20 @@ desc: 降序
     SELECT SECOND(NOW());
     SELECT SECOND('12:00:13');
     ```
+
+##### format匹配模式字母定义
+格式 |定义 
+:--- |:---
+%Y |4位的年份
+%y |2位的年份
+%m |2位的月份(01, 02...11, 12)
+%c |自然月份(1, 2...11, 12)
+%d |2位的日(01, 02...31)
+%H |2位的小时(24小时制)
+%h |小时(12小时制)
+%i |2位的分钟(01, 02...59)
+%s |2位的秒(01, 02...59)
+
 
 * STR_TO_DATE(str,format) 根据日期格式format将字符创str转成日期，并返回
     >SELECT STR_TO_DATE('1999-12-31', '%Y-%c-%d');
@@ -1172,7 +1186,7 @@ group by 分组的字段
         FROM employees
         WHERE manager_id > 102
         GROUP BY manager_id
-        HAVING low > 5000
+        HAVING low > 5000;
         ```
 
 * 分组后再筛选，结果指定排序方式

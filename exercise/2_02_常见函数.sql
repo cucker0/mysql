@@ -244,7 +244,7 @@ SELECT YEAR(hiredate) AS 年 FROM employees;
 
 --
 SELECT MONTH(NOW()); 
-SELECT MONTH('2019-06-01')
+SELECT MONTH('2019-06-01');
 
 --
 SELECT MONTHNAME(@now); -- September

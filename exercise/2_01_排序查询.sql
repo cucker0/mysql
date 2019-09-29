@@ -35,17 +35,17 @@ ORDER BY department_id DESC;
 # 案例：查询员工信息 按年薪降序
 SELECT
     *, (
-        salary * 12 * (1 + IFNULL (commission_pct, 0))
+        salary * 12 * (1 + IFNULL(commission_pct, 0))
     ) AS 年薪
 FROM
     employees
-ORDER BY (salary * 12 * (1 + IFNULL (commission_pct, 0))) DESC;
+ORDER BY (salary * 12 * (1 + IFNULL(commission_pct, 0))) DESC;
 
 -- 按别名排序
 # 案例：查询员工信息 按年薪升序
 SELECT
     *, (
-        salary * 12 * (1 + IFNULL (commission_pct, 0))
+        salary * 12 * (1 + IFNULL(commission_pct, 0))
     ) AS 年薪
 FROM
     employees

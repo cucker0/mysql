@@ -27,7 +27,7 @@ COUNT(DISTINCT expr,[expr...]) 返回列出的字段不全为NULL值的行，再
 SELECT COUNT(DISTINCT last_name, department_id)
 FROM employees;
 
-SELECT(salary = 24000) FROM employees;
+SELECT (salary = 24000) FROM employees;
 
 SELECT COUNT(DISTINCT salary = 24000) FROM employees; -- 结果：2，因为salary要么等于24000，要么不等于
 
@@ -88,7 +88,7 @@ INNODB存储引擎下，COUNT(*)和COUNT(1)的效率差不多，比COUNT(字段)
 
 -- 分组函数与字段查询有限制
 /*
-因为分组函数值返回一个值
+因为分组函数值返回一个值，不能与多行的结果的组合使用
 */
 SELECT AVG(salary), first_name FROM employees; -- 错误
 

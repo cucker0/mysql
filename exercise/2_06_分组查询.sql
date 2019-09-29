@@ -75,7 +75,7 @@ GROUP BY department_id;
 SELECT department_id, COUNT(*) AS coun
 FROM employees
 GROUP BY department_id
-HAVING coun > 5; -- 这步在查询完结果，设置完别名后，才执行，所有这里可以引用别名
+HAVING coun > 5; -- 这步在查询完结果，设置完别名后，才执行，所以这里可以引用别名
 
 
 # 案例2：每个工种有奖金的员工的最高工资>12000的工种编号和最高工资

@@ -3,7 +3,9 @@ SQL语言
 
 # 本次测试练习的表关系模型
 [sql 文件](./sql/myemployees.sql)  
-![](./images/myemployees库的表关系模型.png) 
+![](./images/myemployees库的表关系模型.png)  
+![](./images/myemployees库的表关系模型2.png)  
+
 
 # SQL语句的3种类型
 * DML数据操作语句

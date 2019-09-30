@@ -56,8 +56,14 @@ SELECT beauty.*, boys.*
 FROM beauty, boys; -- 48行
 
 -- 等值连接(相当于取两表的连接条件相等的交集记录)
+--
 # 案例1：查询女神名和对应的男神名
 SELECT NAME, boyName
+FROM beauty, boys
+WHERE beauty.`boyfriend_id` = boys.`id`;
+
+--
+SELECT *
 FROM beauty, boys
 WHERE beauty.`boyfriend_id` = boys.`id`;
 
@@ -97,21 +103,62 @@ WHERE d.location_id = l.location_id
 AND city LIKE '_o%';
 
 
+-- 可以加分组
+# 案例1：查询每个城市的部门个数
+SELECT l.city, COUNT(*)
+FROM locations l, departments d
+WHERE l.location_id = d.location_id
+GROUP BY l.city;
+
+# 案例2：查询每个部门的部门名和部门的领导编号和该部门的最低工资,且该有奖金的
+SELECT d.department_name, d.manager_id, MIN(e.salary)
+FROM departments d, employees e
+WHERE e.department_id = d.department_id
+AND e.commission_pct IS NOT NULL
+GROUP BY d.department_id;
+ 
+-- 可以加排序
+# 案例：查询每个工种的工种名和员工的个数，并且按员工个数降序
+SELECT j.job_title, COUNT(*)
+FROM jobs j, employees e
+WHERE j.job_id = e.job_id
+GROUP BY j.job_title
+ORDER BY COUNT(*) DESC;
+
+
+-- 可以实现三表连接(或更多表)
+# 案例：查询员工名、部门名和所在的城市
+SELECT e.first_name, d.department_name, l.city
+FROM employees e, departments d, locations l
+WHERE e.department_id = d.department_id
+AND d.location_id = l.location_id
 
 
 
+-- 非等值连接myemployees
+--
+
+# 案例1：查询员工的工资和工资级别
+SELECT e.salary, j.grade_level
+FROM employees e, job_grades j 
+WHERE e.salary >= j.lowest_sal 
+AND e.salary <= j.highest_sal;
+
+--
+SELECT e.salary, j.grade_level
+FROM employees e, job_grades j 
+WHERE e.salary BETWEEN j.lowest_sal AND j.highest_sal;
 
 
+-- 自连接
+-- 
+-- 用于表内自关联，查询时，这个表需要用到两次
 
 
-
-
-
-
-
-
-
-
+#案例：查询 员工名和上级的名称
+SELECT e.first_name 员工名, m.first_name 上级名 
+FROM employees e, employees m
+WHERE e.manager_id = m.employee_id;
 
 
 

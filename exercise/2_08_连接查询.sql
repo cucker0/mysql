@@ -85,8 +85,32 @@ WHERE e.`job_id` = j.`job_id`;
 
 -- 可以添加筛选条件
 # 案例：查询有奖金的员工名、部门名
+SELECT e.first_name, d.department_name, e.commission_pct
+FROM employees e, departments d
+WHERE e.department_id = d.department_id
+AND commission_pct IS NOT NULL;
 
-take something  OK I think that IS OK 
+# 案例2：查询城市名中第二个字符为o的部门名和城市名
+SELECT city, department_name
+FROM locations l, departments d
+WHERE d.location_id = l.location_id
+AND city LIKE '_o%';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

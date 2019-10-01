@@ -40,10 +40,36 @@
 */
 
 
--- SQL-92标准
+-- SQL-92标准连接语法
 --
 -- 执行girls.sql脚本，创建girls及相应的表
 
+
+/*
+语法：
+select 查询列表
+from 表1 别名1, 表2 别名2
+where 连接条件
+[and 其它筛选条件]
+[group by 分组字段]
+[having 分组后筛选条件]
+[order by 排序字段或表达式 排序方式]
+
+
+其中表1、表2可以为同一个表，表示自连接，
+注意：起了别名后，原来的表名在将不可用
+
+
+select 查询列表
+from 表1 别名1, 表2 别名2, 表3 别名3
+where 表1与表2连接条件
+and 表2与表3连接条件或者是表1与表3连接条件
+[and 其它筛选条件]
+[group by 分组字段]
+[having 分组后筛选条件]
+[order by 排序字段或表达式 排序方式]
+
+*/
 
 -- 笛卡尔乘积现象（等价于交叉连接）
 
@@ -150,7 +176,7 @@ FROM employees e, job_grades j
 WHERE e.salary BETWEEN j.lowest_sal AND j.highest_sal;
 
 
--- 自连接
+-- 自连接(自连内连接)
 -- 
 -- 用于表内自关联，查询时，这个表需要用到两次
 

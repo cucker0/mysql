@@ -255,7 +255,17 @@ FULL OUTER JOIN boys bo
 ON b.boyfriend_id = bo.id;
 
 -- mysql中全外连接代替方法
+SELECT * 
+FROM beauty b
+LEFT OUTER JOIN boys bo
+ON b.boyfriend_id = bo.id
 
+UNION
+
+SELECT * 
+FROM beauty b
+RIGHT OUTER JOIN boys bo
+ON b.boyfriend_id = bo.id;
 
 
 -- 交叉链接(即笛卡尔乘积)
@@ -270,5 +280,5 @@ SELECT *
 FROM beauty, boys;
 
 
-
+SELECT * FROM boys;
 

@@ -1717,9 +1717,6 @@ CROSS JOIN boys bo;
 -- 效果等效(SQL-92语法)
 SELECT *
 FROM beauty, boys;
-
-
-SELECT * FROM boys;
 ```
 </details>
 

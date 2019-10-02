@@ -281,5 +281,3 @@ SELECT *
 FROM beauty, boys;
 
 
-SELECT * FROM boys;
-

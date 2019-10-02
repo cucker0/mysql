@@ -246,9 +246,10 @@ full outer join 表2 别名2
 on 连接条件
 */
 
-USE girls;
 
 -- 因为mysql不支持全外连接full outer join语法，系列语句执行时报错语法错误
+USE girls;
+
 SELECT *
 FROM beauty b
 FULL OUTER JOIN boys bo

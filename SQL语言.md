@@ -1311,7 +1311,8 @@ SELECT beauty.*, boys.*
 FROM beauty, boys; -- 48行
 ```
 
-#### 等值连接(相当于取两表的连接条件相等的交集记录)
+#### 等值连接
+相当于取两表的连接条件相等的交集记录
 * 案例1：查询女神名和对应的男神名
     ```mysql
     SELECT NAME, boyName
@@ -1402,7 +1403,7 @@ FROM beauty, boys; -- 48行
         AND d.location_id = l.location_id
         ```
 
-#### 非等值连接myemployees
+#### 非等值连接
 * 案例1：查询员工的工资和工资级别
     ````mysql
     SELECT e.salary, j.grade_level

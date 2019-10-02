@@ -161,7 +161,7 @@ AND d.location_id = l.location_id
 
 
 
--- 非等值连接myemployees
+-- 非等值连接
 --
 
 # 案例1：查询员工的工资和工资级别

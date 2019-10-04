@@ -43,9 +43,12 @@
     in/not in  any/some  all
     * any、some效果一样
     
-    * in (...) 等效于 = any (...)
-             等效于 = some (...)
-    * not in () 等效于 <> all (...)
+    * in (...) 表示括号集合里的任意一个元素
+        等效于 = any (...)
+        等效于 = some (...)
+        
+    * not in () 不在括号集合的范围内。即括号集合的范围外的
+        等效于 <> all (...)
 * 子查询的执行优先于主查询执行，因为主查询的条件用到了子查询的结果
 
 */
@@ -288,7 +291,7 @@ AND salary < (
 
 
 -- 行子查询
--- 可以用集合来接受子查询结果集
+-- 可以用列表来接收子查询结果集
 # 案例：查询员工编号最小并且工资最高的员工信息
 SELECT *
 FROM employees
@@ -323,11 +326,127 @@ AND salary = (
 
 
 
+-- select后面
+--
+/*
+仅仅支持标量子查询
+*/
 
 
+# 案例1：查询每个部门的员工个数
+SELECT DISTINCT d.department_id, (
+    SELECT COUNT(*)
+    FROM employees e
+    WHERE e.department_id = d.department_id
+
+) 个数
+FROM departments d
 
 
+# 案例2：查询员工号=102的部门名
+-- ①查询员工号=102所在的部门编号
+SELECT department_id
+FROM employees
+WHERE employee_id = 102
+;
+
+-- ②查询部门名，满足department_id = ①
+SELECT e.department_id, (
+    SELECT d.department_name
+    FROM departments d
+    WHERE e.department_id = d.department_id
+) AS 部门名
+FROM employees e
+WHERE employee_id = 102;
 
 
+-- from后面
+-- 
+/*
+将子查询结果集充当一张表，要求必须起别名
+*/
+
+# 案例：查询每个部门的平均工资的工资等级
+-- ①查询每个部门的平均工资
+SELECT department_id, AVG(salary)
+FROM employees
+GROUP BY department_id
+;
+
+-- ②把①的结果集与job_grades连接查询，①的结果集做主表，因为有可能没有匹配的等级
+SELECT g.grade_level, t.avg_salary, t.department_id
+FROM job_grades g
+RIGHT OUTER JOIN (
+    SELECT department_id, AVG(salary) AS avg_salary
+    FROM employees
+    GROUP BY department_id
+) t
+ON t.avg_salary BETWEEN g.lowest_sal AND g.highest_sal;
+
+
+-- exists后面
+-- 
+/*
+功能：用于判断结果集是否存在记录，即是否不为空。返回boolean值(1或0)
+是：返回 1
+否：返回 0
+
+## 语法
+exists (查询语句)
+
+*/
+
+SELECT EXISTS (
+    SELECT *
+    FROM employees
+    WHERE salary < 0 -- 工资 < 0的员工不存在
+); -- 0
+
+# 案例1：查询有员工的部门名
+-- 常规方法
+SELECT d.department_id, d.department_name
+FROM departments d
+WHERE d.department_id = SOME (
+    SELECT DISTINCT department_id 
+    FROM employees
+);
+
+-- exists方式
+SELECT d.department_id, d.department_name
+FROM departments d
+WHERE EXISTS (
+    SELECT *
+    FROM employees e
+    WHERE e.department_id = d.department_id
+);
+
+# 案例2：查询没有女朋友的男生信息
+USE girls;
+
+-- 连接查询方式
+SELECT * 
+FROM boys bo
+LEFT OUTER JOIN beauty b
+ON b.boyfriend_id = bo.id
+WHERE b.id IS NULL;
+
+
+-- in方式
+SELECT *
+FROM boys bo
+WHERE bo.id NOT IN (
+    SELECT DISTINCT boyfriend_id
+    FROM beauty
+);
+
+
+-- exists方式
+SELECT * 
+FROM boys bo
+WHERE NOT EXISTS (
+    SELECT *
+    FROM beauty b
+    WHERE b.boyfriend_id = bo.id
+);
 
 

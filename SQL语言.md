@@ -994,14 +994,23 @@ desc: 降序
 
 ###  分组函数概览与总结
 ```text
-SUM(expr) 求和
+SUM(expr) 求和，
+    当统计的数据为空时(没有一条记录)，返回值为NULL
 SUM([DISTINCT] expr) 去重后求和
-AVG([DISTINCT] expr) 求平均值(去重后求平均值)
-MAX(expr) 求最大值
+
+AVG([DISTINCT] expr) 求平均值(或去重后求平均值)，
+    当统计的数据为空时(没有一条记录)，返回值为NULL
+    
+MAX(expr) 求最大值, 
+    当统计的数据为空时(没有一条记录)，返回值为NULL
 MAX([DISTINCT] expr) 去重后求最大值
-MIN(expr) 求最小值
+
+MIN(expr) 求最小值，
+    当统计的数据为空时(没有一条记录)，返回值为NULL
 MIN([DISTINCT] expr) 去重后求最小值
-COUNT(expr) 计算非null值的行个数
+
+COUNT(expr) 计算非null值的行个数，
+    当统计的数据为空时(没有一条记录)，返回值为0
 COUNT(DISTINCT expr,[expr...]) 返回列出的字段不全为NULL值的行，再去重的数目, 可以写多个字段，expr不能为*
 ```
 
@@ -1024,6 +1033,14 @@ COUNT(DISTINCT expr,[expr...]) 返回列出的字段不全为NULL值的行，再
         SUM(salary) AS 和, AVG(salary) 平均值, MAX(salary) 最大值, MIN(salary) 最小值, COUNT(salary) 计数
     FROM
         employees;
+      
+    --
+    SELECT
+        SUM(salary) AS 和, AVG(salary) 平均值, MAX(salary) 最大值, MIN(salary) 最小值, COUNT(salary) 计数
+    FROM
+        employees
+    WHERE salary < 0; -- NULL, NULL, NULL, NULL, 0
+  
     ```
 
 * 参数支持的类型

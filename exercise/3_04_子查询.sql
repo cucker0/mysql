@@ -15,15 +15,15 @@
 * where或having后面
     标量子查询(结果集只有一行一列)
     列子查询(结果集为多行一列)
-    行子查询(结果集一行多列)
+    行子查询(结果集一行多列或多行多列，总之一定是大于1列)
 * exists后面(也叫相关子查询)
     表子查询
 
 ### 按结果集的行数列数不同分
 * 标量子查询(结果集只有一行一列)
 * 列子查询(结果集为多行一列)
-* 行子查询(结果集一行多列)
-* 表子查询(结果集一般为多行多表，也可以为任意的情况)
+* 行子查询(结果集一行多列或多行多列，总之一定是大于1列)
+* 表子查询(结果集一般为多行多列，也可以为任意行任意列)
 
 */
 -- where或having后面
@@ -40,7 +40,12 @@
     >  <  >=  <=  =  <>  <=>
 
 * 列子查询，一般搭配多行操作符使用
-    in  any/some  all
+    in/not in  any/some  all
+    * any、some效果一样
+    
+    * in (...) 等效于 = any (...)
+             等效于 = some (...)
+    * not in () 等效于 <> all (...)
 * 子查询的执行优先于主查询执行，因为主查询的条件用到了子查询的结果
 
 */
@@ -121,7 +126,203 @@ HAVING MIN(salary) > (
     WHERE department_id = 50
 );
 
--- ③
+
+# 非法使用标量子查询
+/*
+当子查询无结果返回或返回为空，则主查询也将返回空结果
+一般要求子查询要有结果返回
+*/
+
+SELECT department_id, MIN(salary)
+FROM employees
+GROUP BY department_id
+HAVING MIN(salary) > (
+    SELECT MIN(salary)
+    FROM employees
+    WHERE department_id = 350
+);
+
+
+-- 列子查询
+# 案例1：返回location_id是1400或1700的部门中的所有员工姓名
+
+-- 内连接查询方式
+SELECT CONCAT(first_name, ' ', last_name), e.department_id
+FROM employees e
+INNER JOIN departments d
+ON e.department_id = d.department_id
+WHERE d.location_id IN (1400, 1700);
+
+-- 列子查询方式
+-- ①查询location_id是1400或1700的部门编号
+SELECT DISTINCT department_id
+FROM departments
+WHERE location_id IN (1400, 1700)
+;
+
+-- ②查询员工姓名，满足department_id在①结果集中，即查询出①结果集内所有department_id对应的员工
+SELECT CONCAT(first_name, ' ', last_name), department_id
+FROM employees
+WHERE department_id IN (
+    SELECT department_id
+    FROM departments
+    WHERE location_id IN (1400, 1700)
+);
+
+-- 或
+SELECT CONCAT(first_name, ' ', last_name), department_id
+FROM employees
+WHERE department_id = ANY (
+    SELECT department_id
+    FROM departments
+    WHERE location_id IN (1400, 1700)
+);
+
+
+-- 或
+SELECT CONCAT(first_name, ' ', last_name), department_id
+FROM employees
+WHERE department_id = SOME (
+    SELECT department_id
+    FROM departments
+    WHERE location_id IN (1400, 1700)
+);
+
+
+# 案例2：返回location_id不是1400或1700的部门中的所有员工姓名
+-- ①location_id是1400或1700的部门编号
+SELECT department_id
+FROM departments
+WHERE location_id = 1400
+OR location_id = 1700
+;
+
+-- ②查询所有员工姓名，满足department_id不在①结果集中
+SELECT CONCAT(first_name, ' ', last_name)
+FROM employees
+WHERE department_id NOT IN (
+    SELECT department_id
+    FROM departments
+    WHERE location_id = 1400
+    OR location_id = 1700
+);
+
+-- 或
+SELECT CONCAT(first_name, ' ', last_name)
+FROM employees
+WHERE department_id <> ALL (
+    SELECT department_id
+    FROM departments
+    WHERE location_id = 1400
+    OR location_id = 1700
+);
+
+# 案例3：返回其它工种中比job_id为'IT_PROG'工种任一工资低的员工的员工号、姓名、job_id 以及salary
+-- ①查询job_id为'IT_PROG'工种的所有员工的工资
+SELECT DISTINCT salary
+FROM employees
+WHERE job_id = 'IT_PROG'
+;
+
+-- ②查询员工号、姓名、job_id 以及salary，满足job_id不为'IT_PROG'，且salary < ①结果集任意一个。可以转化salary < ①结果集中最大的salary
+SELECT 
+    employee_id, 
+    CONCAT(first_name, ' ', last_name) AS 姓名,
+    job_id,
+    salary
+FROM employees
+WHERE job_id != 'IT_PROG'
+AND salary < ANY (
+    SELECT DISTINCT salary
+    FROM employees
+    WHERE job_id = 'IT_PROG'
+);
+
+-- 或
+SELECT 
+    employee_id, 
+    CONCAT(first_name, ' ', last_name) AS 姓名,
+    job_id,
+    salary
+FROM employees
+WHERE job_id != 'IT_PROG'
+AND salary < (
+    SELECT MAX(salary)
+    FROM employees
+    WHERE job_id = 'IT_PROG'
+);
+
+
+# 案例4：返回其它部门中比job_id为'IT_PROG'部门所有工资都低的员工   的员工号、姓名、job_id 以及salary
+-- ①查询job_id为'IT_PROG'部门的所有员工工资
+SELECT DISTINCT salary 
+FROM employees
+WHERE job_id = 'IT_PROG'
+;
+
+-- ②查询员工号、姓名、job_id 以及salary，满足job_id != 'IT_PROG'，且salary < ①结果集中所有的salary。可以转化为salary < ①结果集中最小的salary
+SELECT employee_id, 
+    CONCAT(first_name, ' ', last_name),
+    job_id,
+    salary
+FROM employees
+WHERE job_id <> 'IT_PROG'
+AND salary < ALL (
+    SELECT DISTINCT salary 
+    FROM employees
+    WHERE job_id = 'IT_PROG'
+);
+
+-- 或
+SELECT employee_id, 
+    CONCAT(first_name, ' ', last_name),
+    job_id,
+    salary
+FROM employees
+WHERE job_id <> 'IT_PROG'
+AND salary < (
+    SELECT MIN(salary)
+    FROM employees
+    WHERE job_id = 'IT_PROG'
+);
+
+
+-- 行子查询
+-- 可以用集合来接受子查询结果集
+# 案例：查询员工编号最小并且工资最高的员工信息
+SELECT *
+FROM employees
+WHERE (employee_id, salary) = (
+    SELECT MIN(employee_id), MAX(salary)
+    FROM employees
+);
+
+
+-- 常规查询方法
+-- ①查询最小的员工编号
+SELECT MIN(employee_id)
+FROM employees
+;
+
+-- ②查询最高的工资
+SELECT MAX(salary)
+FROM employees
+;
+
+-- ③查询员工信息，满足employee_id = ①，且salary = ②
+SELECT * 
+FROM employees
+WHERE employee_id = (
+    SELECT MIN(employee_id)
+    FROM employees
+)
+AND salary = (
+    SELECT MAX(salary)
+    FROM employees
+);
+
+
+
 
 
 

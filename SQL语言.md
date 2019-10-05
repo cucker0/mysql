@@ -2269,7 +2269,80 @@ exists (查询语句)
 <details>
 <summary>分页查询</summary>
 
+```text
+应用场景：当要显示的数据，一页显示不全，需要分页显示，提交分页sql查询请求
+```
 
+### 分页查询语法
+```text
+
+
+select 查询列表
+from 表
+[连接类型 join 表2
+on 连接条件
+]
+where 筛选条件
+group by 分组字段
+having分组后的筛选条件
+order by 排序字段
+limit [offset, ] size
+
+## 注意
+offset: 起始索引值(起始索引值从0开始)，若省略，默认值为0
+size: 要查询的条目个数
+offset、size: 都为自然数N常量，不支持表达式或变量
+```
+
+### 分页查询特点
+* limit 字句放在查询语句的最后
+* 分页公式
+    ```text
+    page: 页数
+    size：每页的条目
+    
+    select 查询列表
+    from 表
+    limit size * (page - 1), size;
+    
+    当查询最后一页条数不足size是，有多少条就显示多少条
+    ```
+
+### 分页查询案例
+* 案例1：查询前5条员工信息
+    ```mysql
+    SELECT * FROM employees LIMIT 0, 5;
+    
+    SELECT * FROM employees LIMIT 5;
+    ```
+
+* 案例2：查询第11条 - 第25条员工信息
+    ```mysql
+    SELECT * 
+    FROM employees
+    LIMIT 10, 15;
+    
+    --
+    SELECT * 
+    FROM employees
+    LIMIT 100, 15;
+    
+    -- limit 不支持变量，下面的语句执行时报错
+    SET @a = 10;
+    
+    SELECT * 
+    FROM employees
+    LIMIT 100, @a;
+    ```
+
+* 案例3：查询有奖金，并且工资较高的前10的员工信息
+    ```mysql
+    SELECT * 
+    FROM employees
+    WHERE commission_pct IS NOT NULL
+    ORDER BY salary DESC
+    LIMIT 0, 10;
+    ```
 </details>
 
 ## union联合查询

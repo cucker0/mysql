@@ -31,13 +31,28 @@ OR email LIKE '%a%';
 -- union联合查询方式
 SELECT * 
 FROM employees
-WHERE department_id > 90
+WHERE department_id > 90 -- 8行
 
 UNION
 
-SELECT *
+SELECT * -- 62行
 FROM employees
-WHERE email LIKE '%a%';
+WHERE email LIKE '%a%'
+; -- 联合查询的结果67行
+
+
+-- union联合查询，保留重复记录
+SELECT * 
+FROM employees
+WHERE department_id > 90 -- 8行
+
+UNION ALL
+
+SELECT * -- 62行
+FROM employees
+WHERE email LIKE '%a%'
+;
+
 
 
 # 案例：查询girls库的beauty表中的姓名、出生日期，以及myemployees库的employees表中的姓名、入职日期，要求姓名显示为同一列，出生日期与入职日期显示为同一列 

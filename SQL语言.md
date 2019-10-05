@@ -1629,8 +1629,8 @@ ORDER BY g.grade_level DESC;
 * 外连接查询结果 = 内连接结果 + 主表中有而从表中没有匹配的记录
 * 左外链接，left join 左边的是主表
 * 右外连接，right join 右边的是主表
-* 全外连接 = 内连接结果 + 表1中有但表2中没有的 + 表2中有单表1中没有的 记录  
-或 = 表1 left join 表2结果 + 表1 right join 表2结果 的并集 （这里会出现重叠的集合：表1 inner join 表2）
+* 全外连接 = 内连接结果集 + 表1中有但表2中没有的 + 表2中有单表1中没有的 记录  
+或 = 表1 left join 表2结果集 + 表1 right join 表2结果集 的并集去重 （这里会出现重叠的集合：表1 inner join 表2）
 * 左外连接、右外连接的主表和从表位置不能调换
 
 
@@ -1708,7 +1708,29 @@ FULL OUTER JOIN boys bo
 ON b.boyfriend_id = bo.id;
 ```
 
-* mysql中全外连接代替方法
+* mysql中全外连接替代方案
+    ```text
+    -- 全外连接
+    select 查询列表
+    from 表1 别名1
+    full outer join 表2 别名2
+    on 连接条件;
+
+    -- 全外连接替代方案，两者的查询结果是一样的
+    select 查询列表
+    from 表1 别名1
+    left outer join 表2 别名2
+    on 连接条件
+    
+    union
+  
+    select 查询列表
+    from 表1 别名1
+    right outer join 表2 别名2
+    on 连接条件;
+  
+    ```
+
     ```mysql
     SELECT * 
     FROM beauty b

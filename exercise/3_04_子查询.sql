@@ -110,7 +110,7 @@ FROM employees
 WHERE salary = (
     SELECT MIN(salary)
     FROM employees
-)
+);
 
 # 案例4：查询最低工资大于50号部门最低工资的部门id和其最低工资
 -- ①查询id为50的部门的最低工资

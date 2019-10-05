@@ -109,29 +109,69 @@ HAVING s.sex = '女'
 
 
 # 六、查询专业和张翠山一样的学生的最低分
+-- ①查询张翠山的专业ID
+SELECT majorid
+FROM student
+WHERE studentname = '张翠山'
+;
 
+-- ②查询最低分，满足 majorid = ①
+SELECT MIN(r.score)
+FROM result r
+INNER JOIN student s
+ON r.studentno = s.studentno
+WHERE s.majorid = (
+    SELECT majorid
+    FROM student
+    WHERE studentname = '张翠山'
+);
 
 # 七、查询大于60分的学生的姓名、密码、专业名
-
+SELECT s.studentname, s.loginpwd, s.majorid, r.score
+FROM result r
+INNER JOIN student s
+ON r.studentno = s.studentno
+INNER JOIN major m
+ON m.majorid = s.majorid
+WHERE r.score > 60;
 
 # 八、按邮箱位数分组，查询每组的学生个数
-
+SELECT COUNT(*), LENGTH(email) 邮箱长度
+FROM student
+GROUP BY LENGTH(email);
 
 # 九、查询学生名、专业名、分数
+-- 有可能出现学生未参加考试或其他原因没有成绩的情况，也有可能学生没有报专业
+SELECT s.studentname, m.majorname, r.score
+FROM student s
+LEFT OUTER JOIN result r
+ON s.studentno = r.studentno
+LEFT OUTER JOIN major m
+ON s.majorid = m.majorid;
 
 
+# 十、查询哪个专业没有学生，分别用左外连接和右外连接实现
+-- 这里要以major为主表
 
+-- 左外连接
+SELECT m.majorname
+FROM major m
+LEFT OUTER JOIN student s
+ON m.majorid = s.majorid
+WHERE s.studentno IS NULL;
 
-# 十、查询哪个专业没有学生，分别用左连接和右连接实现
+-- 右外连接
+SELECT  m.majorname
+FROM student s
+RIGHT OUTER JOIN major m
+ON s.majorid = m.majorid
+WHERE s.studentno IS NULL;
+
 
 # 十一、查询没有成绩的学生人数
-
-
-
-
-
-
-
-
-
+SELECT COUNT(*)
+FROM student s
+LEFT OUTER JOIN result r
+ON s.studentno = r.studentno
+WHERE r.score IS NULL;
 

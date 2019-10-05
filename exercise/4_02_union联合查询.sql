@@ -11,12 +11,14 @@ union
 ...
 
 ## 应用场景：
-要查询的结果来自多个表，且多个表之间没有直接的连接关系，但查询的信息一致
+要查询的结果来自多个表，且多个表之间没有直接的连接关系，但查询的信息一致；
+作为full outer join全外连接的代替方案
 
 ## 特点
 * 要求多个查询语句的查询列数是一致的
 * 要求多个查询语句的每一列的类型和顺序最好一致
-* union关键字默认去重，使用 union all关键字可以保留重复的记录
+* union关键字默认去重
+* union all关键字可以保留重复的记录
 * 列表只会显示第一查询语句的
 
 */
@@ -67,3 +69,41 @@ FROM myemployees.employees
 ;
 
 
+-- full outer join全外连接替代方案
+# 查询所有女神有无男朋友和所有男神有无女朋友的详情信息
+USE girls;
+
+/*
+全外连接查询，奈何mysql不支持
+SELECT *
+FROM beauty b
+FULL OUTER JOIN boys bo
+ON b.boyfriend_id = bo.id;
+*/
+
+-- ①查询beauty表与boys表左外连接，此时主表为beauty
+SELECT *
+FROM beauty b
+LEFT OUTER JOIN boys bo
+ON b.boyfriend_id = bo.id
+;
+
+-- ②查询beauty表与boys表右外连接，此时主表为boys
+SELECT *
+FROM beauty b
+RIGHT OUTER JOIN boys bo
+ON b.boyfriend_id = bo.id
+;
+
+-- ③用union把①结果集与②结果集合并，并去重(union默认去重)
+SELECT *
+FROM beauty b
+LEFT OUTER JOIN boys bo
+ON b.boyfriend_id = bo.id
+
+UNION
+
+SELECT *
+FROM beauty b
+RIGHT OUTER JOIN boys bo
+ON b.boyfriend_id = bo.id;

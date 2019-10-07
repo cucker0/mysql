@@ -2,6 +2,8 @@
 
 
 /*
+DML都是基于记录的操作的
+
 查询(DQL)：select ...      -- 前面有一章介绍DQL
 插入：insert
 修改：update
@@ -91,4 +93,191 @@ SELECT '韩雪', '女', '15823326677';
 INSERT INTO beauty (NAME, sex, phone)
 SELECT boyName, '男', '12306'
 FROM boys WHERE id < 3;
+
+
+
+-- 修改语句
+-- 
+
+/*
+## 单表修改记录语法
+updat 表名
+set 列=值, 列2=值2,...
+where 筛选条件;
+
+
+## 多表连接修改记录语法
+* sql-92语法
+update 表1 别名1, 表2 别名2
+set 别名1.列=值, 别名2.列=值2,...
+where 连接条件
+and 筛选条件;
+
+
+* sql:1999语法
+update 表1 别名1
+[inner |left outer |right outer] join 表2 别名2
+on 连接条件
+set 别名1.列=值, 别名2.列=值2,...
+where 筛选条件; 
+
+
+*/
+
+
+SELECT * FROM beauty;
+
+SELECT * FROM boys;
+
+-- 单表修改记录
+# 案例1：修改beauty表中姓唐的女神的电话为15899998888
+UPDATE beauty
+SET phone='15899998888'
+WHERE `name` LIKE '张%'
+AND sex = '女';
+
+
+# 案例2：修改boys表中id好为2的名称为张飞，魅力值 10
+UPDATE boys
+SET userCP='10', boyName='张飞' -- 这里的字符'10'会自动转成数值型，也可以指定只为10
+WHERE id = 2;
+
+
+-- 多表连接修改记录
+--
+# 案例 1：修改张无忌的女朋友的手机号为12123, 并把张无忌的颜值修改为1000
+UPDATE boys bo
+INNER JOIN beauty b
+ON b.boyfriend_id = bo.id
+SET b.phone=12123, bo.userCP=1000
+WHERE bo.boyName = '张无忌';
+
+# 案例2：修改没有男朋友的女神的男朋友编号都为2号，并把2号男神的颜值修改为1000
+-- 经过分析，beauty表需要为主表
+UPDATE boys bo
+RIGHT OUTER JOIN beauty b
+ON bo.id = b.boyfriend_id
+SET b.boyfriend_id=2
+WHERE bo.id IS NULL; 
+
+
+-- 删除语句
+-- 
+
+/*
+## delete删除记录
+### 语法
+* 单表的删除
+delete from 表名
+[where 筛选条件];
+
+delete from 表名; 表示删除表的所有记录
+
+
+* 多表连接删除
+    * sql-92语法删除记录语法
+delete 别名1[, 别名2]
+from 表1 别名1, 表2 别名2
+where 连接条件
+and 筛选条件;
+
+
+    * sql:1999删除记录语法
+delete 别名1[, 别名2]
+from 表1 别名1
+[inner |left outer |right outer] join 表2 别名2
+on 连接条件
+where 筛选条件;
+
+
+注意：
+[, 别名2]:表示是否要同时删除 别名2对应吧表的记录，不需要就不写
+可以用 limit 条目数结合，删除前面多少条记录，但用 limit 条目起始索引, 条目数    会报错
+
+## truncate清空表删除所有记录
+TRUNCATE(x, D)是一个用于阶段数值的函数，一般用于小数阶段
+* 语法
+truncate table 表名;
+
+*/
+
+-- delete删除记录方式
+-- 
+
+-- 1.单表删除记录
+
+# 案例：删除手机号以9结尾的女神信息
+SELECT *
+FROM beauty
+WHERE phone LIKE '%9';
+
+DELETE FROM beauty
+WHERE phone LIKE '%9';
+
+--
+DELETE FROM beauty
+WHERE phone LIKE '%9'
+LIMIT 3; -- 可以执行成功，删除前面3条记录
+
+--
+DELETE FROM beauty
+WHERE phone LIKE '%9'
+LIMIT 0, 3; -- 报语法错误
+
+
+-- 多变连接删除记录
+
+# 案例：删除张无忌的女朋友的信息
+DELETE b
+FROM boys bo
+INNER JOIN beauty b
+ON bo.id = b.boyfriend_id
+WHERE bo.boyName = '张无忌';
+
+
+# 案例：删除黄晓明的信息以及他女朋友的信息
+DELETE bo, b
+FROM boys bo
+INNER JOIN beauty b
+ON bo.id = b.boyfriend_id
+WHERE bo.boyName = '黄晓明';
+
+
+-- truncate删除所有记录(清空表)
+-- 
+
+# 案例：清空boys表所有记录
+TRUNCATE TABLE boys;
+
+
+-- delete删除记录、truncate清空表删除所有记录对比
+/*
+* delete可以加where筛选条件，truncate不能
+* truncate删除记录效率稍微高一些
+* truncate删除所有记录后，AUTO_INCREMENT自增变量值重置为1，再添加记录是，自增列值从1开始
+    delete删除后，AUTO_INCREMENT自增变量值不变，再添加记录时，自增列值从原来的计数开始
+* truncate清空表时没有返回值，delete删除时有返回值
+* truncate清空表不能回滚，delete删除记录可以回滚
+
+
+*/
+
+DELETE FROM boys;
+
+INSERT INTO boys (boyName, userCP)
+VALUES ('张飞',100),('刘备',100),('关云长',100);
+
+SELECT * FROM boys;
+
+
+--
+TRUNCATE TABLE boys;
+
+INSERT INTO boys (boyName, userCP)
+VALUES ('张飞',100),('刘备',100),('关云长',100);
+
+SELECT * FROM boys;
+
+
+
 

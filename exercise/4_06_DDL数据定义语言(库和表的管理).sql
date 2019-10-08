@@ -1,4 +1,4 @@
--- DDL数据定义语言
+-- DDL数据定义语言(库和表的管理)
 
 /*
 功能：库和表的管理
@@ -95,7 +95,7 @@ USE books;
 
 CREATE TABLE book (
     id INT, -- 编号
-    `name` VARCHAR(32), -- 书名
+    `name` VARCHAR (32), -- 书名
     price DOUBLE, -- 价格
     authorId INT, -- 作者ID
     publishDate DATETIME -- 发布让日期
@@ -107,10 +107,118 @@ DESC book;
 # 案例：创建author表
 CREATE TABLE IF NOT EXISTS author (
     id INT,
-    `name` VARCHAR(32),
-    nation VARCHAR(20)
+    `name` VARCHAR (32),
+    nation VARCHAR (20)
 );
 
 
+-- 向author、books表中插入数据
+
+INSERT INTO author (id, `name`, nation)
+VALUES (1, 'jean-henri casimir fabre', '法国'),
+(2, '李淼', '中国'),
+(3, '霍金', '英国')
+;
+
+
+INSERT INTO book VALUES
+(1, '昆虫记', 37.10, 1, '2019-04-01'),
+(2, '给孩子讲宇宙', 26.90, 2, '2017-08-01'),
+(3, '时间简史', 32.40, 3, '2012-01-01')
+;
+
+
 -- 表的修改
+/*
+## 语法
+alter table 表名 add|drop|modify|change column 列名 [列类型 约束];
+
+*/
+
+# change重命名列名
+ALTER TABLE book CHANGE COLUMN publishDate pubdate DATETIME;
+
+DESC book;
+
+
+# 修改列的类型或约束
+ALTER TABLE book MODIFY COLUMN pubdate TIMESTAMP;
+
+# 把name字段的长度修改为64
+ALTER TABLE book MODIFY COLUMN `name` VARCHAR (64);
+
+# 添加新列
+ALTER TABLE book ADD COLUMN quantity INT; -- 数量
+
+# 删除列
+ALTER TABLE book DROP COLUMN quantity;
+
+# 修改表名
+/*
+## 语法
+alter table 表名 rename [to] 新表名;
+*/
+ALTER TABLE book RENAME TO ebook;
+
+DESC ebook;
+SELECT * FROM ebook;
+
+
+-- 表的删除
+/*
+## 语法
+drop table [if exists] 表名;
+
+* [if exists] 表示如果表存在就删除，如果不加这个判断，在表不存在的情况下执行删除表语句会报错，加了这个判断则只会报警告
+*/
+
+DROP TABLE IF EXISTS ebook;
+
+
+-- 表的复制
+
+
+# 只复制表的结构
+/*
+## 语法
+create table 表名 like 源表;
+
+*/
+CREATE TABLE tab_copy LIKE author;
+
+DESC tab_copy;
+
+SELECT * FROM tab_copy;
+
+
+# 复制表的结构 + 全部数据
+CREATE TABLE tab_copy2
+SELECT * FROM author;
+
+SELECT * FROM tab_copy2;
+
+# 复制表的部分结构 + 部分数据
+CREATE TABLE tab_copy3
+SELECT id, `name`
+FROM author
+WHERE nation = '中国';
+
+SELECT * FROM tab_copy3;
+
+
+# 只复制表的部分结构(部分字段)
+-- 就是让查询结果集为0条记录
+CREATE TABLE tab_copy4
+SELECT id, `name`
+FROM author
+WHERE 0;
+
+-- 或
+CREATE TABLE tab_copy4
+SELECT id, `name`
+FROM author
+LIMIT 0;
+
+SELECT * FROM tab_copy4;
+
 

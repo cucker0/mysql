@@ -48,6 +48,8 @@
 */
 
 # 设置有符号整型字段
+USE test;
+
 CREATE TABLE tab_int (
     price INT,
     num INT
@@ -210,5 +212,38 @@ INSERT INTO tab_set VALUES ('a,g'); -- 包含set选项外的将报错：Data tru
 SELECT * FROM tab_set;
 
 
+-- 日期型
+-- 
+/*
+## 分类
+date: 日期
+time: 时间
+year: 年份
+datetime: 日期+时间
+timestamp: 时间戳，时间范围 [1970年, 2038年)
+
+## datetime、timestamp比较
+
+类型        占用空间    可表示时间范围     是否受时区影响
+datetime    8字节       [1000年, 9999年]   否
+timestamp   4字节       [1970年, 2038年)   是，受服务器的时区影响 
 
 
+*/
+
+CREATE TABLE tab_date (
+    dt DATETIME,
+    tt TIMESTAMP
+);
+
+DESC tab_date;
+
+INSERT INTO tab_date VALUES (NOW(), NOW());
+
+SELECT * FROM tab_date;
+
+SHOW VARIABLES LIKE 'time_zone';
+
+SET time_zone = '+9:00';
+
+SELECT * FROM tab_date; -- mysql服务器的时区更改后，timestamp类型的查询值也变了

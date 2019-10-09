@@ -40,7 +40,8 @@
 * 字段 数值类型 unsigned：表示该字段设置无符号数值
 * 字段 整型 (长度) zerofill： 长度表示查询时显示的最大宽度，不影响存储，如果位数<指定的长度则会用0在左边填充，同时该字段已经设置为无符号整型
     如果不加zerefill是不生效的，只指定长度没有意义。
-    字段的值范围与这里指定的长度无关，只与所使用的整数类型的范围有关    
+    字段的值范围与这里指定的长度无关，只与所使用的整数类型的范围有关
+    指定的显示宽度可以大于默认长度，这时显示也是按设置的宽度去填充显示
 * 如果不设置长度，会有默认的长度，即为最大值的位数，长度表示显示的宽度
 
 * 
@@ -72,6 +73,28 @@ DESC tab_int2;
 
 INSERT INTO tab_int2 VALUES (-1, 0); -- 报错：Out of range value for column 'price' at row 1
 
+--
+CREATE TABLE tab_int3 (
+    num  TINYINT (5) ZEROFILL
+);
+
+
+INSERT INTO tab_int3 VALUES (11);
+
+SELECT * FROM tab_int3;
+
+-- 
+CREATE TABLE tab_int4 (
+    f1 TINYINT ZEROFILL,
+    f2 SMALLINT ZEROFILL,
+    f3 MEDIUMINT ZEROFILL,
+    f4 INT ZEROFILL,
+    f5 BIGINT ZEROFILL
+);
+
+DESC tab_int4;
+INSERT INTO tab_int4 VALUES (1, 2, 3, 4, 5);
+SELECT * FROM tab_int4;
 
 -- 小数
 -- 
@@ -88,19 +111,20 @@ INSERT INTO tab_int2 VALUES (-1, 0); -- 报错：Out of range value for column '
 * M: 整个数的位数，整数位数 + 小数倍数的和
 * D: 小数位数
 * M和D都可以省略，
-    * 如果是decimal，轩M默认为10，D默认为0，即相当于 decimal (10, 0)
+    * 如果是decimal，M默认为10，D默认为0，即相当于 decimal (10, 0)
     * 如果是float和double，则不指定M、D的值，保留插入数据的精度，插入多少位小数的是多少就保存多少位小数
 * 小数位数小于D的，用0在右边补够D位小数
 * 定点型的精确度较高，如果要求插入数值的精度要求较高的，如货币运算则可以考虑使用decimal定点型
 * float、double小数位数超过M后，M+1 位上的数<= 5舍去，>5收上来
 * decimal小数位数超过M后，采用四舍五入，M+1 位上的数< 5舍去，>=5收上来
 
+
 ## 原则
 选择类型越简单越好，能满足保存数值的类型越小越好
 
 */
 
-# 
+# 小数示例
 
 DROP TABLE tab_float;
 
@@ -134,6 +158,13 @@ INSERT INTO tab_float2 VALUES (12345.125, 1234567.125, 1234567.12345); -- 报错
 
 SELECT * FROM tab_float2;
 
+--
+CREATE TABLE tab_float3 (
+    f1 FLOAT (6, 3)
+);
+
+INSERT INTO tab_float3 VALUES (1.8);
+SELECT * FROM tab_float3;
 
 -- 字符型
 -- 
@@ -192,7 +223,7 @@ DESC tab_enum;
 
 INSERT INTO tab_enum VALUES ('a');
 INSERT INTO tab_enum VALUES ('b');
-INSERT INTO tab_enum VALUES ('e'); 报错：1265  DATA truncated FOR COLUMN 'answer' AT ROW 1
+INSERT INTO tab_enum VALUES ('e'); -- 报错：1265  DATA truncated FOR COLUMN 'answer' AT ROW 1
 INSERT INTO tab_enum VALUES ('A');
 
 SELECT * FROM tab_enum;

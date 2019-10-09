@@ -2933,7 +2933,7 @@ create table 表名 (
     ```text
     alter table 表名 add|drop|modify|change column 列名 [列类型 约束];
     ```
-*# change重命名列名
+* change重命名列名
     ```mysql
     ALTER TABLE book CHANGE COLUMN publishDate pubdate DATETIME;
     

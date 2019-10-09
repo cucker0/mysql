@@ -3217,55 +3217,59 @@ char (M) |最大的字符数, [0, 255]   |可以省略，默认为1，<br>固定
 varchar (M)|最大的字符数, [0, 65535]   不可省略，<可变长度字符>可变长度字符 |比较节省     |相对低些，当数据量很多时，硬盘IO成为瓶颈，这时varchar效率可能更高
 
 * 示例
-```mysql
-CREATE TABLE tab_str (
-    `name` CHAR (32),
-    address VARCHAR (64)
-);
+    ```mysql
+    CREATE TABLE tab_str (
+        `name` CHAR (32),
+        address VARCHAR (64)
+    );
+    
+    DESC tab_str;
+    INSERT INTO tab_str VALUES ('王大仙', '滚石路人民大街A城');
+    
+    SELECT * FROM tab_str;
+    
+    --
+    CREATE TABLE tab_str2 (
+        `name` CHAR, -- 默认为1
+        address VARCHAR (64)
+    );
+    
+    INSERT INTO tab_str2 VALUES ('王大仙', '滚石路人民大街A城'); -- 报错：Data too long for column 'name' at row 1
+    
+    ```
 
-DESC tab_str;
-INSERT INTO tab_str VALUES ('王大仙', '滚石路人民大街A城');
+* enum示例
+    ```mysql
+    CREATE TABLE tab_enum (
+        answer ENUM ('a', 'b', 'c', 'd')
+    
+    );
+    
+    DESC tab_enum;
+    
+    INSERT INTO tab_enum VALUES ('a');
+    INSERT INTO tab_enum VALUES ('b');
+    INSERT INTO tab_enum VALUES ('e'); -- 报错：1265  DATA truncated FOR COLUMN 'answer' AT ROW 1
+    INSERT INTO tab_enum VALUES ('A');
+    
+    SELECT * FROM tab_enum;
+    ```
 
-SELECT * FROM tab_str;
-
---
-CREATE TABLE tab_str2 (
-    `name` CHAR, -- 默认为1
-    address VARCHAR (64)
-);
-
-INSERT INTO tab_str2 VALUES ('王大仙', '滚石路人民大街A城'); -- 报错：Data too long for column 'name' at row 1
-
-
-CREATE TABLE tab_enum (
-    answer ENUM ('a', 'b', 'c', 'd')
-
-);
-
-DESC tab_enum;
-
-INSERT INTO tab_enum VALUES ('a');
-INSERT INTO tab_enum VALUES ('b');
-INSERT INTO tab_enum VALUES ('e'); -- 报错：1265  DATA truncated FOR COLUMN 'answer' AT ROW 1
-INSERT INTO tab_enum VALUES ('A');
-
-SELECT * FROM tab_enum;
-
---
-CREATE TABLE tab_set (
-    answer SET ('a', 'b', 'c', 'd')
-);
-
-DESC tab_set;
-
-INSERT INTO tab_set VALUES ('a');
-INSERT INTO tab_set VALUES ('a,b');
-INSERT INTO tab_set VALUES ('a,b,c,d');
-INSERT INTO tab_set VALUES ('a,g'); -- 包含set选项外的将报错：Data truncated for column 'answer' at row 1
-
-SELECT * FROM tab_set;
-```
-
+* set类型示例
+    ```mysql
+    CREATE TABLE tab_set (
+        answer SET ('a', 'b', 'c', 'd')
+    );
+    
+    DESC tab_set;
+    
+    INSERT INTO tab_set VALUES ('a');
+    INSERT INTO tab_set VALUES ('a,b');
+    INSERT INTO tab_set VALUES ('a,b,c,d');
+    INSERT INTO tab_set VALUES ('a,g'); -- 包含set选项外的将报错：Data truncated for column 'answer' at row 1
+    
+    SELECT * FROM tab_set;
+    ```
 
 ### 日期时间型
 #### 日期时间型分类
@@ -3286,36 +3290,36 @@ time |3字节
 year |1字节 |[1901, 2015]
 
 * 示例
-```mysql
-CREATE TABLE tab_date (
-    dt DATETIME,
-    tt TIMESTAMP
-);
-
-
-/*
-CREATE TABLE $_tab_date22 (
-    1dt DATETIME,
-    _tt TIMESTAMP
-);
-
-CREATE DATABASE _tt;
-
-CREATE DATABASE 22_tt;
-*/
-
-DESC tab_date;
-
-INSERT INTO tab_date VALUES (NOW(), NOW());
-
-SELECT * FROM tab_date;
-
-SHOW VARIABLES LIKE 'time_zone';
-
-SET time_zone = '+9:00';
-
-SELECT * FROM tab_date; -- mysql服务器的时区更改后，timestamp类型的查询值也变了
-```
+    ```mysql
+    CREATE TABLE tab_date (
+        dt DATETIME,
+        tt TIMESTAMP
+    );
+    
+    
+    /*
+    CREATE TABLE $_tab_date22 (
+        1dt DATETIME,
+        _tt TIMESTAMP
+    );
+    
+    CREATE DATABASE _tt;
+    
+    CREATE DATABASE 22_tt;
+    */
+    
+    DESC tab_date;
+    
+    INSERT INTO tab_date VALUES (NOW(), NOW());
+    
+    SELECT * FROM tab_date;
+    
+    SHOW VARIABLES LIKE 'time_zone';
+    
+    SET time_zone = '+9:00';
+    
+    SELECT * FROM tab_date; -- mysql服务器的时区更改后，timestamp类型的查询值也变了
+    ```
 
 
 ## 常见约束

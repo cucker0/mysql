@@ -2365,8 +2365,6 @@ offset、size: 都为自然数N常量，不支持表达式或变量
 ```text
 功能：将多个查询语句的结果集合并成一个结果集
 ```
-/*
-
 
 ### union联合查询语法
 ```text
@@ -2480,7 +2478,6 @@ union
     RIGHT OUTER JOIN boys bo
     ON b.boyfriend_id = bo.id;
     ```
-</details>
 
 ## DQL查询语句总结
 * 语法与执行顺序
@@ -2499,8 +2496,12 @@ limit 起始条目索引, 条目数    ⑨
 
 注意：右边的序号为执行顺序
 ```
+</details>
 
 # DML表数据操作语言
+<details>
+<summary>DML表数据操作语言</summary>
+
 DML都是基于表数据的操作的
 
 * 分类
@@ -2514,9 +2515,6 @@ DML都是基于表数据的操作的
 ## [查询语句 (DQL数据查询语言)](#DQL数据查询语言)
 
 ## 插入语句
-<details>
-<summary>插入语句</summary>
-
 ### values多行插入
 * 语法
 ```text

@@ -3041,7 +3041,7 @@ drop table [if exists] 表名;
     SELECT * FROM tab_copy4;
     ```
 
-## 常见数据结构类型介绍
+## 常见数据结构类型
 ## 常见约束
 </details>
 

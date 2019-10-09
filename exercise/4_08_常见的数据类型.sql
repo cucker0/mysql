@@ -236,6 +236,18 @@ CREATE TABLE tab_date (
     tt TIMESTAMP
 );
 
+
+/*
+CREATE TABLE $_tab_date22 (
+    1dt DATETIME,
+    _tt TIMESTAMP
+);
+
+CREATE DATABASE _tt;
+
+CREATE DATABASE 22_tt;
+*/
+
 DESC tab_date;
 
 INSERT INTO tab_date VALUES (NOW(), NOW());

@@ -2785,7 +2785,7 @@ SELECT * FROM boys;
 
 # DDL数据定义语言(库和表的管理)
 <details>
-<summry>DDL数据定义语言(库和表的管理)</summry>
+<summary>DDL数据定义语言(库和表的管理)</summary>
 
 ```text
 功能：库和表的管理，创建、修改、删除等

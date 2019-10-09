@@ -2,7 +2,7 @@
 
 
 /*
-DML都是基于记录的操作的
+DML都是基于表数据的操作的
 
 查询(DQL)：select ...      -- 前面有一章介绍DQL
 插入：insert
@@ -20,7 +20,7 @@ DML都是基于记录的操作的
 --
 /*
 ## 语法
-insert into 表名(列名,...) values
+insert into 表名 (列名,...) values
 (值1,...),
 ...
 (值n,...);
@@ -195,7 +195,7 @@ where 筛选条件;
 可以用 limit 条目数结合，删除前面多少条记录，但用 limit 条目起始索引, 条目数    会报错
 
 ## truncate清空表删除所有记录
-TRUNCATE(x, D)是一个用于阶段数值的函数，一般用于小数阶段
+TRUNCATE(x, D)是一个用于阶段数值的函数，一般用于小数截断
 * 语法
 truncate table 表名;
 

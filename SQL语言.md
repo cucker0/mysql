@@ -12,8 +12,8 @@ SQL语言
 * DDL数据定义语句
 * DCL数据控制语句
 
-# DQL查询语句
-DML数据处理操作语句中的查询操作
+# DQL表数据查询语言
+DML数据处理操作语言中的数据查询操作
 
 * 单引号' 和 双引号"
     * 在标准 SQL 中，字符串使用的是单引号
@@ -2487,10 +2487,289 @@ limit 起始条目索引, 条目数    ⑨
 注意：右边的序号为执行顺序
 ```
 
-# DML数据操作语句
+# DML表数据操作语言
+DML都是基于表数据的操作的
+
+* 分类
+```text
+查询(DQL)：select ...      -- 前面有一章介绍DQL
+插入：insert
+修改：update
+删除：delete
+```
+
 ## 插入语句
+<details>
+<summary>插入语句</summary>
+
+### values多行插入
+* 语法
+```text
+insert into 表名 (列名, ...) values
+(值1, ...),
+...
+(值n, ...);
+
+注意：
+值要与列位置对应
+```
+
+* 插入的值的类型要与列的类型一致或兼容
+    ```mysql
+    USE girls;
+    
+    SELECT * FROM beauty;
+    
+    INSERT INTO beauty (id, `name`, sex, borndate, phone, photo, boyfriend_id) 
+    VALUES (13, '苏路', '女', '1988-01-03', '13544456666', NULL, 2);
+    ```
+
+* 不可以为null的列必须指定值。
+* 可以为null的列若想插入的值为null，有一下两种方式
+    * 方式1：指定值为null，如上示例
+    * 方式2：插入列名列表中不指定该列
+    ```mysql
+    INSERT INTO beauty (id, `name`, sex, phone) 
+    VALUES (15, '云朵', '女', '13826966677');
+    ```
+
+
+* 指定的列顺序可以不与表的顺序一样，只要值与列对应即可
+    ```mysql
+    INSERT INTO beauty (`name`, sex, phone) 
+    VALUES ('花姐', '女', '15899888888');
+    ```
+
+* 列数与值的个数必须相同
+* 省略列名，默认为所有的列，且列的顺序与表中列的顺序一致
+    ```mysql
+    INSERT INTO beauty 
+    VALUES (17, 'K娃', '女', '2005-5-1' ,'18933335555' ,NULL ,NULL);
+    ```
+    
+### set单行插入
+* 语法
+```text
+insert into 表名
+set 列名=值, 列2=值2,...
+;
+```
+
+* 示例
+    ```mysql
+    INSERT INTO beauty
+    SET id=19, `name`='刘涛', phone='13533339999';
+    ```
+
+### values多行插入、set单行插入对比
+* values多行插入支持多行插入，set单行插入不支持
+    ```mysql
+    INSERT INTO beauty (`name`, sex, phone)
+    VALUES
+    ('周笔畅', '女', '110'),
+    ('张靓颖', '女', '120'),
+    ('降央卓玛', '女', '119')
+    ;
+    ```
+
+* values多行插入支持子查询，set单行插入不支持
+    ```mysql
+    INSERT INTO beauty (NAME, sex, phone)
+    SELECT '韩雪', '女', '15823326677';
+    
+    -- vs
+    INSERT INTO beauty (NAME, sex, phone)
+    SELECT boyName, '男', '12306'
+    FROM boys WHERE id < 3;
+    ```
+
 ## 修改语句
+### 修改表数据语法
+* 单表修改记录语法
+```text
+updat 表名
+set 列=值, 列2=值2,...
+where 筛选条件;
+```
+
+* 多表连接修改记录语法
+    * sql-92多表连接修改记录语法
+        ```text
+        update 表1 别名1, 表2 别名2
+        set 别名1.列=值, 别名2.列=值2,...
+        where 连接条件
+        and 筛选条件;
+        ```
+    * sql:1999多表连接修改记录语法
+        ```text
+        update 表1 别名1
+        [inner |left outer |right outer] join 表2 别名2
+        on 连接条件
+        set 别名1.列=值, 别名2.列=值2,...
+        where 筛选条件; 
+        ```
+
+
+
+### 单表修改记录示例
+* 案例1：修改beauty表中姓唐的女神的电话为15899998888
+    ```mysql
+    SELECT * FROM beauty;
+    
+    SELECT * FROM boys;
+    
+    UPDATE beauty
+    SET phone='15899998888'
+    WHERE `name` LIKE '张%'
+    AND sex = '女';
+    ```
+
+* 案例2：修改boys表中id好为2的名称为张飞，魅力值 10
+    ```mysql
+    UPDATE boys
+    SET userCP='10', boyName='张飞' -- 这里的字符'10'会自动转成数值型，也可以指定只为10
+    WHERE id = 2;
+    ```
+
+
+### 多表连接修改记录示例
+* 案例 1：修改张无忌的女朋友的手机号为12123, 并把张无忌的颜值修改为1000
+    ```mysql
+    UPDATE boys bo
+    INNER JOIN beauty b
+    ON b.boyfriend_id = bo.id
+    SET b.phone=12123, bo.userCP=1000
+    WHERE bo.boyName = '张无忌';
+    ```
+
+* 案例2：修改没有男朋友的女神的男朋友编号都为2号，并把2号男神的颜值修改为1000
+    ```mysql
+    -- 经过分析，beauty表需要为主表
+    UPDATE boys bo
+    RIGHT OUTER JOIN beauty b
+    ON bo.id = b.boyfriend_id
+    SET b.boyfriend_id=2
+    WHERE bo.id IS NULL; 
+    ```
+
 ## 删除语句
+### delete删除记录语法
+* 单表的删除
+    ```text
+    delete from 表名
+    [where 筛选条件];
+    
+    delete from 表名; 表示删除表的所有记录
+    ```
+* 多表连接删除
+    * sql-92语法删除记录语法
+        ```text
+        delete 别名1[, 别名2]
+        from 表1 别名1, 表2 别名2
+        where 连接条件
+        and 筛选条件;
+        ```
+    * sql:1999删除记录语法
+        ```text
+        delete 别名1[, 别名2]
+        from 表1 别名1
+        [inner |left outer |right outer] join 表2 别名2
+        on 连接条件
+        where 筛选条件;
+        ```
+    * 注意
+        ```text
+        以上两种语法中，
+        [, 别名2]:表示是否要同时删除 别名2对应吧表的记录，不需要就不写。
+        也可以值删除表2中的记录: delete 别名2 from ...
+        可以用 limit 条目数结合，删除前面多少条记录，但用 limit 条目起始索引, 条目数    会报错
+        ```
+    
+### truncate清空表删除所有记录
+```text
+例外truncate这个关键还有一个函数功能，TRUNCATE(x, D)是一个用于阶段数值的函数，一般用于小数截断
+```
+
+* 语法
+    ```text
+    truncate table 表名;
+    ```
+
+### delete删除记录示例
+* 1.单表删除记录
+    * 案例：删除手机号以9结尾的女神信息
+        ```mysql
+        SELECT *
+        FROM beauty
+        WHERE phone LIKE '%9';
+        
+        DELETE FROM beauty
+        WHERE phone LIKE '%9';
+        
+        --
+        DELETE FROM beauty
+        WHERE phone LIKE '%9'
+        LIMIT 3; -- 可以执行成功，删除前面3条记录
+        
+        --
+        DELETE FROM beauty
+        WHERE phone LIKE '%9'
+        LIMIT 0, 3; -- 报语法错误
+        ```
+
+* 多变连接删除记录
+    * 案例：删除张无忌的女朋友的信息
+        ```mysql
+        DELETE b
+        FROM boys bo
+        INNER JOIN beauty b
+        ON bo.id = b.boyfriend_id
+        WHERE bo.boyName = '张无忌';
+        ```
+        
+    * 案例：删除黄晓明的信息以及他女朋友的信息
+        ```mysql
+        DELETE bo, b
+        FROM boys bo
+        INNER JOIN beauty b
+        ON bo.id = b.boyfriend_id
+        WHERE bo.boyName = '黄晓明';
+        ```
+
+### truncate清空表删除所有记录示例
+* 案例：清空boys表所有记录
+    ```mysql
+    TRUNCATE TABLE boys;
+    ```
+
+### delete删除记录、truncate清空表删除所有记录对比
+1. delete可以加where筛选条件，truncate不能
+1. truncate删除记录效率稍微高一些
+1. truncate删除所有记录后，AUTO_INCREMENT自增变量值重置为1，再添加记录是，自增列值从1开始  
+    delete删除后，AUTO_INCREMENT自增变量值不变，再添加记录时，自增列值从原来的计数开始
+1. truncate清空表时没有返回值，delete删除时有返回值
+1. truncate清空表不能回滚，delete删除记录可以回滚
+
+* 示例
+```mysql
+DELETE FROM boys;
+
+INSERT INTO boys (boyName, userCP)
+VALUES ('张飞',100),('刘备',100),('关云长',100);
+
+SELECT * FROM boys;
+
+
+-- vs
+TRUNCATE TABLE boys;
+
+INSERT INTO boys (boyName, userCP)
+VALUES ('张飞',100),('刘备',100),('关云长',100);
+
+SELECT * FROM boys;
+```
+</details>
+
 
 # DDL数据定义语句
 ## 库和表的管理

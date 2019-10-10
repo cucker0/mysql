@@ -2760,7 +2760,7 @@ where 筛选条件;
 1. truncate删除所有记录后，AUTO_INCREMENT自增变量值重置为1，再添加记录是，自增列值从1开始  
     delete删除后，AUTO_INCREMENT自增变量值不变，再添加记录时，自增列值从原来的计数开始
 1. truncate清空表时没有返回值，delete删除时有返回值
-1. truncate清空表不能回滚，delete删除记录可以回滚
+1. truncate清空表不能回滚，释放表的存储空间，delete删除记录可以回滚，执行rollback;即可回滚
 
 * 示例
 ```mysql
@@ -2825,6 +2825,13 @@ only IF the MySQL VERSION IS greater THAN OR equal TO the specified VERSION numb
 
 ```
 
+* 命名规则
+    * 数据库名不得超过30个字符，变量名限制为29个
+    * 必须只能包含 A–Z, a–z, 0–9, _共63个字符，实测$等没有限制
+    * 不能在对象名的字符间留空格
+    * 必须保证你的字段没有和保留字、数据库系统或常用方法冲突
+    * 保持相关联的表的字段名和类型的一致性,在命名字段并为其指定数据类型的时候一定要保证一致性
+    
 * 案例：创建库books
     ```mysql
     CREATE DATABASE IF NOT EXISTS books;
@@ -3005,7 +3012,7 @@ drop table [if exists] 表名;
 
 * 复制表的结构 + 全部数据
     ```mysql
-    CREATE TABLE tab_copy2
+    CREATE TABLE tab_copy2 AS
     SELECT * FROM author;
     
     SELECT * FROM tab_copy2;
@@ -3049,11 +3056,11 @@ drop table [if exists] 表名;
     * 较短的文本
         >char、varchar
     * 较长的文本
-        >text
+        >text, 最大可达4G
     * 较短的二进制
         >binary、varbinary
     * 较长的二进制
-        blob
+        >blob, 最大可达4G
     * enum
         >枚举类型，指定项里的单选
     * set
@@ -3152,11 +3159,11 @@ double: 1 x 11 x 52 指数范围：[-1022, 1023]
 ```
 
 
-类型 |占用空间 |值范围 
-:--- |:--- |:---
-float|4字节 |(-(2<sup>2^7</sup>), -(2<sup>-126</sup>)), <br>0, <br>(2<sup>-126</sup>, 2<sup>2^7</sup>)
-double |8字节 |(-(2<sup>1024</sup>), -(2<sup>-1022</sup>)), <br>0, <br>(2<sup>-1022</sup>, 2<sup>1024</sup>)
-decimal(M,D)|(M + 2) 字节 |最大取值范围与double相同，给定decimal的有效取值范围由M和D决定
+类型 |占用空间 |值范围 |备注
+:--- |:--- |:--- |:---
+float(M,D)|4字节 |(-(2<sup>2^7</sup>), -(2<sup>-126</sup>)], <br>0, <br>[2<sup>-126</sup>, 2<sup>2^7</sup>) |单精度，D<= M <= 255, 0<= D <=30 <br>默认M+D<=6
+double(M,D) |8字节 |(-(2<sup>1024</sup>), -(2<sup>-1022</sup>)], <br>0, <br>[2<sup>-1022</sup>, 2<sup>1024</sup>) |双精度，D<= M <=255, 0<= D <=30 <br>默认M+D<=15
+decimal(M,D)|(M + 2) 字节 |最大取值范围与double相同，<br>给定decimal的有效取值范围由M和D决定
 
 * float的最小值: -(2 − 2<sup>−23</sup>) * 2<sup>127</sup> ≈ -(2 * 2<sup>127</sup>) = -(2<sup>128</sup>)，最大值2<sup>128</sup>
 * double的最小值: -(2 - 2<sup>-52</sup>) * 2<sup>1023</sup> ≈ -(2 * 2<sup>1023</sup>) = -(2<sup>1024</sup>), 最大值2<sup>1024</sup>

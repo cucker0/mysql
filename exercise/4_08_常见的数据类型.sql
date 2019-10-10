@@ -303,7 +303,16 @@ INSERT INTO tab_set VALUES ('a,g'); -- 包含set选项外的将报错：Data tru
 SELECT * FROM tab_set;
 
 
---
+-- 
+CREATE TABLE tab_binary (
+    f3 BLOB (4294967295)
+);
+
+DESC tab_binary;
+
+`tab_bit3`
+
+DESC tab_binary2;
 
 
 -- 日期型

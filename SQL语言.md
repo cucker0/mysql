@@ -3046,7 +3046,7 @@ drop table [if exists] 表名;
         * 浮点型
         * 定点型
 * 字符型
-    *较短的文本
+    * 较短的文本
         >char、varchar
     * 较长的文本
         >text
@@ -3142,6 +3142,8 @@ bigint        |8字节     |-2^63 ~ (2^63 - 1)   |0 ~ 2^64 - 1 |20
     * float、double小数位数超过M后，M+1 位上的数<= 5舍去，>5收上来
     * decimal小数位数超过M后，采用四舍五入，M+1 位上的数< 5舍去，>=5收上来
     * 插入数的小数位数不够D，自动右补0。低版本的mysql取近视值，mysql 5.5以上的不会
+    * 加unsigned关键字，设置为无符号
+    * 加ZEROFILL关键字，设置为无符号，且整数部分在显示时不够显示宽度的自动左补0显示
 
 #### 小数值范围
 类型 |占用空间 |值范围 
@@ -3189,6 +3191,72 @@ INSERT INTO tab_float2 VALUES (15.126, 15.126, 15.12345); -- 插入到数据库�
 INSERT INTO tab_float2 VALUES (12345.125, 1234567.125, 1234567.12345); -- 报错:Out of range value for column
 
 SELECT * FROM tab_float2;
+
+--
+CREATE TABLE tab_float3 (
+    f1 FLOAT (6, 3)
+);
+
+INSERT INTO tab_float3 VALUES (1.8);
+SELECT * FROM tab_float3;
+
+
+-- 无符号、ZEROFILL，ZEROFILL跟整数类型用法一致，整数部分不够显示宽度的左补0
+CREATE TABLE tab_float4 (
+    f1 FLOAT (6, 2) UNSIGNED,
+    f2 DOUBLE (8, 2) ZEROFILL,
+    f3 DECIMAL (10, 4) ZEROFILL
+);
+
+DESC tab_float4;
+INSERT INTO tab_float4 VALUES (-1.3, 1.1, 1.1); -- 不能为负数了
+INSERT INTO tab_float4 VALUES (2.2, 2.2, 2.2);
+INSERT INTO tab_float4 VALUES (2.2, -2.2, -2.2); -- 不能为负数了
+
+SELECT * FROM tab_float4;
+
+```
+
+### bit类型
+* b'xx'表示二进制数，x为0或1，查询插入等操作时可以用二进制也可以用十进制
+
+
+位类型 | M的范围 |占用空间 |备注 |值范围
+:--- |:--- |:--- |:--- |:---
+bit(M) | [1, 7]  |M字节 |不写M，默认为1 |[0, 2<sup>M</sup> - 1]
+
+* 示例
+```mysql
+CREATE TABLE tab_bit (
+    f1 BIT
+);
+
+DESC tab_bit;
+INSERT INTO tab_bit VALUES (0);
+INSERT INTO tab_bit VALUES (b'1');
+INSERT INTO tab_bit VALUES(b'0');
+
+SELECT * FROM tab_bit;
+
+-- bit字段 + 0 可以去掉高位的0
+SELECT f1 + 0 FROM tab_bit;
+
+--
+CREATE TABLE tab_bit2 (
+    f BIT(3)
+);
+
+DESC tab_bit2;
+INSERT INTO tab_bit2 VALUES (0);
+INSERT INTO tab_bit2 VALUES (1);
+INSERT INTO tab_bit2 VALUES (b'10');
+INSERT INTO tab_bit2 VALUES (3);
+INSERT INTO tab_bit2 VALUES (7);
+INSERT INTO tab_bit2 VALUES (8); -- 报错：1406 Data too long for column 'f' at row 1
+
+SELECT * FROM tab_bit2;
+SELECT * FROM tab_bit2 WHERE f = 3;
+SELECT * FROM tab_bit2 WHERE f = b'11';
 ```
 
 ### 字符型
@@ -3200,7 +3268,7 @@ SELECT * FROM tab_float2;
 * 较短的二进制
     >binary、varbinary
 * 较长的二进制
-    blob
+    >blob
 * enum
     >枚举类型，指定项里的单选。要求插入的值必须属于列表中指定的值之一
 * set

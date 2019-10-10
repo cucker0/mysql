@@ -166,6 +166,57 @@ CREATE TABLE tab_float3 (
 INSERT INTO tab_float3 VALUES (1.8);
 SELECT * FROM tab_float3;
 
+
+-- 无符号、ZEROFILL，ZEROFILL跟整数类型用法一致，整数部分不够显示宽度的左补0
+CREATE TABLE tab_float4 (
+    f1 FLOAT (6, 2) UNSIGNED,
+    f2 DOUBLE (8, 2) ZEROFILL,
+    f3 DECIMAL (10, 4) ZEROFILL
+);
+
+DESC tab_float4;
+INSERT INTO tab_float4 VALUES (-1.3, 1.1, 1.1); -- 不能为负数了
+INSERT INTO tab_float4 VALUES (2.2, 2.2, 2.2);
+INSERT INTO tab_float4 VALUES (2.2, -2.2, -2.2); -- 不能为负数了
+
+SELECT * FROM tab_float4;
+
+
+-- bit类型
+-- 
+CREATE TABLE tab_bit (
+    f1 BIT
+);
+
+DESC tab_bit;
+INSERT INTO tab_bit VALUES (0);
+INSERT INTO tab_bit VALUES (b'1');
+INSERT INTO tab_bit VALUES(b'0');
+
+SELECT * FROM tab_bit;
+
+-- bit字段 + 0 可以去掉高位的0
+SELECT f1 + 0 FROM tab_bit;
+
+--
+CREATE TABLE tab_bit2 (
+    f BIT(3)
+);
+
+DESC tab_bit2;
+INSERT INTO tab_bit2 VALUES (0);
+INSERT INTO tab_bit2 VALUES (1);
+INSERT INTO tab_bit2 VALUES (b'10');
+INSERT INTO tab_bit2 VALUES (3);
+INSERT INTO tab_bit2 VALUES (7);
+INSERT INTO tab_bit2 VALUES (8); -- 报错：1406 Data too long for column 'f' at row 1
+
+SELECT * FROM tab_bit2;
+SELECT * FROM tab_bit2 WHERE f = 3;
+SELECT * FROM tab_bit2 WHERE f = b'11';
+
+
+
 -- 字符型
 -- 
 /*

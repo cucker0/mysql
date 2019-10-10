@@ -215,7 +215,16 @@ SELECT * FROM tab_bit2;
 SELECT * FROM tab_bit2 WHERE f = 3;
 SELECT * FROM tab_bit2 WHERE f = b'11';
 
+--
+CREATE TABLE tab_bit3 (
+    f BIT (64)
+);
 
+CREATE TABLE tab_bit4 (
+    f BIT (65) -- 报错： 错误代码： 1439 Display width out of range for column 'f' (max = 64)
+);
+
+DESC tab_bit3;
 
 -- 字符型
 -- 
@@ -292,6 +301,9 @@ INSERT INTO tab_set VALUES ('a,b,c,d');
 INSERT INTO tab_set VALUES ('a,g'); -- 包含set选项外的将报错：Data truncated for column 'answer' at row 1
 
 SELECT * FROM tab_set;
+
+
+--
 
 
 -- 日期型

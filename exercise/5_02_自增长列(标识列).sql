@@ -6,8 +6,8 @@
 功能：不用手动插入值，系统提供默认的序列值
 
 关键字：AUTO_INCREMENT
-可在建表时可用"AUTO_INCREMENT=n"选项来指定一个自增的初始值。
-可用alter table table_name AUTO_INCREMENT=n命令来重设自增的起始值。
+
+可用alter table table_name AUTO_INCREMENT=n命令来重设自增的起始值，n从1开始
 
 ## 特点
 * 标识列必须与主键搭配吗？ --不一定，但必须是一个key
@@ -17,6 +17,7 @@
 * 表示列可以通过 set auto auto_increment_increment = 步长值; 设置步长
     可以通过 手动插入值来设置起始值
 * 设置为标识列的类自动添加了非null值约束
+* 自动产生的自增序列值为正整数
 
 */
 
@@ -46,7 +47,7 @@ INSERT INTO tab_increment (`name`, seat) VALUES
 ('marry', 1.0)
 
 
---
+-- float类型的自增长列
 CREATE TABLE tab_increment2 (
     id INT,
     `name` VARCHAR(20),
@@ -66,4 +67,20 @@ INSERT INTO  tab_increment2 VALUES (7, 'aa1', NULL);
 SELECT * FROM tab_increment2;
 
 
+-- 
+CREATE TABLE tab_increment3 (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    cname VARCHAR(32)
+);
 
+SHOW CREATE TABLE tab_increment3;
+
+INSERT INTO tab_increment3 VALUES (-10, 'dada');
+
+SELECT * FROM tab_increment3;
+
+INSERT INTO tab_increment3 VALUES (NULL, 'didi'); -- 1
+
+
+DELETE FROM tab_increment3;
+ALTER TABLE tab_increment3 AUTO_INCREMENT=1; -- 可设置AUTO_INCREMENT的=值

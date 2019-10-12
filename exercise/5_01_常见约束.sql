@@ -235,3 +235,126 @@ DESC stuinfo;
 SHOW INDEX FROM stuinfo;
 
 SHOW CREATE TABLE stuinfo;
+
+
+-- 外键
+--
+
+# 多列外键组合
+-- 主表
+CREATE TABLE classes (
+    id INT,
+    `name` VARCHAR(20),
+    number INT,
+    PRIMARY KEY (`name`, number)
+);
+
+DESC classes;
+
+-- 从表
+DROP TABLE IF EXISTS student; 
+CREATE TABLE student (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    `name` VARCHAR(32),
+    classes_name VARCHAR(20),
+    classes_number INT,
+    
+    CONSTRAINT student_fk_classes FOREIGN KEY (classes_name, classes_number)
+    REFERENCES classes (`name`, number)
+);
+
+SHOW CREATE TABLE student;
+
+INSERT INTO classes VALUES
+(1, 'c191', 191),
+(2, 'c192', 192),
+(3, 'c193', 193);
+
+
+
+INSERT INTO student (classes_name, classes_number, `name`) VALUES ('c193', 193, '张杨');
+
+INSERT INTO student
+SELECT NULL, '黑蒙', c.name, c.number
+FROM classes c
+WHERE number = 191
+;
+
+INSERT INTO student (classes_name, classes_number, `name`) VALUES ('c193', 194, '王丰'); -- 插入失败
+
+
+SELECT * FROM student;
+
+
+-- 级联删除(ON DELETE CASCADE)
+-- 当删除主表中的记录时，从表中关联此记录的相关记录也被自动同时删除
+DROP TABLE IF EXISTS major;
+CREATE TABLE major1 ( -- 主表
+    id INT PRIMARY KEY,
+    `name` VARCHAR(20)
+);
+
+DROP TABLE IF EXISTS stu1;
+CREATE TABLE stu1 (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    `name` VARCHAR(32),
+    major_id INT,
+    CONSTRAINT stu1__major_id_fk_major1__id FOREIGN KEY (major_id) REFERENCES major1 (id) ON DELETE CASCADE
+);
+
+SHOW CREATE TABLE stu1;
+
+INSERT INTO major1 VALUES
+(1, 'java'),
+(2, 'GO'),
+(3, 'python');
+
+SELECT * FROM major1;
+
+
+INSERT INTO stu1 VALUES
+(NULL, 'jacy1', 1),
+(NULL, 'jacy2', 1),
+(NULL, 'jacy3', 2),
+(NULL, 'jacy4', 2),
+(NULL, 'jacy5', 1),
+(NULL, 'jacy6', 1),
+(NULL, 'jacy7', 3),
+(NULL, 'jacy8', 1),
+(NULL, 'jacy9', 1),
+(NULL, 'jacy10', 3),
+(NULL, 'jacy11', 1);
+
+SELECT * FROM stu1;
+
+DELETE FROM major1 WHERE id = 3;
+SELECT * FROM stu1;
+
+
+-- 级联置空(ON DELETE SET NULL)
+-- 当删除主表中的记录时，从表中关联此记录的相关记录外键列值也被自动同时设置为null值，不会被删除
+DROP TABLE IF EXISTS stu1;
+CREATE TABLE stu1 (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    `name` VARCHAR(32),
+    major_id INT DEFAULT 1,
+    CONSTRAINT stu1__major_id_fk_major1__id FOREIGN KEY (major_id) REFERENCES major1 (id) ON DELETE SET NULL
+);
+
+SHOW CREATE TABLE stu1;
+INSERT INTO stu1 VALUES
+(NULL, 'jacy1', 1),
+(NULL, 'jacy2', 1),
+(NULL, 'jacy3', 2),
+(NULL, 'jacy4', 2),
+(NULL, 'jacy5', 1),
+(NULL, 'jacy6', 1),
+(NULL, 'jacy8', 1),
+(NULL, 'jacy9', 1),
+(NULL, 'jacy11', 1);
+
+SELECT * FROM stu1;
+
+DELETE FROM major1 WHERE id = 1;
+
+SELECT * FROM stu1;

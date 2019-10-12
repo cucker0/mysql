@@ -3454,10 +3454,22 @@ year |1字节 |[1901, 2015]
 * 表级约束
     >除了not null、默认值约束外，其他的都可以(主键、唯一、外键、check)
 
-* 通常primary key、not null、default、unique、check用列级，
-    外键约束用表级
-    
+**通用写法**
+```text
+便于阅读的写法：
+* primary key、not null、default、unique、check约束用列级，
+* 外键约束用表级
+```
 
+```text
+系统常用写法:
+(通过show create table 表名; 可以查看到，在导致mysql表结构中也能看到)
+
+* not null、default 值约束用列级
+* primary key、unique、check、foreign key用表级
+
+```
+    
 ### 添加约束的时机
 * 创建表时
 * 修改表时

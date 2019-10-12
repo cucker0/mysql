@@ -3673,7 +3673,7 @@ alter table 表名 add [constraint 约束名] foreign key (本表关联的字段
 
 关键字：AUTO_INCREMENT
 
-可用alter table table_name AUTO_INCREMENT=n命令来重设自增的起始值，n从1开始
+可用alter table table_name AUTO_INCREMENT=n 命令来重设自增的起始值，n ∈ N+
 ```
 
 * 标识列特点

@@ -36,7 +36,7 @@ as
 */
 
 
-# 案例：查询姓张的学生名和专业名
+# 案例1：查询姓张的学生名和专业名
 USE student;
 
 -- 一般的方法
@@ -59,4 +59,82 @@ ON s.majorid = m.majorid
 -- ②使用视图
 SELECT * FROM myv1
 WHERE studentname LIKE '张%';
+
+
+# 案例2：查询各部门的平均工资级别
+
+-- 常规方法
+-- ①先查询各部门平均工资
+USE myemployees;
+
+SELECT AVG(salary)
+FROM employees
+GROUP BY department_id
+;
+
+-- ② 将①结果集与工资级别表连接查询
+SELECT avg_dept.s_avg, j.grade_level
+FROM (
+    SELECT AVG(salary) AS s_avg
+    FROM employees
+    GROUP BY department_id
+) avg_dept
+INNER JOIN job_grades j
+ON avg_dept.s_avg BETWEEN j.lowest_sal AND j.highest_sal;
+
+-- view视图方法
+-- ①创建视图，先查询各部门平均工资
+CREATE VIEW myv2
+AS
+SELECT AVG(salary) AS s_avg
+FROM employees
+GROUP BY department_id;
+
+-- ②使用视图，将①中创建的视图与job_grades连接查询工资等级
+SELECT m.s_avg, j.grade_level
+FROM myv2 AS m
+INNER JOIN job_grades j
+ON m.s_avg BETWEEN j.lowest_sal AND j.highest_sal
+;
+
+# 案例3：查询平均工资最低的部门信息
+-- ①创建视图，查询平均工资最低的部门id
+CREATE VIEW myv3
+AS
+SELECT department_id, AVG(salary)
+FROM employees
+GROUP BY department_id
+ORDER BY AVG(salary)
+LIMIT 1;
+
+
+-- 查看当前库中所有的所有视图
+SHOW TABLE STATUS WHERE COMMENT='view';
+
+-- ②将①视图与departments连接查询部门信息
+SELECT *
+FROM myv3 
+INNER JOIN departments d
+ON myv3.department_id = d.department_id;
+
+
+
+-- 视图的修改
+-- 
+/*
+## 语法1
+create or replace view 视图名
+as
+查询语句
+;
+
+
+## 语法2
+alter view 视图名
+as
+查询语句
+;
+
+*/
+
 

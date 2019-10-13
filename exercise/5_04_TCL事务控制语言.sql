@@ -75,10 +75,11 @@ select @@tx_isolation;
 
 ## 设置事务隔离级别
 * mysql 8
-set session|global transaction_isolation isolation 隔离级别;
+set session|global transaction transaction_isolation 隔离级别;
 
 * mysql 8之前版本
 set session|global transaction isolation 隔离级别;
+-- 可以设置为只作用于当前连接会话，也可以设置作用于全局的
 
 
 ## 查看引擎

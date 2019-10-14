@@ -280,7 +280,7 @@ SELECT * FROM myv10;
 
 --
 SELECT * FROM myv15;
-UPDATE myv15 mx = 100000 WHERE department_id = 100; -- 不可更新
+UPDATE myv15 SET mx = 100000 WHERE department_id = 100; -- 不可更新
 
 -- ⑥where子句的子查询引用了from子句中的表构成的视图
 CREATE VIEW myv16

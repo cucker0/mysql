@@ -84,3 +84,10 @@ INSERT INTO tab_increment3 VALUES (NULL, 'didi'); -- 1
 
 DELETE FROM tab_increment3;
 ALTER TABLE tab_increment3 AUTO_INCREMENT=1; -- 可设置AUTO_INCREMENT的=值
+
+
+
+
+
+
+

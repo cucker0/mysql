@@ -2,7 +2,7 @@
 
 
 /*
-事务含义: ，一个或一组sql语句组成一个执行单元，这个执行单元要么全部执行，要么全部都不执行
+事务含义: 一个或一组sql语句组成一个执行单元，这个执行单元要么全部执行，要么全部都不执行
 
 * mysql中只有innodb引擎支持事务
 
@@ -57,7 +57,7 @@ ROLLBACK TO 保存点名; -- 回滚到指定的保存点，保存点之前的操
 ## 事务隔离级别
 隔离级别            避免了脏读       避免了不可重复读(表数据update时)          避免了幻读(表数据插入时)       备注
 read uncommitted    否               否                                        否
-read commited       是               否                                        否                              oracle的默认事务隔离级别
+read committed       是               否                                        否                              oracle的默认事务隔离级别
 repeatable read     是               是                                        否                              mysql默认事务隔离级别
 serializable        是               是                                        是
 
@@ -84,6 +84,8 @@ set session|global transaction isolation 隔离级别;
 
 ## 查看引擎
 show engines;
+
+SHOW VARIABLES LIKE '%storage_engine%';
 
 ## 关闭当前会话的自动提交事务功能，默认是开启的。关闭只是针对当前这个连接session的
 SET autocommit = 0;
@@ -163,4 +165,5 @@ ROLLBACK TO sp1; -- 回滚到指定的sp1保存点，保存点之前的操作提
 SELECT * FROM account; -- 张无忌没有删除
 
 SELECT @@tx_isolation;
+
 

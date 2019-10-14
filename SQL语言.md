@@ -3490,8 +3490,11 @@ year |1字节 |[1901, 2015]
 * 语法
     ```text
     CONSTRAINT 约束名 FOREIGN KEY (本表关联字段) REFERENCES 主表 (关联的字段)
+
+    也可以是组合的:
+    CONSTRAINT 约束名 FOREIGN KEY (本表关联字段列表) REFERENCES 主表 (关联的字段列表)
     ```
-* 必修在从表设置外键约束
+* 只能在从表设置外键约束
 * 从表的外键列的类型与主表的关联列的类型要求一致或兼容，列名相同或不同均可
 * 主表的关联列必须是一个key(一般是主键或唯一键)
 * 插入数据时，先插入主表数据，再插入从表数据
@@ -3800,12 +3803,396 @@ alter table 表名 add [constraint 约束名] foreign key (本表关联的字段
     ALTER TABLE tab_increment3 AUTO_INCREMENT=1; -- 可设置AUTO_INCREMENT的=值
     ```
 
+### 外键
+
+* 多列外键组合
+    ```mysql
+    -- 主表
+    CREATE TABLE classes (
+        id INT,
+        `name` VARCHAR(20),
+        number INT,
+        PRIMARY KEY (`name`, number)
+    );
+    
+    DESC classes;
+    
+    -- 从表
+    DROP TABLE IF EXISTS student; 
+    CREATE TABLE student (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        `name` VARCHAR(32),
+        classes_name VARCHAR(20),
+        classes_number INT,
+        
+        CONSTRAINT student_fk_classes FOREIGN KEY (classes_name, classes_number)
+        REFERENCES classes (`name`, number)
+    );
+    
+    SHOW CREATE TABLE student;
+    
+    INSERT INTO classes VALUES
+    (1, 'c191', 191),
+    (2, 'c192', 192),
+    (3, 'c193', 193);
+    
+    
+    
+    INSERT INTO student (classes_name, classes_number, `name`) VALUES ('c193', 193, '张杨');
+    
+    INSERT INTO student
+    SELECT NULL, '黑蒙', c.name, c.number
+    FROM classes c
+    WHERE number = 191
+    ;
+    
+    INSERT INTO student (classes_name, classes_number, `name`) VALUES ('c193', 194, '王丰'); -- 插入失败
+    
+    
+    SELECT * FROM student;
+    ```
+    
+### 级联删除(ON DELETE CASCADE)
+当删除主表中的记录时，从表中关联此记录的相关记录也被自动同时删除
+```mysql
+DROP TABLE IF EXISTS major;
+CREATE TABLE major1 ( -- 主表
+    id INT PRIMARY KEY,
+    `name` VARCHAR(20)
+);
+
+DROP TABLE IF EXISTS stu1;
+CREATE TABLE stu1 (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    `name` VARCHAR(32),
+    major_id INT,
+    CONSTRAINT stu1__major_id_fk_major1__id FOREIGN KEY (major_id) REFERENCES major1 (id) ON DELETE CASCADE
+);
+
+SHOW CREATE TABLE stu1;
+
+INSERT INTO major1 VALUES
+(1, 'java'),
+(2, 'GO'),
+(3, 'python');
+
+SELECT * FROM major1;
+
+
+INSERT INTO stu1 VALUES
+(NULL, 'jacy1', 1),
+(NULL, 'jacy2', 1),
+(NULL, 'jacy3', 2),
+(NULL, 'jacy4', 2),
+(NULL, 'jacy5', 1),
+(NULL, 'jacy6', 1),
+(NULL, 'jacy7', 3),
+(NULL, 'jacy8', 1),
+(NULL, 'jacy9', 1),
+(NULL, 'jacy10', 3),
+(NULL, 'jacy11', 1);
+
+SELECT * FROM stu1;
+
+DELETE FROM major1 WHERE id = 3;
+SELECT * FROM stu1;
+```
+
+### 级联置空(ON DELETE SET NULL)
+当删除主表中的记录时，从表中关联此记录的相关记录外键列值也被自动同时设置为null值，不会被删除
+```mysql
+DROP TABLE IF EXISTS stu1;
+CREATE TABLE stu1 (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    `name` VARCHAR(32),
+    major_id INT DEFAULT 1,
+    CONSTRAINT stu1__major_id_fk_major1__id FOREIGN KEY (major_id) REFERENCES major1 (id) ON DELETE SET NULL
+);
+
+SHOW CREATE TABLE stu1;
+INSERT INTO stu1 VALUES
+(NULL, 'jacy1', 1),
+(NULL, 'jacy2', 1),
+(NULL, 'jacy3', 2),
+(NULL, 'jacy4', 2),
+(NULL, 'jacy5', 1),
+(NULL, 'jacy6', 1),
+(NULL, 'jacy8', 1),
+(NULL, 'jacy9', 1),
+(NULL, 'jacy11', 1);
+
+SELECT * FROM stu1;
+
+DELETE FROM major1 WHERE id = 1;
+
+SELECT * FROM stu1;
+```
+
 </details>
 
 # DCL数据控制语言
-## 事务和事务管理
+<details>
+<summary>DCL数据控制语言</summary>
 
-# 视图讲解
+## TCL事务控制语言
+事务含义: 一个或一组sql语句组成一个执行单元，这个执行单元要么全部执行，要么全部都不执行
+
+* mysql中只有innodb引擎支持事务
+
+### 事务特点(ACID)
+* Atomicity原子性
+    ```text
+    事务是一个不可再分割的工作单元，事务中的操作要么都执行，要么都不执行。
+    就像原子核一样不能再侵害了。
+    ```
+* Consistency一致性
+    ```text
+    事务必须使数据库从一个一致性状态变换到另外一个一致性状态
+    ```
+* Isolation隔离性
+    ```text
+    事务的隔离性是指一个事务的执行不能被其他事务干扰。
+    并发执行的各个事务之间不能互相干扰
+    ```
+* Durability持久性
+    ```text
+    持久性是指一个事务一旦被提交，它对数据库中数据的改变就是永久性的，
+    持久化到文件系统了
+    ```
+
+### 事务的使用
+* 以第一个 DML 语句的执行作为开始
+* 以下面的其中之一作为结束: 
+    * COMMIT 或 ROLLBACK 语句
+    * DDL 或 DCL 语句（自动提交）
+    * 用户会话正常结束
+    * 系统异常终了
+    
+### 事务的创建
+```text
+事务能写的语句是表数据的insert、update、delete语句，也可以写select查询语句。
+```
+
+### 隐式事务
+```text
+事务没有明显的开始和结束的标记，事务是自动的提交的
+指表数据的insert、update、delete语句
+```
+
+### 显式事务
+```text
+事务有显式指明开始和结束标记，
+前提：必须先设置 自动提交功能为禁用
+set autocommit = 0;
+
+```
+
+### 显式事务语法
+```text
+* 要求：确保当前连接session的autocommit=0，即自动提交事务为禁止的
+set autocommit=0; --禁用自动提交事务功能，只对当前连接session起作用，执行一次即可
+
+-- 事务开始
+[start transaction;]
+
+-- 事务的具体操作
+编写事务中的sql语句(insert、update、delete、select)
+语句1;
+语句2;
+...
+
+-- 事务结束(以下二选一)
+commit; -- 提交事务，确定上面的操作
+rollback; -- 回滚事务，回滚上面的操作
+```
+
+### savepoint设置保存点，与rollback搭配使用
+```text
+start transaction;
+事务1;
+事务2;
+savepoint 保存点名;
+...
+事务n;
+ROLLBACK TO 保存点名; -- 回滚到指定的保存点，保存点之前的操作提交了，之后的操作撤销了
+```
+
+### 事务隔离级别对比
+事务隔离级别 |避免了脏读 |避免了不可重复读(表数据更新) |避免了幻读(表数据插入) |备注
+:--- |:--- |:--- |:--- |:--- 
+read uncommitted    |否 |否 |否 |
+read committed      |是 |否 |否 |oracle的默认事务隔离级别
+repeatable read     |是 |是 |否 |mysql默认事务隔离级别
+serializable        |是 |是 |是 |类似java中的多线程同步
+
+* 效率有上往下递减
+
+* 相关概念
+    ```text
+    当这些事务访问数据库中相同的数据时可能发生下列问题
+    ```
+
+    * 脏读
+        ```text
+        T1先更新不提交，T2后读，T1再回滚，则T2读取的是临时无效的数据  
+      
+        对于两个事务 T1、T2, 
+        ①T1 更新了字段但还没有提交，
+        ②T2 读取了已经被 T1修改的字段
+        ③之后, 若 T1 回滚,
+        T2读取的内容就是临时且无效的
+        ```
+    * 不可重复读
+        ```text
+        T1先读，T2后更新并提交，T1再读，导致T1两次读取的结果不同
+        
+        对于两个事务T1、T2, 
+        ①T1 读取了一个字段, 
+        ②然后 T2 更新了该字段并提交了. 
+        ③之后, T1再次读取同一个字段, 值就不同了
+        导致两次读取的结果不同
+        ```
+    * 幻读
+        ```text
+        T1先读，T2后插入数据并提交，T1再读，导致T1两次读取的行数不同
+        
+        对于两个事务T1、T2,
+        ①T1 从一个表中读取了一个字段, 
+        ②然后 T2 在该表中插 入了一些新的行，并提交了. 
+        ③之后, 如果 T1 再次读取同一个表, 就会多出几行
+        删除数据也类似。
+        导致的结果是两次读取的行数不同
+        ```
+
+### 查看事务隔离级别
+* mysql 8
+    ```text
+    select @@transaction_isolation
+    ```
+
+* mysql 8之前版本
+    ```text
+    select @@tx_isolation;
+    ```
+
+### 设置事务隔离级别
+* mysql 8
+    ```text
+    set session|global transaction transaction_isolation 隔离级别;
+    ```
+
+* mysql 8之前版本
+    ```text
+    set session|global transaction isolation 隔离级别;
+    
+    ## 注意
+    session: 只作用于当前连接会话
+    global: 作用于全局
+    ```
+
+### 查看引擎
+* mysql已提供的存储引擎
+    ```text
+    show engines;
+    ```
+
+* mysql当前默认的存储引擎
+    ```text
+    show variables like '%storage_engine%';
+    ```
+
+### 关闭当前会话的自动提交事务功能
+默认是开启的，关闭只是针对当前这个连接session的
+```mysql
+SET autocommit = 0;
+```
+
+### 事务测试
+* 测试准备
+    ```mysql
+    SHOW VARIABLES LIKE 'autocommit';
+    SHOW ENGINES;
+    
+    USE test;
+    CREATE TABLE account (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        `name` VARCHAR(32) UNIQUE,
+        balance DOUBLE
+    );
+    
+    INSERT INTO account VALUES
+    (NULL, '张无忌', 2000),
+    (NULL, '赵敏', 2000);
+    
+    SELECT * FROM account;
+    ```
+
+* 开启事务并提交
+    ```mysql
+    SET autocommit = 0;
+    SHOW VARIABLES LIKE 'autocommit';
+    
+    START TRANSACTION;
+    
+    UPDATE account SET balance = 1500 WHERE `name` = '张无忌';
+    UPDATE account SET balance = 2500 WHERE NAME = '赵敏';
+    
+    COMMIT;
+    ```
+
+* 开启事务，并回滚
+    ```mysql
+    START TRANSACTION; -- 事务开始
+    
+    UPDATE account SET balance = 3000 WHERE `name` = '张无忌';
+    UPDATE account SET balance = 1000 WHERE NAME = '赵敏';
+    SELECT * FROM account; -- 当前会话查看生效了
+    
+    ROLLBACK; -- 事务结束
+    
+    SELECT * FROM account;
+    ```
+
+* delete删除表所有记录、truncate清空表所有记录的事务回滚区别
+    ```mysql
+    START TRANSACTION;
+    DELETE FROM account;
+    ROLLBACK;
+    -- 查看结果，记录还在
+    SELECT * FROM account;
+    
+    -- vs
+    START TRANSACTION;
+    TRUNCATE TABLE account;
+    ROLLBACK;
+    -- 查看结果，表记录被删除了，说明truncat清空表操作不可回滚
+    SELECT * FROM account;
+    ```
+
+* savepoint设置保存点
+    ```mysql
+    INSERT INTO account VALUES
+    (NULL, '张无忌', 2000),
+    (NULL, '赵敏', 2000);
+    SELECT * FROM account;
+    
+  
+    SET autocommit = 0; -- 若本session的autocommit已经关闭，则可不执行此语句
+    START TRANSACTION;
+    DELETE FROM account
+    WHERE `name` = '赵敏';
+    SAVEPOINT sp1; -- 设置保存点，保存点名为sp1
+    DELETE FROM account
+    WHERE `name` = '张无忌';
+    
+    ROLLBACK TO sp1; -- 回滚到指定的sp1保存点，保存点之前的操作提交了，之后的回滚了
+    
+    SELECT * FROM account; -- 张无忌没有删除
+    ```
+</details>
+
+
+# view视图讲解
 
 # 存储过程和函数
 

@@ -3173,8 +3173,8 @@ double: 1 x 11 x 52 指数范围：[-1022, 1023]
 
 类型 |占用空间 |值范围 |备注
 :--- |:--- |:--- |:---
-float(M,D)|4字节 |(-(2<sup>2^7</sup>), -(2<sup>-126</sup>)], <br>0, <br>[2<sup>-126</sup>, 2<sup>2^7</sup>) |单精度，D<= M <= 255, 0<= D <=30 <br>默认M+D<=6, <br>如果 D <= 24 则为默认的FLOAT，<br>如果 D > 24 则会自动被转换为DOUBLE型
-double(M,D) |8字节 |(-(2<sup>1024</sup>), -(2<sup>-1022</sup>)], <br>0, <br>[2<sup>-1022</sup>, 2<sup>1024</sup>) |双精度，D<= M <=255, 0<= D <=30 <br>默认M+D<=15
+float(M,D)|4字节 |{<br>    (-(2<sup>2^7</sup>), -(2<sup>-126</sup>)], <br>    0, <br>    [2<sup>-126</sup>, 2<sup>2^7</sup>)  <br>} |单精度，D<= M <= 255, 0<= D <=30 <br>默认M+D<=6, <br>如果 D <= 24 则为默认的FLOAT，<br>如果 D > 24 则会自动被转换为DOUBLE型
+double(M,D) |8字节 |{<br>    (-(2<sup>1024</sup>), -(2<sup>-1022</sup>)], <br>    0, <br>    [2<sup>-1022</sup>, 2<sup>1024</sup>) <br>} |双精度，D<= M <=255, 0<= D <=30 <br>默认M+D<=15
 decimal(M,D)|(M + 2) 字节 |最大取值范围与double相同，<br>给定decimal的有效取值范围由M和D决定
 
 * float的最小值: -(2 − 2<sup>−23</sup>) * 2<sup>127</sup> ≈ -(2 * 2<sup>127</sup>) = -(2<sup>128</sup>)，最大值2<sup>128</sup>

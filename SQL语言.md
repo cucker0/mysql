@@ -4539,5 +4539,3 @@ FROM employees;
 # 存储过程和函数
 
 # 流程控制结构
-
-[baidu.com](https://www.baidu.com/){:target="_blank"}

@@ -4042,7 +4042,7 @@ read committed      |是 |否 |否 |oracle的默认事务隔离级别
 repeatable read     |是 |是 |否 |mysql默认事务隔离级别
 serializable        |是 |是 |是 |类似java中的多线程同步
 
-* 效率有上往下递减
+* 效率由上往下依次递减
 
 * 相关概念
     ```text

@@ -65,8 +65,8 @@ inout: 标识该参数即使传入的参数，又是返回的参数
     delimiter 提交分隔符
     为什么要修改提交符，是因为存储体中已经有了默认的;提交符，
     但创建存储过程这个方法时，还不能提交，必须到end 结束处才能提交，说到底还是mysql客户端做得不够智能
-* SQLyog、Navicat Premium等客户端
-创建存储过程、函数式时，会自动设置delimiter为其他符号，不需要修改提交分隔符，直接就能创建存储过程和函数
+* Navicat Premium等客户端
+    Navicat Premium、SQLyog有独立的窗口编辑窗口可以编写存储过程和函数
 * 如果存储过程体只有一个语句，可以省略begin、end关键字
 * 存过过程体中的sql语句必须以;结尾
 
@@ -86,7 +86,7 @@ call 存储过程名(实参列表);
 USE girls;
 SELECT * FROM admin;
 
--- delimiter $
+DELIMITER $
 -- 表示提交分隔符设置为$, 注意后面没有;，可以设置多个字符组合为提交分隔符
 -- delimiter ;;  -- 表示提交分隔符为 ;;
 
@@ -98,11 +98,11 @@ BEGIN
     ('tom3', '123456'),
     ('tom4', '123456'),
     ('tom5', '123456');
-END;
+END$
 
 
-DROP PROCEDURE myp1;
 
+TRUNCATE TABLE admin;
 
 
 

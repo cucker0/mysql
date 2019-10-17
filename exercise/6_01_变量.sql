@@ -84,7 +84,7 @@ SET SESSION transaction_isolation = 'read-committed';
 作用域：当前连接会话
 
 ## 使用步骤
-1. 声明
+1. 声明且初始化
 1. 赋值
 1. 使用(查看、运算等)
 
@@ -154,11 +154,15 @@ SELECT @z;
 
 
 -- 局部变量
+/*
+局部变量若不指定初始化值，则值均为null
+*/
+
 CREATE 存储过程|函数 ...
 BEGIN
     DECLARE m INT DEFAULT 10; 
     DECLARE n INT DEFAULT 20;
-    DECLARE s INT;
+    DECLARE s INT; -- s 值为null
     SET s = m + n;
     SELECT s;
 END

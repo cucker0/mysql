@@ -27,8 +27,8 @@ SQL语言
     ```
     
     ```mysql
-    create table desc; -- 报错 
-    create table `desc`; -- 成功
+    create database desc; -- 报错 
+    create database `desc`; -- 成功
     ```
     **一般我们建表时都会将表名，库名都加上反引号来保证语句的执行度。**
 

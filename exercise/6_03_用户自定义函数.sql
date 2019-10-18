@@ -39,17 +39,17 @@ select 函数名(实参列表);
 
 
 # 无参函数
-# 案例：返回公司员工个数
+# 案例：返回公司员工个数，减去一个老板
 
 USE myemployees;
 
 
 DELIMITER $
-CREATE FUNCTION myf1(aa INT) RETURNS INT
+CREATE FUNCTION myf1() RETURNS INT
 BEGIN
     DECLARE c INT DEFAULT 0;
-    SELECT COUNT(*) INTO c FROM employees; -- COUNT(*)最终的值赋值给局部变量c
-    RETURN c;
+    SELECT COUNT(*) INTO c FROM employees; -- COUNT(*)最终的值赋值给局部变量c。这里的查询结果不会显示
+    RETURN c - 1; -- 返回结果
 END$
 
 DELIMITER ;
@@ -69,7 +69,7 @@ set global log_bin_trust_function_creators=1;
 
 [mysqld]
 
-log_bin_trust_routine_creators = 1
+log-bin-trust-function-creators = 1
 
 重启mysql服务
 */
@@ -77,7 +77,66 @@ log_bin_trust_routine_creators = 1
 
 SELECT myf1();
 
+# 有参函数
+# 案例：创建函数实现：输入last_name，返回他对应的工资
+DELIMITER $
+
+CREATE FUNCTION myf2(lname VARCHAR(32)) RETURNS DOUBLE (10, 2)
+BEGIN
+    SET @gongzi = 0;
+    SELECT salary INTO @gongzi
+    FROM employees
+    WHERE last_name = lname;
+    RETURN @gongzi;
+END$
+
+DELIMITER ;
+
+SELECT myf2('Kochhar');
 
 
+# 案例：创建函数：输入部门名，返回该部门的平均工资
+DELIMITER $
+CREATE FUNCTION myf3(dname VARCHAR(20)) RETURNS DOUBLE
+BEGIN
+    DECLARE avg_salary DOUBLE DEFAULT 0;
+    SELECT AVG(e.salary) INTO avg_salary
+    FROM employees e
+    RIGHT OUTER JOIN departments d
+    ON e.department_id = d.department_id
+    WHERE d.department_name = dname;
+    RETURN avg_salary;
+END$
+DELIMITER ;
+
+SELECT myf3('IT');
 
 
+# 案例：创建函数：传入两个float数，返回这两数之和
+DELIMITER $
+CREATE FUNCTION mysum(n1 FLOAT, n2 FLOAT) RETURNS DOUBLE
+BEGIN
+    RETURN n1 + n2;
+END$
+DELIMITER ;
+
+SELECT mysum(1.1, 2.2);
+
+-- 查看用户自定义函数
+-- mysql 8，列出指定库的所有用户自定义函数
+SELECT * FROM information_schema.routines
+WHERE routine_schema = '库名' AND routine_type = 'FUNCTION';
+
+-- mysql 8之前版，列出指定库的所有用户自定义函
+SELECT * FROM mysql.`proc` WHERE `type` = 'FUNCTION';
+
+
+SHOW CREATE FUNCTION myf1; -- 查看指定用户自定义函数的创建结构
+
+
+-- 删除自定义用户函数
+-- 只能一次删除一个
+DROP FUNCTION 用户自定义函数名;
+
+
+DROP FUNCTION myf1;

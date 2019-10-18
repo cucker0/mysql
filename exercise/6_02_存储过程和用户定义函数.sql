@@ -233,11 +233,11 @@ SHOW CREATE PROCEDURE 存储过程名;
 
 SHOW CREATE PROCEDURE myp7;
 
--- mysql 8查看所有存储过程
+-- mysql 8，查看所有存储过程
 SELECT * FROM information_schema.routines
 WHERE routine_schema = '库名' AND routine_type = 'PROCEDURE';
 
--- mysql 8之前版本查看所有存储过程
+-- mysql 8之前版本，查看所有存储过程
 SELECT * FROM mysql.`proc` WHERE `type` = 'PROCEDURE';
 
 /*
@@ -259,5 +259,24 @@ SHOW TABLES;
 
 
 SELECT * FROM information_schema.routines WHERE routine_schema = 'girls' AND routine_type = 'PROCEDURE';
+
+
+-- 
+
+DELIMITER $
+DROP PROCEDURE IF EXISTS myp8;
+CREATE PROCEDURE myp8()
+BEGIN
+    DECLARE aa INT;
+    DECLARE bb FLOAT;
+    DECLARE cc DOUBLE;
+    DECLARE dd CHAR;
+    DECLARE ee VARCHAR(10);
+    SELECT aa, bb, cc, dd, ee;
+END$
+DELIMITER ;
+
+CALL myp8();
+
 
 

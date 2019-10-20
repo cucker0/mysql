@@ -4546,6 +4546,200 @@ FROM employees;
 </details>
 
 
+# 变量
+
+## 变量分类
+* 系统标量
+    * 全局变量(@@global.)
+    * 会话变量(连接会话,@@session.)
+
+* 自定义变量
+    * 用户变量(@)
+    * 局部变量(没有前缀)
+
+## 系统变量
+```text
+由系统定义的变量，属于服务器层面的
+全局变量必须添加 global 关键字，
+会话变量添加 session 关键字，省略不写为会话级别变量
+```
+
+### 全局变量
+```text
+作用域：所有连接会话，修改全局变量值，重启mysql服务后恢复默认值。
+持久改变需要修改配置文件
+```
+
+* 查看所有的全局变量
+    ```mysql
+    SHOW GLOBAL VARIABLES;
+    ```
+
+* 通过关键字模糊过滤全局变量
+    >SHOW GLOBAL VARIABLES LIKE '%sys%';
+
+* 查看指定的系统全局变量
+    >SELECT @@global.autocommit;
+
+* 修改全局变量值
+    ```mysql
+    -- 语法1
+    SET @@global.autocommit = 0;
+    
+    -- 语法2
+    SET GLOBAL autocommit = 1;
+    ```
+
+
+### 会话变量
+```text
+作用域：当前连接会话
+```
+
+* 查看所有的会话变量
+    ```mysql
+    SHOW SESSION VARIABLES;
+    
+    SHOW VARIABLES;
+    ```
+
+* 通过关键字模糊过滤会话变量
+    ```mysql
+    SHOW SESSION VARIABLES LIKE '%dir%';
+    ```
+
+* 查看指定的系统会话变量
+    ```mysql
+    SELECT @@datadir;
+    
+    SELECT @@session.transaction_isolation;
+    ```
+    
+* 修改会话变量值
+    ```mysql
+    -- 语法1
+    SET @@transaction_isolation = 'read-uncommitted';
+    SELECT @@transaction_isolation;
+    
+    -- 语法2
+    SET SESSION transaction_isolation = 'read-committed';
+    ```
+
+## 自定义变量
+```text
+由用户定义的变量
+作用域：当前连接会话
+
+```
+
+### 使用步骤
+1. 声明且初始化
+1. 赋值
+1. 使用(查看、运算等)
+
+
+### 用户变量
+* 赋值操作符 = 和 :=
+
+* 声明用户变量并初始化
+    ```text
+    SET @变量名 = 值;
+    SET @变量名 := 值;
+    SELECT @变量名 := 值;
+    ```
+
+* 赋值(更新变量值)
+    ```text
+    -- 语法1
+    SET @变量名 = 值;
+    SET @变量名 := 值;
+    SELECT @变量名 := 值;
+    
+    -- 语法2
+    SELECT 字段 INTO @变量名 FROM 表名;
+    ```
+
+* 赋值
+    ```text
+    SELECT 字段 INTO @变量名
+    FROM 表名   
+    ```
+     
+* 使用用户变量
+    ```text
+    SELECT @变量名
+    ```
+
+### 局部变量
+```text
+作用域：声明、赋值、使用都在begin ... end块代码块内，
+局部变量变量的声明必须在紧跟begin的第一行，一般都需要声明时初始化值
+```
+
+* 声明局部变量
+    ```text
+    DECLARE 变量名 类型; -- 是否有默认值?？
+    ```
+
+* 声明局部变量并初始化
+    ```text
+    DECLARE 变量名 类型 DEFAULT 值;
+    ```
+
+* 赋值(更新变量值)
+    ```text
+    -- 语法1
+    SET 变量名 = 值;
+    SET 变量名 := 值;
+    SELECT 变量名 := 值;
+    
+    -- 语法2
+    SELECT 字段 INTO 局部变量名 FROM 表名;
+    ```
+
+* 使用局部变量
+    ```text
+    SELECT 局部变量名;
+    ```
+
+
+* 案例：声明两个变量，求和并打印
+```mysql
+-- 用户变量
+SET @x = 1;
+SET @y = 6;
+SET @z = @x + @y;
+SELECT @z;
+
+
+-- 局部变量
+/*
+局部变量若不指定初始化值，则值均为null
+*/
+
+CREATE 存储过程|函数 ...
+BEGIN
+    DECLARE m INT DEFAULT 10; 
+    DECLARE n INT DEFAULT 20;
+    DECLARE s INT; -- s 值为null
+    SET s = m + n;
+    SELECT s;
+END提交符
+```
+
+
+### 用户变量、局部变量对比
+
+变量类型    |作用域                     |定义位置                |变量声明
+:--- |:--- |:--- |:--- 
+全局变量    |服务器所有连接会话         |系统定义
+会话变量    |当前连接会话               |系统定义              
+用户变量    |当前连接会话               |会话的任何地方          |@变量名，不用指定类型
+局部变量    |在begin ... and代码块中    |在begin ... and代码块中，begin ... and的首行，<br>不加@，需要指定类型|
+
+
+*/
+
 # 存储过程和函数
 <details>
 <summary>存储过程和函数</summary>
@@ -4555,3 +4749,8 @@ FROM employees;
 
 
 # 流程控制结构
+<details>
+<summary>流程控制结构</summary>
+
+
+</details>

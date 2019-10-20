@@ -113,7 +113,10 @@ SELECT myf3('IT');
 
 
 # 案例：创建函数：传入两个float数，返回这两数之和
+
+
 DELIMITER $
+DROP FUNCTION IF EXISTS mysum$
 CREATE FUNCTION mysum(n1 FLOAT, n2 FLOAT) RETURNS DOUBLE
 BEGIN
     RETURN n1 + n2;
@@ -140,3 +143,37 @@ DROP FUNCTION 用户自定义函数名;
 
 
 DROP FUNCTION myf1;
+
+
+-- 修改用户自定义函数(不能更改函数体和参数列表，只能更改函数特性)
+/*
+## 语法
+ALTER FUNCTION func_name [characteristic ...]
+
+characteristic包括:
+    COMMENT 'string'
+  | LANGUAGE SQL
+  | { CONTAINS SQL | NO SQL | READS SQL DATA | MODIFIES SQL DATA }
+  | SQL SECURITY { DEFINER | INVOKER }
+
+
+此语句可用于更改存储函数的特性。在alter function语句中可以指定多个更改。
+但是不能使用此语句更改存储函数的参数或主体；
+若要进行此类更改，必须使用drop function和create function删除并重新创建该函数
+
+-- https://dev.mysql.com/doc/refman/5.5/en/alter-function.html
+*/
+
+SELECT SPECIFIC_NAME,SQL_DATA_ACCESS,ROUTINE_COMMENT 
+FROM information_schema.Routines
+WHERE ROUTINE_NAME='mysum';
+
+
+ALTER FUNCTION mysum
+READS SQL DATA
+COMMENT 'find float number sum.';
+
+
+SELECT SPECIFIC_NAME,SQL_DATA_ACCESS,ROUTINE_COMMENT 
+FROM information_schema.Routines
+WHERE ROUTINE_NAME='mysum';

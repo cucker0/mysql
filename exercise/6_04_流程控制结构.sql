@@ -207,6 +207,12 @@ while 循环条件 do
     迭代条件;
 end while [label标签]; -- 此处的label标签任何时候都可以省略
 
+
+-- 无限循环
+while 1 do
+    循环体;
+end while;
+
 可以嵌套
 
 --
@@ -256,7 +262,7 @@ while (循环条件);
 USE girls;
 
 DELIMITER $
-DROP PROCEDURE IF EXISTS while1;
+DROP PROCEDURE IF EXISTS while1$
 CREATE PROCEDURE while1(IN num INT) 
 BEGIN
     DECLARE i INT DEFAULT 1;
@@ -276,7 +282,7 @@ CALL while1(3);
 # leave控制提前循环退出
 #案例：批量插入，根据次数插入到admin表中多条记录，如果次数>10则停止
 DELIMITER $
-DROP PROCEDURE IF EXISTS while2;
+DROP PROCEDURE IF EXISTS while2$
 CREATE PROCEDURE while2(IN num INT)
 BEGIN 
     SET @i = 1;
@@ -332,7 +338,37 @@ SELECT * FROM admin;
 CALL while3(10);
 
 
--- loop循环测试
+-- while 1 无限循环
+DELIMITER $
+DROP PROCEDURE IF EXISTS myproc1$
+CREATE PROCEDURE myproc1()
+BEGIN
+    DECLARE i INT DEFAULT 0;
+    lab1:
+    WHILE 1 DO
+        IF i > 5 THEN
+            LEAVE lab1;
+        END IF;
+        SELECT i;
+        SET i = i + 1;
+    END WHILE;
+    
+END$
+
+DELIMITER ;
+
+
+CALL myproc1();
+
+-- loop无限循环测试
+/*
+功能与下面的等价
+while 1 do
+    循环体;
+end while;
+
+*/
+
 DROP PROCEDURE IF EXISTS loop1;
 
 DELIMITER $

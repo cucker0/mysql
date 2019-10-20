@@ -279,4 +279,33 @@ DELIMITER ;
 CALL myp8();
 
 
+-- 修改存储过程(不能修改参数或存储过程主体，只能修改存储过程特性)
+/*
+ALTER PROCEDURE proc_name [characteristic ...]
 
+characteristic:
+    COMMENT 'string'
+  | LANGUAGE SQL
+  | { CONTAINS SQL | NO SQL | READS SQL DATA | MODIFIES SQL DATA }
+  | SQL SECURITY { DEFINER | INVOKER }
+
+此语句可用于更改存储过程的特性。在alter procedure语句中可以指定多个更改。
+但是不能使用此语句更改存储过程的参数或主体；
+若要进行此类更改，必须使用DROP PROCEDURE和CREATE PROCEDURE删除并重新创建过程。
+
+*/
+
+
+SELECT SPECIFIC_NAME,SQL_DATA_ACCESS,ROUTINE_COMMENT 
+FROM information_schema.Routines
+WHERE ROUTINE_NAME='myp8';
+
+
+ALTER PROCEDURE myp8
+READS SQL DATA
+COMMENT 'procedure p8';
+
+
+SELECT SPECIFIC_NAME,SQL_DATA_ACCESS,ROUTINE_COMMENT 
+FROM information_schema.Routines
+WHERE ROUTINE_NAME='myp8';

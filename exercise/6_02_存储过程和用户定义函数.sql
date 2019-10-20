@@ -293,6 +293,8 @@ characteristic:
 但是不能使用此语句更改存储过程的参数或主体；
 若要进行此类更改，必须使用DROP PROCEDURE和CREATE PROCEDURE删除并重新创建过程。
 
+
+-- https://dev.mysql.com/doc/refman/5.5/en/alter-procedure.html
 */
 
 

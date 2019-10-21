@@ -131,7 +131,7 @@ CALL myp2('苍老师');
 # 用存储过程实现：输入用户名、密码，判断用户是否登录成功
 
 DELIMITER $
-DROP PROCEDURE IF EXISTS myp3;
+DROP PROCEDURE IF EXISTS myp3$
 CREATE PROCEDURE myp3(IN username VARCHAR(20), IN pwd VARCHAR(10))
 BEGIN
     DECLARE result INT DEFAULT 0; -- 声明一个局部变量(局部变量只能贴着begin)，用来表示登录是否成功，= 0：不成功，!= 0：成功
@@ -261,10 +261,10 @@ SHOW TABLES;
 SELECT * FROM information_schema.routines WHERE routine_schema = 'girls' AND routine_type = 'PROCEDURE';
 
 
--- 
+-- 局部变量默认值
 
 DELIMITER $
-DROP PROCEDURE IF EXISTS myp8;
+DROP PROCEDURE IF EXISTS myp8$
 CREATE PROCEDURE myp8()
 BEGIN
     DECLARE aa INT;
@@ -272,7 +272,7 @@ BEGIN
     DECLARE cc DOUBLE;
     DECLARE dd CHAR;
     DECLARE ee VARCHAR(10);
-    SELECT aa, bb, cc, dd, ee;
+    SELECT aa, bb, cc, dd, ee; -- 为赋初值的默认值为null
 END$
 DELIMITER ;
 

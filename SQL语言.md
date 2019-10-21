@@ -4673,7 +4673,8 @@ FROM employees;
 ### 局部变量
 ```text
 作用域：声明、赋值、使用都在begin ... end块代码块内，
-局部变量变量的声明必须在紧跟begin的第一行，一般都需要声明时初始化值
+局部变量变量的声明必须在紧跟begin的第一行，一般都需要声明时初始化值，
+没有赋默认值则值为null
 ```
 
 * 声明局部变量
@@ -4727,24 +4728,508 @@ BEGIN
 END提交符
 ```
 
+## 全局变量、会话变量、用户变量、局部变量对比
 
-### 用户变量、局部变量对比
-
-变量类型    |作用域                     |定义位置                |变量声明
-:--- |:--- |:--- |:--- 
-全局变量    |服务器所有连接会话         |系统定义
-会话变量    |当前连接会话               |系统定义              
-用户变量    |当前连接会话               |会话的任何地方          |@变量名，不用指定类型
-局部变量    |在begin ... and代码块中    |在begin ... and代码块中，begin ... and的首行，<br>不加@，需要指定类型|
+变量类型 |变量写法 |变量分类 |作用域                     |定义位置                |变量声明 |修改变量值
+:--- |:--- |:--- |:--- |:--- |:--- |:---
+全局变量 |@@global.变量名 |系统变量 |服务器所有连接会话         |系统定义                | |SET @@global.全局变量名 = 新值; <br>SET GLOBAL 全局变量名 = 新值; <br>mysql服务重启后失效，恢复到系统初始值，持久生效要写入配置文件
+会话变量 |@@session.变量名 <br>或@@会话变量 |系统变量 |当前连接会话               |系统定义                | |SET @@会话变量 = 新值; <br>SET SESSION 会话变量名 = 新值; <br>SET @@session.会话变量 = 新值; 
+用户变量 |@变量名 |当前连接会话,<br>或在begin ... and代码块中  |自定义变量 |会话的任何地方 |set @变量名 = 值;  <br>不用指定类型，必须赋初始值 |SET @变量名 = 新值; <br>SELECT 字段 INTO @变量名 FROM 表名; 
+局部变量 |变量名 |只能在begin ... and代码块中 |自定义变量 |在begin ... and代码块中，begin ... and的首行，<br>不加@，需要指定类型 |DECLARE 局部变量名 INT DEFAULT 值;  <br>必须赋初始值 |SET 变量名 = 新值; <br>SELECT 字段 INTO 变量名 FROM 表名; 
 
 
-*/
-
-# 存储过程和函数
+# 存储过程、用户定义函数
 <details>
-<summary>存储过程和函数</summary>
+<summary>存储过程、用户定义函数</summary>
+
+```text
+Stored Procedure
+Function
+
+概念：事先经过编译并保存在数据库中的一组sql语句集合。类似java中的方法
+```
+
+* 存储过程和自定义函数的优点
+    * 提高代码的重用性
+    * 简化操作
+    * 减少了编译次数，并且减少了客户端与服务器的连接次数，减少数据在数据库和应用服务器之间的传输，提高了效率
+
+## 存储过程、函数对比
+* 本质上没区别
+* 语法不同
+    * 创建存储过程
+        ```text
+        delimiter 提交分隔符
+  
+        create procedure 存储过程名(参数模式 参数名 参数类型, ...)
+        begin
+            存储过程体(一组合法的sql语句);
+        end 提交分隔符
+        delimiter ;
+        ```
+    * 创建用户自定义函数
+        ```text
+        delimiter $
+        
+        create function 函数名(参数名1 参数1的类型, ...) return 返回类型
+        begin
+            函数体(一组的sql语句);
+        end$
+        
+        delimiter ;
+        ```
+* 返回值
+    * 函数有且仅有一个返回值，指定返回值的数值类型，只能用return 变量; 返回结果
+    * 存储过程可以没有返回值、可以返回一个或多个值, select 字段或表达式列表 into 变量列表 ... 返回结果
+
+* 限制不同
+    函数中函数体的限制较多，不能使用显式或隐式方式打开
+    transaction、commit、rollback、set autocommit=0等, 
+    存储过程可以使用几乎所有的sql语句，use不能用
+
+* 调用方式
+    * select 函数名(参数列表);
+    * call 存储过程名(参数列表);
+* 功能强弱
+    * 存储过程实现的功能要复杂一点，功能强大些，可以执行包括修改表等一系列数据库操作
+    * 函数的实现的功能针对性比较强，用户定义函数不能用于执行一组修改全局数据库状态的操作
 
 
+
+
+## 存储过程
+### 创建存储过程语法
+```text
+delimiter 提交分隔符
+create procedure 存储过程名(参数模式 参数名 参数类型, ...)
+begin
+    存储过程体(一组合法的sql语句);
+end 提交分隔符
+delimiter ;
+
+
+* delimiter 提交分隔符
+    * 作用：重置提交分隔符
+    * 作用域：当前连接会话
+* 参数模式
+in: 标识该参数为传入参数，省略参数模式，默认为in
+out: 标识该参数为返回的参数
+inout: 标识该参数即使传入的参数，又是返回的参数
+
+* 使用mysql自带的客户端，需要重置提交分隔符，
+    默认为;
+    提交分隔符可以是一个字符也可以是多个字符
+    delimiter 提交分隔符
+    为什么要修改提交符，是因为存储体中已经有了默认的;提交符，
+    但创建存储过程这个方法时，还不能提交，必须到end 结束处才能提交，说到底还是mysql客户端做得不够智能
+* Navicat Premium等客户端
+    Navicat Premium、SQLyog有独立的窗口编辑窗口可以编写存储过程和函数
+* 如果存储过程体只有一个语句，可以省略begin、end关键字
+* 存过过程体中的sql语句必须以;结尾
+```
+
+### 调用存储过程语法
+```
+call 存储过程名(实参列表);
+
+需要有supper权限
+```
+
+### 创建存储过程示例
+* 空参列表  
+**案例：使用存储过程插入5条数据到girls库的admin表中**
+    ```mysql
+    USE girls;
+    SELECT * FROM admin;
+    
+    DELIMITER $
+    -- 表示提交分隔符设置为$, 注意后面没有;，可以设置多个字符组合为提交分隔符
+    -- 此修改只作用于当前连接会话
+    -- delimiter ;;  -- 表示提交分隔符为 ;;
+    
+    
+    DELIMITER $
+    CREATE PROCEDURE myp1()
+    BEGIN
+        INSERT INTO admin (username, `password`) VALUES
+        ('tom1', '123456'),
+        ('tom2', '123456'),
+        ('tom3', '123456'),
+        ('tom4', '123456'),
+        ('tom5', '123456');
+    END$
+    
+    DELIMITER ;
+    CALL myp1();
+    
+    TRUNCATE TABLE admin;
+    ```
+
+* 创建带in模式参数的存储过程  
+**案例：创建存储过程实现输入女神名，返回对应的男神信息**
+    ```mysql
+    DELIMITER $
+    
+    CREATE PROCEDURE myp2(IN girlName VARCHAR(50))
+    BEGIN
+        SELECT bo.*
+        FROM boys bo
+        RIGHT JOIN beauty b
+        ON bo.id = b.boyfriend_id
+        WHERE b.name = girlName;
+    END$
+    
+    DELIMITER ;
+    
+    CALL myp2('苍老师');
+    ```
+
+* 用存储过程实现：输入用户名、密码，判断用户是否登录成功
+    ```mysql
+    DELIMITER $
+    DROP PROCEDURE IF EXISTS myp3$
+    CREATE PROCEDURE myp3(IN username VARCHAR(20), IN pwd VARCHAR(10))
+    BEGIN
+        DECLARE result INT DEFAULT 0; -- 声明一个局部变量(局部变量只能贴着begin)，用来表示登录是否成功，= 0：不成功，!= 0：成功
+        
+        -- USE girls; -- 存储过程中不允许使用use
+        DROP TABLE IF EXISTS admin;
+        
+        CREATE TABLE `admin` (    
+            `id` INT(11) PRIMARY KEY AUTO_INCREMENT,  
+            `username` VARCHAR(10) NOT NULL,    
+            `password` VARCHAR(10) NOT NULL
+        );                                                                                                                                                                 CALL myp1();                         
+                                                                                                                                                              
+        SELECT COUNT(*) INTO result
+        FROM admin
+        WHERE admin.`username` = username AND admin.`password` = pwd;
+        
+        SELECT IF(result = 0, '失败', '成功');
+    END$
+    DELIMITER ;
+    
+    
+    CALL myp3('tom1', '123456');
+    
+    SELECT * FROM admin;
+    SHOW CREATE TABLE admin;
+    
+    
+    DROP PROCEDURE myp4;
+    ```
+
+* 创建out模式参数的存储过程  
+**案例：用存储过程实现，输入女神名，返回对应男神名**
+    ```mysql
+    DELIMITER $
+    DROP PROCEDURE myp5$
+    CREATE PROCEDURE myp5(IN bname VARCHAR(10), OUT boyname VARCHAR(10) )
+    BEGIN 
+        SELECT bo.boyName INTO boyname -- 赋值给返回的参数，由系统自动返回out模式的参数，不用写return，也无法写
+        FROM beauty b
+        LEFT OUTER JOIN boys bo
+        ON b.boyfriend_id = bo.id
+        WHERE b.name = bname;
+    
+    END$
+    
+    DELIMITER ;
+    
+    SET @ret = '';  -- 定义用户变量
+    CALL myp5('周芷若', @ret);
+    SELECT @ret;
+    
+    CALL myp5('小昭', @ret2);
+    SELECT @ret2;
+    
+    
+    SELECT * FROM beauty;
+    ```
+
+* 多个out模式参数  
+**案例2：存储 过程：根据输入的女神名，返回对应的男神名和魅力值**
+    ```mysql
+    DELIMITER $
+    CREATE PROCEDURE myp6(IN bname VARCHAR(20), OUT boyname VARCHAR(20), OUT num INT)
+    BEGIN
+        SELECT bo.boyName, bo.userCP INTO boyname, num
+        FROM boys bo
+        RIGHT OUTER JOIN beauty b
+        ON bo.id = b.boyfriend_id
+        WHERE b.name = bname;
+    
+    END$
+    
+    DELIMITER ;
+    
+    CALL myp6('王语嫣', @boname, @cp);
+    SELECT @boname, @cp;
+    ```
+
+* 创建带inout模式参数的存储过程  
+**案例：输入a、bg两个参数，a、b翻倍并返回**
+    ```mysql
+    DELIMITER $
+    CREATE PROCEDURE myp7(INOUT a INT, INOUT b INT)
+    BEGIN
+        SET a = a * 2;
+        -- set b = b * 2;
+        SELECT b * 2 INTO b;
+    END$
+    
+    DELIMITER ;
+    
+    SET @m = 10;
+    SET @n = 20;
+    CALL myp7(@m, @n);
+    SELECT @m, @n;
+    ```
+
+### 查看存储过程
+* 查看指定存储过程的结构
+    ```mysql
+    SHOW CREATE PROCEDURE 存储过程名;
+    ```
+* mysql 8，查看所有存储过程
+    ```mysql
+    SELECT * FROM information_schema.routines
+    WHERE routine_schema = '库名' AND routine_type = 'PROCEDURE';
+    ```
+* mysql 8之前版本，查看所有存储过程
+    ```mysql
+    SELECT * FROM mysql.`proc` WHERE `type` = 'PROCEDURE';
+    ```
+
+### 删除存储过程
+```text
+DROP PROCEDURE [IF EXISTS] 存储过程名; -- 只能一次删除一个
+```
+
+### 修改存储过程(不能修改参数或存储过程主体，只能修改存储过程特性)
+```text
+## 语法
+ALTER PROCEDURE proc_name [characteristic ...]
+
+characteristic:
+    COMMENT 'string'
+  | LANGUAGE SQL
+  | { CONTAINS SQL | NO SQL | READS SQL DATA | MODIFIES SQL DATA }
+  | SQL SECURITY { DEFINER | INVOKER }
+
+此语句可用于更改存储过程的特性。在alter procedure语句中可以指定多个更改。
+但是不能使用此语句更改存储过程的参数或主体；
+若要进行此类更改，必须使用DROP PROCEDURE和CREATE PROCEDURE删除并重新创建过程。
+
+-- https://dev.mysql.com/doc/refman/5.5/en/alter-procedure.html
+```
+
+* 修改存储过程特性示例
+    ```mysql
+    SELECT SPECIFIC_NAME,SQL_DATA_ACCESS,ROUTINE_COMMENT 
+    FROM information_schema.Routines
+    WHERE ROUTINE_NAME='myp8';
+    
+    
+    ALTER PROCEDURE myp8
+    READS SQL DATA
+    COMMENT 'procedure p8';
+    
+    
+    SELECT SPECIFIC_NAME,SQL_DATA_ACCESS,ROUTINE_COMMENT 
+    FROM information_schema.Routines
+    WHERE ROUTINE_NAME='myp8';
+    ```
+
+
+## 用户自定义函数
+### 函数创建语法
+```text
+delimiter $
+
+create function 函数名(参数名1 参数1的类型, ...) return 返回类型
+begin
+    函数体(一组的sql语句);
+end$
+
+delimiter ;
+
+
+* 一个参数分成两部分
+参数名 参数类型
+
+* 返回值
+有且仅有一个返回值，所以必须有return语句;
+
+* 省略begin、end关键字情况
+当函数体中只有一个语句时，可以省略begin、end关键字
+
+* 函数提结束符(提交分界符)
+结束使用提交分界符结尾
+
+* 函数体不能使用外部的用户变量
+
+* 函数体不能定义用户变量，只能定义局部变量
+```
+
+[开启了bin-log功能，但未开启函数功能](#创建函数示例)
+
+### 调用用户自定义函数语法
+```text
+select 函数名(实参列表);
+
+与系统函数调用方法相同
+```
+
+### 创建函数示例
+* 无参函数  
+**案例：返回公司员工个数，减去一个老板**
+    ```mysql
+    USE myemployees;
+    
+    
+    DELIMITER $
+    CREATE FUNCTION myf1() RETURNS INT
+    BEGIN
+        DECLARE c INT DEFAULT 0;
+        SELECT COUNT(*) INTO c FROM employees; -- COUNT(*)最终的值赋值给局部变量c。这里的查询结果不会显示
+        RETURN c - 1; -- 返回结果
+    END$
+    
+    DELIMITER ;
+    
+    /*
+    提示错误:
+    ERROR 1418 (HY000): This function has none of DETERMINISTIC, NO SQL, or READS SQL DATA 
+    in its declaration and binary logging is enabled 
+    (you *might* want to use the less safe log_bin_trust_function_creators variable)
+    
+    
+    原因：开启了bin-log功能，但未开启函数功能
+    * 解决方法1：通过修改全局变量来开启函数功能。重启mysql服务后失效
+    set global log_bin_trust_function_creators=1;
+    
+    * 解决方式2: 编缉my.cnf,添加如下内容，永久生效
+    
+    [mysqld]
+    
+    log-bin-trust-function-creators = 1
+    
+    重启mysql服务
+    */
+    
+    
+    SELECT myf1();
+    ```
+
+* 有参函数  
+**案例：创建函数实现：输入last_name，返回他对应的工资**
+    ```mysql
+    DELIMITER $
+    
+    CREATE FUNCTION myf2(lname VARCHAR(32)) RETURNS DOUBLE (10, 2)
+    BEGIN
+        SET @gongzi = 0;
+        SELECT salary INTO @gongzi
+        FROM employees
+        WHERE last_name = lname;
+        RETURN @gongzi;
+    END$
+    
+    DELIMITER ;
+    
+    SELECT myf2('Kochhar');
+    ```
+
+* 案例：创建函数：输入部门名，返回该部门的平均工资
+    ```mysql
+    DELIMITER $
+    CREATE FUNCTION myf3(dname VARCHAR(20)) RETURNS DOUBLE
+    BEGIN
+        DECLARE avg_salary DOUBLE DEFAULT 0;
+        SELECT AVG(e.salary) INTO avg_salary
+        FROM employees e
+        RIGHT OUTER JOIN departments d
+        ON e.department_id = d.department_id
+        WHERE d.department_name = dname;
+        RETURN avg_salary;
+    END$
+    DELIMITER ;
+    
+    SELECT myf3('IT');
+    ```
+
+* 案例：创建函数：传入两个float数，返回这两数之和
+    ```mysql
+    DELIMITER $
+    DROP FUNCTION IF EXISTS mysum$
+    CREATE FUNCTION mysum(n1 FLOAT, n2 FLOAT) RETURNS DOUBLE
+    BEGIN
+        RETURN n1 + n2;
+    END$
+    DELIMITER ;
+    
+    SELECT mysum(1.1, 2.2);
+    ```
+    
+### 查看用户自定义函数
+* 查看指定用户自定义函数的创建结构
+    ```mysql
+    SHOW CREATE FUNCTION 函数名;
+    ```
+
+* mysql 8，列出指定库的所有用户自定义函数
+    ```mysql
+    SELECT * FROM information_schema.routines
+    WHERE routine_schema = '库名' AND routine_type = 'FUNCTION';
+    ```
+
+* mysql 8之前版，列出指定库的所有用户自定义函
+```mysql
+SELECT * FROM mysql.`proc` WHERE `type` = 'FUNCTION';
+```
+
+### 删除自定义用户函数
+```mysql
+DROP FUNCTION 用户自定义函数名;
+-- 只能一次删除一个
+```
+
+### 修改用户自定义函数(不能更改函数体和参数列表，只能更改函数特性)
+```text
+## 语法
+ALTER FUNCTION func_name [characteristic ...]
+
+characteristic包括:
+    COMMENT 'string'
+  | LANGUAGE SQL
+  | { CONTAINS SQL | NO SQL | READS SQL DATA | MODIFIES SQL DATA }
+  | SQL SECURITY { DEFINER | INVOKER }
+
+
+此语句可用于更改存储函数的特性。在alter function语句中可以指定多个更改。
+但是不能使用此语句更改存储函数的参数或主体；
+若要进行此类更改，必须使用drop function和create function删除并重新创建该函数
+
+-- https://dev.mysql.com/doc/refman/5.5/en/alter-function.html
+```
+
+* 修改用户自定义函数特性示例
+    ```mysql
+    SELECT SPECIFIC_NAME,SQL_DATA_ACCESS,ROUTINE_COMMENT 
+    FROM information_schema.Routines
+    WHERE ROUTINE_NAME='mysum';
+    
+    
+    ALTER FUNCTION mysum
+    READS SQL DATA
+    COMMENT 'find float number sum.';
+    
+    
+    SELECT SPECIFIC_NAME,SQL_DATA_ACCESS,ROUTINE_COMMENT 
+    FROM information_schema.Routines
+    WHERE ROUTINE_NAME='mysum';
+    ```
 </details>
 
 
@@ -4752,5 +5237,418 @@ END提交符
 <details>
 <summary>流程控制结构</summary>
 
+### 流程控制结构分类
+* 顺序结构
+    从上往下依次执行
+* 分支结构
+    * if分支
+    * case分支
+* 循环结构
+    * while循环
+    * loop循环
+    * repeat循环
 
+
+### 分支结构
+
+#### if函数
+```text
+## 语法
+if(表达式1, 表达式2, 表达式3)
+功能：如果表达式1为真，则返回表达式2，否则返回表达式3
+即三目运算
+在任何地方使用
+```
+
+* 示例：返回两数中较小的数
+    ```mysql
+    SELECT IF(10 < 3, 10, 3);
+    ```
+
+#### IFNULL(expr1,expr2)
+```text
+如果表达式expr1为null，则返回expr2, 否则返回expr1
+```
+#### if分支
+```text
+## 语法
+if 表达式1 then
+    语句1;
+elseif 表达式2 then
+    语句2;
+...
+else
+    语句n;
+end if;
+
+功能：类似java的多重if分支判断
+* 位置：只能在begin ... end中
+```
+
+* 案例：创建函数实现
+    ```text
+    传入成绩，
+    如果成绩>90,返回A;
+    如果成绩>80,返回B;
+    如果成绩>60,返回D;
+    否则,返回D;
+    ```
+    ```mysql
+    DELIMITER $
+    CREATE FUNCTION fun1(score INT) RETURNS CHAR(1)
+    BEGIN
+        SET @lev = 'D';
+        IF score > 90 AND score <= 100 THEN
+            SET @lev = 'A';
+        ELSEIF score > 80 THEN
+            SET @lev = 'B';
+        ELSEIF score > 60 THEN
+            SET @lev = 'C';
+        ELSE
+            SET @lev = 'D';
+        END IF;
+        
+        RETURN @lev;
+    END$
+    
+    DELIMITER ;
+    
+    SELECT fun1(88);
+    ```
+
+* 案例2：创建存储过程，实现下列功能：
+    ```text
+    输入员工的工资
+    如果工资<2000,则删除，
+    如果5000>工资>=2000,则涨工资1000，
+    否则涨工资500
+    ```
+    ```mysql
+    DELIMITER $
+    CREATE PROCEDURE myp1(IN gz DOUBLE)
+    BEGIN
+        IF gz < 2000 THEN
+            DELETE FROM employees
+            WHERE salary = gz;
+        ELSEIF gz < 5000 AND gz >= 2000 THEN
+            UPDATE employees SET salary = salary + 1000
+            WHERE salary = gz;
+        ELSE
+            UPDATE employees SET salary = salary + 500
+            WHERE salary = gz;
+        END IF;
+    END$
+    
+    DELIMITER ;
+    
+    CALL myp1(9000);
+    ```
+
+#### case结构
+```text
+## 语法
+
+* 情况1: 值枚举
+case 变量或表达式
+when 值1 then
+    语句1;
+when 值2 then
+    语句2;
+...
+else
+    语句n;
+end case;
+
+
+* 情况2: 值范围枚举
+case
+when 条件1 then
+    语句1;
+when 条件2 then
+    语句2;
+...
+else
+    语句n;
+end case;
+
+* 位置：begin ... and 中
+```
+
+case做分支函数语法
+[case做分支函数语法，可以下载任何地方](#流程分支控制函数)
+
+
+* 案例：创建函数case实现：
+    ```text
+    传入成绩，
+    如果成绩>90,返回A;
+    如果成绩>80,返回B;
+    如果成绩>60,返回D;
+    否则,返回D;
+    ```
+    ```mysql
+    DELIMITER $
+    CREATE FUNCTION func2(score INT) RETURNS CHAR(1)
+    BEGIN
+        DECLARE ret CHAR DEFAULT 'D';
+        CASE
+        WHEN score BETWEEN 90 AND 100 THEN
+            SET ret = 'A';
+        WHEN score > 80 THEN
+            SET ret = 'B';
+        WHEN score > 60 THEN
+            SET ret = 'C';
+        ELSE
+            SET ret = 'D';
+        END CASE;
+        RETURN ret;
+    END$
+    DELIMITER ;
+    
+    SELECT func2(66);
+    
+    SELECT * FROM information_schema.routines
+    WHERE routine_schema = 'myemployees' AND routine_type = 'FUNCTION';
+    ```
+
+### 循环结构
+* 循环结分类
+    * while
+    * loop
+    * repeat
+
+#### 循环控制
+* leave
+    ```text
+    类似java中的break，跳出当前循环，即结束当前循环，也可以结合标签跳出哪个循环
+    ```
+* iterate
+    ```text
+    类似java中的continue，结束本次循环(本次循环执行到continue这就结束)，继续下一次循环
+    ```
+* 当要进行循环控制时，要指定循环标签
+
+#### while循环
+* 语法
+    ```text
+    初始化条件;
+    [label标签:]
+    while 循环条件 do
+        循环体;
+        迭代条件;
+    end while [label标签]; -- 此处的label标签任何时候都可以省略
+    
+    -- 无限循环
+    while 1 do
+        循环体;
+    end while;
+    
+    可以嵌套
+    --
+    相当于java中的while
+    初始化条件;
+    while (循环条件) {
+        循环体;
+        迭代条件;
+    }
+    ```
+
+#### loop无限循环
+* 语法
+    ```text
+    [label标签名:]
+    loop
+        循环体;
+    end loop [label标签名]; -- 此处的label标签任何时候都可以省略
+    
+    
+    相当于 while (true) {
+        循环体;
+    }
+    ```
+
+
+
+#### repeat循环
+* 语法
+    ```text
+    [label标签名:]
+    repeat
+        循环体;
+    untile 结束循环条件 -- 注意这里没有;
+    end repeat [label标签名]; -- 此处的label标签任何时候都可以省略
+    
+    相当于
+    初始化条件;
+    do {
+        循环体;
+        迭代条件;
+    }
+    while (循环条件);
+    ```
+
+#### 循环示例
+* 案例：批量插入，根据指定的次数插入到admin表中多条记录
+    ```mysql
+    USE girls;
+    
+    DELIMITER $
+    DROP PROCEDURE IF EXISTS while1$
+    CREATE PROCEDURE while1(IN num INT) 
+    BEGIN
+        DECLARE i INT DEFAULT 1;
+        WHILE i <= num DO
+            INSERT INTO admin (username, `password`) VALUES
+            (CONCAT('tom', i), '123456');
+            SET i = i + 1;
+        END WHILE;
+    
+    END$
+    
+    DELIMITER ;
+    
+    CALL while1(3);
+    ```
+
+* leave控制提前循环退出  
+**案例：批量插入，根据次数插入到admin表中多条记录，如果次数>10则停止**
+    ```mysql
+    DELIMITER $
+    DROP PROCEDURE IF EXISTS while2$
+    CREATE PROCEDURE while2(IN num INT)
+    BEGIN 
+        SET @i = 1;
+        label1:
+        WHILE @i <= num DO
+            INSERT INTO admin (username, `password`) VALUES
+            (CONCAT('dafenqi', @i), '888888');
+            IF @i >= 10 THEN
+                LEAVE label1;
+            END IF;
+            SET @i = @i + 1;
+            
+            SET @j = 0;
+            WHILE @j < 3 DO
+                SELECT @j;
+                SET @j = @j + 1;
+            END WHILE;
+        END WHILE;
+    END$
+    
+    DELIMITER ;
+    
+    
+    TRUNCATE TABLE admin;
+    SELECT * FROM admin;
+    
+    CALL while2(30);
+    ```
+
+* iterate结束本次循环  
+**案例：批量插入，根据次数插入到admin表中多条记录，只插入偶数次**
+    ```mysql
+    DELIMITER $
+    CREATE PROCEDURE while3(IN num INT)
+    BEGIN
+        SET @i = 0;
+        lab1:
+        WHILE @i <= num DO
+            SET @i = @i + 1;
+            IF @i % 2 != 0 THEN
+               ITERATE lab1; -- 结束本次循环
+            END IF;
+            INSERT INTO admin (username, `password`) VALUES
+            (CONCAT('zhenbiao', @i), '666666');
+        END WHILE;
+    
+    END$
+    
+    DELIMITER ;
+    
+    
+    TRUNCATE TABLE admin;
+    SELECT * FROM admin;
+    
+    CALL while3(10);
+    ```
+* while 1 无限循环
+    ```mysql
+    DELIMITER $
+    DROP PROCEDURE IF EXISTS myproc1$
+    CREATE PROCEDURE myproc1()
+    BEGIN
+        DECLARE i INT DEFAULT 0;
+        lab1:
+        WHILE 1 DO
+            IF i > 5 THEN
+                LEAVE lab1;
+            END IF;
+            SELECT i;
+            SET i = i + 1;
+        END WHILE;
+        
+    END$
+    
+    DELIMITER ;
+    
+    
+    CALL myproc1();
+    ```
+
+* loop无限循环测试
+    ```mysql
+    /*
+    功能与下面的等价
+    while 1 do
+        循环体;
+    end while;
+    
+    */
+    
+    DROP PROCEDURE IF EXISTS loop1;
+    
+    DELIMITER $
+    CREATE PROCEDURE loop1()
+    BEGIN
+        SET @i = 0;
+        lab1:
+        LOOP
+            SET @i = @i + 1;
+            IF @i > 10 THEN
+                LEAVE lab1;
+            END IF;   
+            SELECT @i;
+        END LOOP;
+    END$
+    
+    DELIMITER ;
+    
+    CALL loop1();
+    ```
+
+* repeat循环测试  
+**创建存储过程实现：输入打印次数，不管次数是否>0，至少打印一次，打印内容为"(x次) 打怪10个"**
+    ```mysql
+    DELIMITER $
+    CREATE PROCEDURE repeat1(IN num INT)
+    BEGIN
+        DECLARE i INT DEFAULT 0;
+        lab1:
+        REPEAT 
+            SET i = i + 1;
+            SELECT CONCAT('(', i, '次) 打怪10个') AS '结果';
+            IF num < 0 THEN -- 要满足：num >= 0
+                LEAVE lab1;
+            END IF;
+        UNTIL i >= num -- 这里没有;
+        END REPEAT;
+    END$
+    
+    DELIMITER ;
+    
+    
+    CALL repeat1(0);
+    CALL repeat1(-10);
+    CALL repeat1(4);
+    ```
 </details>

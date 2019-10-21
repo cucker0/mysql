@@ -3329,7 +3329,7 @@ SELECT * FROM tab_bit2 WHERE f = b'11';
     多个选项之间使用英文逗号分隔，选项之间不能有空格，多个选项拼接成一个字符串，
     ```
     
-##### char、varchar比较
+#### char、varchar比较
 
 类型 |M的含义        |特点                  |空间的耗费       |效率
 :--- |:--- |:--- |:--- |:---  
@@ -3538,29 +3538,6 @@ year |1字节 |[1901, 2015]
 * 从表(1) --对--> 主表(1) 实现方法，在从表添加外键，再添加unique (从表主键字段, 从表外键字段)  约束
 * 从表(多) --对--> 主表(多) 实现方法，在主、从表中设置主键，再添加一张关系表，设置两个外键，分别关联从表和主表。
 
-#### 外键设置主表删除记录时相关动作
-* 默认情况
-```text
-删除主表中的一条记录时，当从表中有记录关联到此记录时，则不能直接删除主表中的这条记录。
-若想删除，则需要先删除从表中相关联的记录，再删除主表中的记录
-```
-* 级联删除(ON DELETE CASCADE)
-```text
-当删除主表中的记录时，从表中关联此记录的相关记录也被自动同时删除.
-
-语法：
-CONSTRAINT 约束名 FOREIGN KEY (本表关联字段) REFERENCES 主表 (关联的字段) ON DELETE CASCADE
-```
-* 级联置空(ON DELETE SET NULL)
-```text
-当删除主表中的记录时，从表中关联此记录的相关记录外键列值也被自动同时设置为null值，从表记录不会被删除
-
-语法：
-CONSTRAINT 约束名 FOREIGN KEY (本表关联字段) REFERENCES 主表 (关联的字段) ON DELETE SET NULL
-```
-
-**示例**  
-[常见约束  级联删除、级联置空](./exercise/5_01_常见约束.sql)
 
 ### 约束语法
 ```text
@@ -3840,7 +3817,7 @@ alter table 表名 add [constraint 约束名] foreign key (本表关联的字段
     ALTER TABLE tab_increment3 AUTO_INCREMENT=1; -- 可设置AUTO_INCREMENT的=值
     ```
 
-### 外键
+### 外键约束
 
 * 多列外键组合
     ```mysql
@@ -3888,8 +3865,29 @@ alter table 表名 add [constraint 约束名] foreign key (本表关联的字段
     
     SELECT * FROM student;
     ```
-    
-### 级联删除(ON DELETE CASCADE)
+
+#### 外键设置在主表删除记录时相关动作
+* 默认情况
+```text
+删除主表中的一条记录时，当从表中有记录关联到此记录时，则不能直接删除主表中的这条记录。
+若想删除，则需要先删除从表中相关联的记录，再删除主表中的记录
+```
+* 级联删除(ON DELETE CASCADE)
+```text
+当删除主表中的记录时，从表中关联此记录的相关记录也被自动同时删除.
+
+语法：
+CONSTRAINT 约束名 FOREIGN KEY (本表关联字段) REFERENCES 主表 (关联的字段) ON DELETE CASCADE
+```
+* 级联置空(ON DELETE SET NULL)
+```text
+当删除主表中的记录时，从表中关联此记录的相关记录外键列值也被自动同时设置为null值，从表记录不会被删除
+
+语法：
+CONSTRAINT 约束名 FOREIGN KEY (本表关联字段) REFERENCES 主表 (关联的字段) ON DELETE SET NULL
+```
+
+#### 级联删除(ON DELETE CASCADE)
 当删除主表中的记录时，从表中关联此记录的相关记录也被自动同时删除
 ```mysql
 DROP TABLE IF EXISTS major;
@@ -3935,7 +3933,7 @@ DELETE FROM major1 WHERE id = 3;
 SELECT * FROM stu1;
 ```
 
-### 级联置空(ON DELETE SET NULL)
+#### 级联置空(ON DELETE SET NULL)
 当删除主表中的记录时，从表中关联此记录的相关记录外键列值也被自动同时设置为null值，不会被删除
 ```mysql
 DROP TABLE IF EXISTS stu1;
@@ -4245,6 +4243,8 @@ SET autocommit = 0;
 ```text
 概念：虚拟表，值保存了sql逻辑，不保存结果，使用视图时动态生成表数据。
 相当于给一组sql语句起了别名，保存在数据库中
+
+view视图主要用于表数据的查询。
 
 使用与普通表一样。
 mysql 5.1开始添加此特性
@@ -4698,7 +4698,7 @@ FROM employees;
 
 * 声明局部变量
     ```text
-    DECLARE 变量名 类型; -- 是否有默认值?？
+    DECLARE 变量名 类型; -- 默认值为null
     ```
 
 * 声明局部变量并初始化
@@ -5257,7 +5257,7 @@ characteristic包括:
 <details>
 <summary>流程控制结构</summary>
 
-### 流程控制结构分类
+## 流程控制结构分类
 * 顺序结构
     从上往下依次执行
 * 分支结构
@@ -5269,9 +5269,9 @@ characteristic包括:
     * repeat循环
 
 
-### 分支结构
+## 分支结构
 
-#### if函数
+### if函数
 * 语法
     ```text
     if(表达式1, 表达式2, 表达式3)
@@ -5286,11 +5286,11 @@ characteristic包括:
     SELECT IF(10 < 3, 10, 3);
     ```
 
-#### IFNULL(expr1,expr2)
+### IFNULL(expr1,expr2)
 ```text
 如果表达式expr1为null，则返回expr2, 否则返回expr1
 ```
-#### if分支
+### if分支
 * 语法
     ```text
     if 表达式1 then
@@ -5365,7 +5365,7 @@ characteristic包括:
     CALL myp1(9000);
     ```
 
-#### case结构
+### case结构
 * 语法  
 位置：begin ... and 中
     * 情况1: 值枚举
@@ -5428,13 +5428,13 @@ characteristic包括:
     WHERE routine_schema = 'myemployees' AND routine_type = 'FUNCTION';
     ```
 
-### 循环结构
+## 循环结构
 * 循环结分类
     * while
     * loop
     * repeat
 
-#### 循环控制
+### 循环控制
 * leave
     ```text
     类似java中的break，跳出当前循环，即结束当前循环，也可以结合标签跳出哪个循环
@@ -5445,7 +5445,7 @@ characteristic包括:
     ```
 * 当要进行循环控制时，要指定循环标签
 
-#### while循环
+### while循环
 * 语法
     ```text
     初始化条件;
@@ -5470,7 +5470,7 @@ characteristic包括:
     }
     ```
 
-#### loop无限循环
+### loop无限循环
 * 语法
     ```text
     [label标签名:]
@@ -5486,7 +5486,7 @@ characteristic包括:
 
 
 
-#### repeat循环
+### repeat循环
 * 语法
     ```text
     [label标签名:]
@@ -5504,7 +5504,7 @@ characteristic包括:
     while (循环条件);
     ```
 
-#### 循环示例
+### 循环示例
 * 案例：批量插入，根据指定的次数插入到admin表中多条记录
     ```mysql
     USE girls;

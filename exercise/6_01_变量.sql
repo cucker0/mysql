@@ -126,7 +126,7 @@ SELECT @变量名
 
 
 # 声明局部变量
-DECLARE 变量名 类型; -- 是否有默认值?？
+DECLARE 变量名 类型; -- 默认值为null
 
 # 声明局部变量并初始化
 DECLARE 变量名 类型 DEFAULT 值;

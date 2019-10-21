@@ -4547,9 +4547,11 @@ FROM employees;
 
 
 # 变量
+<details>
+<summary>变量</summary>
 
 ## 变量分类
-* 系统标量
+* 系统变量
     * 全局变量(@@global.)
     * 会话变量(连接会话,@@session.)
 
@@ -4737,6 +4739,7 @@ END提交符
 用户变量 |@变量名 |当前连接会话,<br>或在begin ... and代码块中  |自定义变量 |会话的任何地方 |set @变量名 = 值;  <br>不用指定类型，必须赋初始值 |SET @变量名 = 新值; <br>SELECT 字段 INTO @变量名 FROM 表名; 
 局部变量 |变量名 |只能在begin ... and代码块中 |自定义变量 |在begin ... and代码块中，begin ... and的首行，<br>不加@，需要指定类型 |DECLARE 局部变量名 INT DEFAULT 值;  <br>必须赋初始值 |SET 变量名 = 新值; <br>SELECT 字段 INTO 变量名 FROM 表名; 
 
+</details>
 
 # 存储过程、用户定义函数
 <details>

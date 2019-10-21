@@ -1034,6 +1034,9 @@ COUNT(expr) 计算非null值的行个数，
 COUNT(DISTINCT expr,[expr...]) 返回列出的字段不全为NULL值的行，再去重的数目, 可以写多个字段，expr不能为*
 ```
 
+![max(expr)](./images/max函数.png)  
+![avg函数_group_by](./images/avg函数_group_by.png)  
+
 * 特点
     * sum, avg一般用于处理数值型
     * 以上分组函数都忽略所提供字段全为null的记录
@@ -1269,6 +1272,9 @@ group by 分组的字段
         GROUP BY department_id, job_id
         ORDER BY mi DESC;
         ```
+        
+### [MySQL获取分组后的top 1和top N记录方法](./exercise/MySQL获取分组后的top%201和top%20N记录.sql)
+
 </details>
 
 ## 连接查询
@@ -1808,7 +1814,7 @@ FROM beauty, boys;
         列子查询(结果集为多行一列)
         行子查询(结果集一行多列或多行多列，总之一定是大于1列)
         ```
-    * exists后面(也叫相关子查询)
+    * exists后面(属于相关子查询)
         ```text
         表子查询
         ```
@@ -1818,6 +1824,10 @@ FROM beauty, boys;
     * 列子查询(结果集为多行一列)
     * 行子查询(结果集一行多列或多行多列，总之一定是大于1列)
     * 表子查询(结果集一般为多行多列，也可以为任意行任意列)
+* 相关子查询
+    ```text
+    子查询where筛选条件中引用了主查询表中的字段
+    ```
 
 ### where或having后面
 ```text
@@ -2407,41 +2417,49 @@ union
     
     
     -- union联合查询方式
-    SELECT * 
-    FROM employees
-    WHERE department_id > 90 -- 8行
-    
+    (
+        SELECT * 
+        FROM employees
+        WHERE department_id > 90 -- 8行
+    )
     UNION
     
-    SELECT * -- 62行
-    FROM employees
-    WHERE email LIKE '%a%'
+    (
+        SELECT * -- 62行
+        FROM employees
+        WHERE email LIKE '%a%'
+    )
     ; -- 联合查询的结果67行
     
     
-    -- union联合查询，保留重复记录
-    SELECT * 
-    FROM employees
-    WHERE department_id > 90 -- 8行
-    
+    -- union all 联合查询，保留重复记录
+    (
+        SELECT * 
+        FROM employees
+        WHERE department_id > 90 -- 8行
+    )
+  
     UNION ALL
-    
-    SELECT * -- 62行
-    FROM employees
-    WHERE email LIKE '%a%'
+    (
+        SELECT * -- 62行
+        FROM employees
+        WHERE email LIKE '%a%'
+    )
     ;
 
     ```
 
 * 案例：查询girls库的beauty表中的姓名、出生日期，以及myemployees库的employees表中的姓名、入职日期，要求姓名显示为同一列，出生日期与入职日期显示为同一列 
     ```mysql
-    SELECT `name` 姓名, borndate 日期
-    FROM girls.beauty
-    
+    (
+        SELECT `name` 姓名, borndate 日期
+        FROM girls.beauty
+    )
     UNION
-    
-    SELECT CONCAT(first_name, ' ', last_name), hiredate
-    FROM myemployees.employees
+    (
+        SELECT CONCAT(first_name, ' ', last_name), hiredate
+        FROM myemployees.employees
+    )
     ;
     ```
 
@@ -2475,17 +2493,19 @@ union
     ;
     
     -- ③用union把①结果集与②结果集合并，并去重(union默认去重)
-    SELECT *
-    FROM beauty b
-    LEFT OUTER JOIN boys bo
-    ON b.boyfriend_id = bo.id
-    
+    (
+        SELECT *
+        FROM beauty b
+        LEFT OUTER JOIN boys bo
+        ON b.boyfriend_id = bo.id
+    )
     UNION
-    
-    SELECT *
-    FROM beauty b
-    RIGHT OUTER JOIN boys bo
-    ON b.boyfriend_id = bo.id;
+    (
+        SELECT *
+        FROM beauty b
+        RIGHT OUTER JOIN boys bo
+        ON b.boyfriend_id = bo.id
+    );
     ```
 
 ## DQL查询语句总结
@@ -4736,7 +4756,7 @@ END提交符
 :--- |:--- |:--- |:--- |:--- |:--- |:---
 全局变量 |@@global.变量名 |系统变量 |服务器所有连接会话         |系统定义                | |SET @@global.全局变量名 = 新值; <br>SET GLOBAL 全局变量名 = 新值; <br>mysql服务重启后失效，恢复到系统初始值，持久生效要写入配置文件
 会话变量 |@@session.变量名 <br>或@@会话变量 |系统变量 |当前连接会话               |系统定义                | |SET @@会话变量 = 新值; <br>SET SESSION 会话变量名 = 新值; <br>SET @@session.会话变量 = 新值; 
-用户变量 |@变量名 |当前连接会话,<br>或在begin ... and代码块中  |自定义变量 |会话的任何地方 |set @变量名 = 值;  <br>不用指定类型，必须赋初始值 |SET @变量名 = 新值; <br>SELECT 字段 INTO @变量名 FROM 表名; 
+用户变量 |@变量名 |当前连接会话,<br>或在begin ... and代码块中  |自定义变量 |会话的任何地方 |set @变量名 = 值;  <br>或 set @变量名 := 值; <br>或 select @变量名 := 值; <br>set @num = 0, @course = '00'; <br>不用指定类型，必须赋初始值 |SET @变量名 = 新值; <br>SELECT 字段 INTO @变量名 FROM 表名; 
 局部变量 |变量名 |只能在begin ... and代码块中 |自定义变量 |在begin ... and代码块中，begin ... and的首行，<br>不加@，需要指定类型 |DECLARE 局部变量名 INT DEFAULT 值;  <br>必须赋初始值 |SET 变量名 = 新值; <br>SELECT 字段 INTO 变量名 FROM 表名; 
 
 </details>

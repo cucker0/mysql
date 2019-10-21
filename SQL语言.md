@@ -178,7 +178,8 @@ DML数据处理操作语言中的数据查询操作，主要用于查询表数�
     最后用转换后的数值进行做加法运算
     
     注意：NULL与任何数做+运算，结果都为NULL
-    
+    mysql中的字符连接用 concat(str1, str2, ...) 函数
+  
     java中的+作用
     * 运算符：连个操作数的类型都为数值类型
     * 连接符：只要有一个操作数的类型为字符串
@@ -1162,22 +1163,22 @@ group by 分组的字段
 
 ```
 
-* 分组查询特点
-    * 能和分组函数一起出现在select查询列表中的字段必须是group by里的字段，因为group by里的字段与组合函数的结果是一一对应的
-    * 筛选分为两类：分组前筛选、分组后筛选
-    * 分组可以按单个字段，也可以按多个字段
-    * 分组可以搭配排序
-    * 分组函数做筛选不能放在where子句中，可以放在having子句中
-    * 分组前筛效率高于分组后筛选，一般的，能用分组前筛的，尽量使用分组前筛，提高效率
+### 分组查询特点
+* 能和分组函数一起出现在select查询列表中的字段必须是group by里的字段，因为group by里的字段与组合函数的结果是一一对应的
+* 筛选分为两类：分组前筛选、分组后筛选
+* 分组可以按单个字段，也可以按多个字段
+* 分组可以搭配排序
+* 分组函数做筛选不能放在where子句中，可以放在having子句中
+* 分组前筛效率高于分组后筛选，一般的，能用分组前筛的，尽量使用分组前筛，提高效率
     
-* 分组前筛选 与 分组后筛选比较
+### 分组前筛选、分组后筛选比较
 
 分类 |筛选对象 |位置 |连接的关键字 |能否引用字段别名
 :--- |:--- |:--- |:--- |:---
 分组前筛选 |原始表 |group by前 |where |不能
 分组后筛选 |group by后的结果集 |group by后 |having |能
 
-
+### 分组查询示例
 * 简单分组查询
     * 案例1：查询每个部门的员工个数
         ```mysql
@@ -1475,7 +1476,7 @@ FROM beauty, boys; -- 48行
     ````
 
 
-#### 自连接(自连内连接)
+#### 自连接(自身内连接)
 用于表内有自关联，查询时，这个表需要用到两次或两次以上
 
 * 案例：查询 员工名和上级的名称
@@ -1486,8 +1487,7 @@ FROM beauty, boys; -- 48行
     ```
 
 ### SQL:1999连接语法
-
-#### SQL-92与SQLSQL:1999对比
+#### SQL-92与SQL:1999对比
 ```text
 功能：SQL:1999比SQL-92的多
 可读性：因为SQL:1999的连接条件与筛选条件分离，所有可读性更高
@@ -1689,7 +1689,7 @@ WHERE boyfriend_id NOT IN (SELECT id FROM boys);
 ```
 
 
-##### 左外连接
+##### 左外连接、右外连接
 ```mysql
 SELECT *
 FROM beauty b
@@ -1745,43 +1745,72 @@ FULL OUTER JOIN boys bo
 ON b.boyfriend_id = bo.id;
 ```
 
-* mysql中全外连接替代方案
-    ```text
-    -- 全外连接
-    select 查询列表
-    from 表1 别名1
-    full outer join 表2 别名2
-    on 连接条件;
+##### full outer join全外连接替代方案
+```text
+-- 全外连接
+select 查询列表
+from 表1 别名1
+full outer join 表2 别名2
+on 连接条件;
 
-    -- 全外连接替代方案，两者的查询结果是一样的
+-- 全外连接替代方案，两者的查询结果是一样的
+(
     select 查询列表
     from 表1 别名1
     left outer join 表2 别名2
     on 连接条件
-    
-    union
-  
+)
+union
+(
     select 查询列表
     from 表1 别名1
     right outer join 表2 别名2
-    on 连接条件;
-  
-    ```
+    on 连接条件
+);
 
+```
+    
+* 案例：查询所有女神有无男朋友和所有男神有无女朋友的详情信息
     ```mysql
-    SELECT * 
+    USE girls;
+    
+    /*
+    全外连接查询，奈何mysql不支持
+    SELECT *
+    FROM beauty b
+    FULL OUTER JOIN boys bo
+    ON b.boyfriend_id = bo.id;
+    */
+    
+    -- ①查询beauty表与boys表左外连接，此时主表为beauty
+    SELECT *
     FROM beauty b
     LEFT OUTER JOIN boys bo
     ON b.boyfriend_id = bo.id
+    ;
     
-    UNION
-    
-    SELECT * 
+    -- ②查询beauty表与boys表右外连接，此时主表为boys
+    SELECT *
     FROM beauty b
     RIGHT OUTER JOIN boys bo
-    ON b.boyfriend_id = bo.id;
+    ON b.boyfriend_id = bo.id
+    ;
+    
+    -- ③用union把①结果集与②结果集合并，并去重(union默认去重)
+    (
+        SELECT *
+        FROM beauty b
+        LEFT OUTER JOIN boys bo
+        ON b.boyfriend_id = bo.id
+    )
+    UNION
+    (
+        SELECT *
+        FROM beauty b
+        RIGHT OUTER JOIN boys bo
+        ON b.boyfriend_id = bo.id
+    );
     ```
-
 
 #### 交叉链接(即笛卡尔乘积)
 ```mysql
@@ -1850,7 +1879,9 @@ FROM beauty, boys;
 * 子查询放在小括号内，即(语句)
 * 子查询一般放在条件的右侧
 * 标量子查询，一般搭配着单行操作符使用
-    >  <  >=  <=  =  <>  <=>
+    ```text
+    <  >=  <=  =  <>  <=>
+    ```
 
 * 列子查询，一般搭配多行操作符使用
     ```text
@@ -2472,50 +2503,7 @@ union
     ;
     ```
 
-
-
-### full outer join全外连接替代方案
-* 查询所有女神有无男朋友和所有男神有无女朋友的详情信息
-    ```mysql
-    USE girls;
-    
-    /*
-    全外连接查询，奈何mysql不支持
-    SELECT *
-    FROM beauty b
-    FULL OUTER JOIN boys bo
-    ON b.boyfriend_id = bo.id;
-    */
-    
-    -- ①查询beauty表与boys表左外连接，此时主表为beauty
-    SELECT *
-    FROM beauty b
-    LEFT OUTER JOIN boys bo
-    ON b.boyfriend_id = bo.id
-    ;
-    
-    -- ②查询beauty表与boys表右外连接，此时主表为boys
-    SELECT *
-    FROM beauty b
-    RIGHT OUTER JOIN boys bo
-    ON b.boyfriend_id = bo.id
-    ;
-    
-    -- ③用union把①结果集与②结果集合并，并去重(union默认去重)
-    (
-        SELECT *
-        FROM beauty b
-        LEFT OUTER JOIN boys bo
-        ON b.boyfriend_id = bo.id
-    )
-    UNION
-    (
-        SELECT *
-        FROM beauty b
-        RIGHT OUTER JOIN boys bo
-        ON b.boyfriend_id = bo.id
-    );
-    ```
+### [full outer join全外连接替代方案](#full-outer-join全外连接替代方案)
 
 ## DQL查询语句总结
 * 语法与执行顺序

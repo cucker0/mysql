@@ -5349,38 +5349,34 @@ characteristic包括:
     ```
 
 #### case结构
-```text
-## 语法
-
-* 情况1: 值枚举
-case 变量或表达式
-when 值1 then
-    语句1;
-when 值2 then
-    语句2;
-...
-else
-    语句n;
-end case;
-
-
-* 情况2: 值范围枚举
-case
-when 条件1 then
-    语句1;
-when 条件2 then
-    语句2;
-...
-else
-    语句n;
-end case;
-
-* 位置：begin ... and 中
-```
-
-case做分支函数语法
-[case做分支函数语法，可以下载任何地方](#流程分支控制函数)
-
+* 语法  
+位置：begin ... and 中
+    * 情况1: 值枚举
+        ```text
+        case 变量或表达式
+        when 值1 then
+            语句1;
+        when 值2 then
+            语句2;
+        ...
+        else
+            语句n;
+        end case;
+        ```
+    * 情况2: 值范围枚举
+        ```text
+        case
+        when 条件1 then
+            语句1;
+        when 条件2 then
+            语句2;
+        ...
+        else
+            语句n;
+        end case;
+        ```
+        
+    * [case做分支函数语法，可以下载任何地方](#流程分支控制函数)
 
 * 案例：创建函数case实现：
     ```text

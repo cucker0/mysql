@@ -164,7 +164,7 @@ MySQL核心技术
         </details>
         
         <details>
-        <summary>常见数据类型</summary>
+        <summary>表的管理</summary>
         
         * [表的管理](md/4_02_DDL数据定义语言.表的管理.md)
             * [表的创建](md/4_02_DDL数据定义语言.表的管理.md#表的创建)

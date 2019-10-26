@@ -8,11 +8,11 @@ SQL语言
 sql文件位：./sql目录下
 
 * myemployees表  
-![](./images/myemployees库的表关系模型.png)  
-![](./images/myemployees库的表关系模型2.png)
+![](../images/myemployees库的表关系模型.png)  
+![](../images/myemployees库的表关系模型2.png)
 
 * girls表  
-![](./images/girls库的表关系模型.png)  
+![](../images/girls库的表关系模型.png)  
   
 </details>
 
@@ -1044,7 +1044,7 @@ COUNT(expr) 计算非null值的行个数，
 COUNT(DISTINCT expr,[expr...]) 返回列出的字段不全为NULL值的行，再去重的数目, 可以写多个字段，expr不能为*
 ```
 
-![max(expr)](./images/max函数.png)  
+![max(expr)](../images/max函数.png)  
 ![avg函数_group_by](./images/avg函数_group_by.png)  
 
 * 特点

@@ -146,16 +146,7 @@ mysql -V
 ```
 
 # mysql图形化客户端
-* [SQLyog](./SQLYog.md)
-* [Navicat Premium](./NavicatPremium.md)
-
+* [SQLyog](SQLYog.md)
+* [Navicat Premium](NavicatPremium.md)
 
   
-
-
-
-
-
-
-
-

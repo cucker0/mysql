@@ -217,6 +217,7 @@ MySQL核心技术
         </details>
         
     * [DCL数据控制语言](md/5_01_DCL数据控制语言.TCL事务控制语言.md)
+        * [mysql用户与权限管理](/md/5_02_DCL数据控制语言.mysql用户与权限管理.md)
         <details>
         <summary>TCL事务控制语言</summary>
         

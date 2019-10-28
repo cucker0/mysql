@@ -53,6 +53,14 @@ Structure Query Language
 Data Manipulation Language
 
 用于添加、删除、修改、查询数据库记录，并检查数据的完整性
+SELECT: 从表或视图中检索数据行
+INSERT: 插入数据到表
+UPDATE: 更新表数据
+DELETE: 删除表数据
+CALL: 调用存储过程
+MERGE: 合并（插入或修改
+COMMIT: 提交当前事务，将当前事务所做的更改永久化（写入数据库）
+ROLLBACK: 取消上次提交以来的所有操作
 ```
 
 * DDL数据定义语句
@@ -60,6 +68,11 @@ Data Manipulation Language
 Data Definition Language
 
 用于库和表的创建、修改、删除
+CREATE: 创建数据库或表
+ALTER: 	修改库、表、存储过程等属性
+DROP: 删除库、表、存储过程、view视图、行数等
+RENAME: 更改数据库对象的名称
+TRUNCATE: 清空表数据
 ```
 
 * DCL数据控制语句
@@ -67,4 +80,6 @@ Data Definition Language
 Data Control Language
 
 用于定义用户的访问权限和安全级别
+CRANT: 授予用户访问库、表等的访问权限
+REVOKE: 回收用户访问库、表等的访问权限
 ```

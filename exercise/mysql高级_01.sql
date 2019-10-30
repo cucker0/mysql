@@ -29,8 +29,19 @@ ALTER TABLE book ADD FULLTEXT idx_book_content (content);
 
 
 
+-- 创建区政图
+CREATE DATABASE testdb;
 
+USE testdb;
 
+CREATE TABLE area_map (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    `name` VARCHAR(32) NOT NULL,
+    stat VARCHAR(32) NOT NULL, -- 州/镇
+    city VARCHAR(32),
+    province VARCHAR(20),
+    postcode INT
+);
 
 
 

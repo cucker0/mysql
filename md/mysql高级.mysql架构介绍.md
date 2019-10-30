@@ -22,8 +22,8 @@ socket = /var/lib/mysql/mysql.sock
 default_character_set = utf8
 
 [mysqld]
-port		= 3306
-socket		= /var/lib/mysql/mysql.sock
+port = 3306
+socket = /var/lib/mysql/mysql.sock
 
 character_set_server = utf8
 collation_server = utf8_general_ci

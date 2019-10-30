@@ -12,6 +12,12 @@ mysql高级.索引优化分析
 ### sql的执行顺序
 ![](../images/sql执行顺序.png)  
 
+依次从左往右
+
+
+## [7种join连接查询](./2_07_DQL数据查询语言.连接查询.md#连接查询总结)
+
+
 ## 索引简介
 ```
 索引(index)帮助mysql高效获取数据的数据结构。
@@ -42,16 +48,61 @@ mysql索引一般使用的是Btree索引
 * 单值索引
     >一个索引只包含一个列，一个表可以有多个交单值索引
 * 唯一索引
-    >索引列的值必须唯一，但允许有一个null值
+    >索引列的值必须唯一，但允许有一个null值。唯一键会创建唯一索引
 * 复合索引
     >一个索引包含多个列
 
-### 增查删索引
+### 索引类型
+* BTree索引
+* Hash索引
+* FullText全文索引
+* RTree索引
+
+### 增查改删索引
 * 创建索引
     ```text
-    CREATE [UNIQUE] INDEX 索引名 ON 表名 (字段列表);
+    可以在创建表时创建，
+    也可以表创建后，再创建索引
+    ```
+    ```text
+    CREATE [UNIQUE | FULLTEXT | SPATIAL] INDEX index_name
+        [index_type]
+        ON tbl_name (key_part,...)
+        [index_option]
+        [algorithm_option | lock_option] ...
     
-    UNIQUE: 唯一索引
+    #######################################################  
+    ## 说明
+    { }: 必填项
+    [ ]: 选填项
+    
+    索引类别: [UNIQUE | FULLTEXT | SPATIAL]
+        UNIQUE: 唯一索引
+        FULLTEXT: 全文索引
+        SPATIAL: 空间索引
+    
+    key_part: {col_name [(length)] | (expr)} [ASC | DESC]
+        默认为ASC升序排序
+        如果是CHAR,VARCHAR类型，length可以小于字段实际长度；
+        如果是BLOB和TEXT类型，必须指定length
+    
+    index_option:
+        KEY_BLOCK_SIZE [=] value
+      | index_type
+      | WITH PARSER parser_name
+      | COMMENT 'string'
+      | {VISIBLE | INVISIBLE}
+    
+    index_type:
+        USING {BTREE | HASH}
+        默认为BTREE
+        
+    algorithm_option:
+        ALGORITHM [=] {DEFAULT | INPLACE | COPY}
+    
+    lock_option:
+        LOCK [=] {DEFAULT | NONE | SHARED | EXCLUSIVE}
+    
     ```
 
     * alter方式
@@ -71,8 +122,31 @@ mysql索引一般使用的是Btree索引
     
 * 删除索引
     ```text
-    DROP INDEX 索引名 ON book;
+    DROP INDEX 索引名 ON 表名;
+    或
+    ALTER TABLE 表名 DROP INDEX 索引名;
     ```
+
+### 需要创建索引情况
+* 主键自动建立唯一索引
+* 频繁作为查询条件的字段、经常排序的字段，该字段应该创建索引
+* 查询中与其它表关联的字段，外键关系建立索引
+* 在高并发下，倾向建复合索引
+* 用于排序的字段
+* 查询中用于统计、分组的字段
+* 表数据行数300万以上，适合开始建索引
+
+### 不适合建索引的情况
+* 表行数不多，表行数<300万
+* 频繁增删改的表
+* 数据重复且分布比较平均的字段。如性别
+    ```text
+    字段的值重复率低的字段建索引效果更高
+    ```
+
+
+
+
 
 
 

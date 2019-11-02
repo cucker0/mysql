@@ -483,6 +483,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     (SELECT `name`, id FROM t2)
     ;
     ```
+    
     ![](../images/explain_case1.png)  
     1. id:4 第1执行(SELECT `name`, id FROM t2)，类型为UNION
     2. id:2 第2执行(SELECT id FROM t3), 类型为SUBQUERY
@@ -523,6 +524,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     ORDER BY views DESC
     LIMIT 0, 1;
     ```
+    
     ![](../images/explain_单表.png)  
     
     **观察与分析**  
@@ -546,6 +548,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     ORDER BY views DESC
     LIMIT 0, 1;
     ```
+    
     ![](../images/explain_单表2.png)  
     
     **观察与分析**  
@@ -578,6 +581,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     这种情况下效果却非常好
     */
     ```
+    
     ![](../images/explain_单表3.png)  
 
 
@@ -596,6 +600,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     ORDER BY views DESC
     LIMIT 0, 1;
     ```
+    
     ![](../images/explain_单表4.png)  
     
     **观察与分析**  
@@ -659,6 +664,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     LEFT OUTER JOIN class
     ON class.card = book.card;
     ```
+    
     ![](../images/explain_两表1.png)  
     
     **观察与分析**
@@ -677,6 +683,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     LEFT OUTER JOIN class
     ON class.card = book.card;
     ```
+    
     ![](../images/explain_两表2_1.png)  
     
     **观察与分析**  
@@ -693,6 +700,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     RIGHT OUTER JOIN class
     ON class.card = book.card;
     ```
+    
     ![](../images/explain_两表2_2.png)  
     
     **观察与分析**
@@ -715,6 +723,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     INNER JOIN class
     ON class.card = book.card;
     ```
+    
     ![](../images/explain_两表inner_join.png)  
     
     **观察与分析**  
@@ -738,6 +747,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     LEFT OUTER JOIN class
     ON class.card = book.card;
     ```
+    
     ![](../images/explain_两表3_1.png)  
     
     **观察与分析**  
@@ -754,6 +764,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     RIGHT OUTER JOIN class
     ON class.card = book.card;
     ```
+    
     ![](../images/explain_两表3_2.png)  
 
     **观察与分析**  
@@ -778,6 +789,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     INNER JOIN class
     ON class.card = book.card;
     ```
+    
     ![](../images/explain_两表3_inner_join.png)  
     
     **观察与分析**  
@@ -832,6 +844,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     LEFT OUTER JOIN phone p
     ON c.card = p.card;
     ```
+    
     ![](../images/explain_3表1.png)  
     
     **观察与分析**  
@@ -848,6 +861,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     INNER JOIN phone p
     ON c.card = p.card;
     ```
+    
     ![](../images/explain_3表1_2.png)  
     
 * 优化1：根据两表连接查询的分析结论，在从表上建索引
@@ -863,6 +877,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     LEFT OUTER JOIN phone p
     ON c.card = p.card;
     ```
+    
     ![](../images/explain_3表2.png)  
     
     **观察与分析**  

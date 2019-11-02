@@ -135,6 +135,7 @@ UNION
 
 -- 单表分析
 -- 
+DROP TABLE IF EXISTS article;
 CREATE TABLE IF NOT EXISTS article (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     author_id INT NOT NULL,
@@ -206,6 +207,13 @@ WHERE category_id = 1
     AND comments = 1
 ORDER BY views DESC
 LIMIT 0, 1;
+/*
+type为ref，
+ref为const, const常量, 
+rows为1
+Extra为Backward index scan
+这种情况下效果却非常好
+*/
 
 
 -- 继续优化，删除前面的索引，新建新的复合索引
@@ -363,6 +371,7 @@ FROM class
 INNER JOIN book
 ON class.card = book.card;
 
+-- 
 EXPLAIN
 SELECT *
 FROM book
@@ -463,8 +472,8 @@ ON c.card = p.card;
 * 尽可能减少join语句中的嵌套循环总次数
 * 永远用小结果集驱动大结果集，即在小结果集表的字段中建索引
 * 优先优化嵌套循环的内层循环
-* 保证join语句中被驱动表上join条件字段已经被索引
-* 当无法保证被驱动表的join条件字段被索引且内存资源充足的情况下，把join_buffer_size设置大点
+* 保证join语句中被驱动表上join条件字段已经被索引，被驱动的表为从表(结果集行数大的表)
+* 当无法保证被驱动表的join条件字段被索引且内存资源充足的情况下，把my.cnf配置文件中join_buffer_size设置大点
 
 
 */
@@ -489,4 +498,10 @@ SELECT * FROM staffs;
 
 
 ALTER TABLE staffs ADD INDEX idx_staffs_name_age_pos (NAME, age ,pos);
+
+
+
+
+
+
 

@@ -52,6 +52,11 @@ mysql索引一般使用的是Btree索引
 * 复合索引
     >一个索引包含多个列
 
+**复合索引示意图**  
+![](../images/复合索引示意图.png)  
+![](../images/复合索引示意图2.png)
+
+
 ### 索引类型
 * BTree索引
 * Hash索引
@@ -486,7 +491,235 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
 
 
 ## 索引优化
+### 单表分析
+* 表结构
+    ```mysql
+    CREATE TABLE IF NOT EXISTS article (
+        id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+        author_id INT NOT NULL,
+        category_id INT NOT NULL,
+        views INT NOT NULL,
+        comments INT NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        content TEXT NOT NULL
+    );
+    
+    
+    INSERT INTO article VALUES
+    (NULL, 1, 1, 10, 10, '三体', '用前沿科学对《三体》世界进行支撑，用烧脑理论让《三体》的意义进一步延伸。'),
+    (NULL, 2, 2, 20, 20, '登月使命', '这本书用文字、图片结合AR技术复现了人类登上月球的伟大旅程。'),
+    (NULL, 3, 3, 30, 30, '人类的未来', '大宇宙时代的到来，是我们人类必然会走的一个康庄大道，也是科技发展的一个重要的领域。');
+    
+    SELECT * FROM article;
+    ```
+* 查询需求：查询category_id为1，且comments >1的情况下，views最多的article_id, author_id
+* 未建索引情况下的查询
+    ```mysql
+    EXPLAIN
+    SELECT id, author_id
+    FROM article
+    WHERE category_id = 1
+        AND comments > 1
+    ORDER BY views DESC
+    LIMIT 0, 1;
+    ```
+    ![](../images/explain_单表.png)  
+    
+    **结论**  
+    ```text
+    type为ALL，最坏情况。
+    Extra中出现了Using filesort，也最坏的情况
+    ```
 
+* 优化1：创建复合索引index (category_id, comments, views)
+    ```mysql
+    CREATE INDEX  idx_article_category_id_comments_views ON article (category_id, comments, views);
+    
+    SHOW INDEX FROM article;
+    
+    -- case 1
+    EXPLAIN
+    SELECT id, author_id
+    FROM article
+    WHERE category_id = 1
+        AND comments > 1
+    ORDER BY views DESC
+    LIMIT 0, 1;
+    ```
+    ![](../images/explain_单表2.png)  
+    
+    **结论**  
+    ```text
+    type变成了range,这时可以忍受的。
+    但是Extra为Using filesort，这个情况任然很坏
+    
+    ## 问题：为什么建了索引没什么用呢
+    1. 这是因为表行数据先按category_id排序，
+    2. 在步骤1基础上，category_id相同的再按comments排序
+    3. 在步骤2基础上，comments相同的再按views排序
+    
+    但comments字段在符合索引里处于中间位置是，因为comments > 1 条件是一个范围(即range)
+    所以mysql无法利用索引再对后面的views进行检索，即range类型对应的查询字段后面的索引失效
+    ```
+    ```mysql
+    -- case 2
+    EXPLAIN
+    SELECT id, author_id
+    FROM article
+    WHERE category_id = 1
+    AND comments = 1
+    ORDER BY views DESC
+    LIMIT 0, 1;
+    /*
+    type为ref，
+    ref为const, const常量, 
+    rows为1
+    Extra为Backward index scan
+    这种情况下效果却非常好
+    */
+    ```
+    ![](../images/explain_单表3.png)  
+
+
+* 优化2：删除前面建的索引，新建复合索引index (category_id, views)
+    ```mysql
+    DROP INDEX idx_article_category_id_comments_views ON article;
+    ALTER TABLE article ADD INDEX (category_id, views);
+    
+    SHOW INDEX FROM article;
+    
+    EXPLAIN
+    SELECT id, author_id
+    FROM article
+    WHERE category_id = 1
+        AND comments > 1
+    ORDER BY views DESC
+    LIMIT 0, 1;
+    ```
+    ![](../images/explain_单表4.png)  
+    
+    **结论**  
+    ```text
+    type为ref
+    Extra为Using where; Backward index scan，已经没有Using filesort情况了
+    
+    这是一种非常理想的情况
+    ```
+
+### 两表分析
+* 表结构
+    ```mysql
+    DROP TABLE IF EXISTS class;
+    CREATE TABLE class (  -- 书类别表
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        card INT NOT NULL
+    );
+    
+    DROP TABLE IF EXISTS book;
+    CREATE TABLE book (  -- 书记录表
+        bookid INT PRIMARY KEY AUTO_INCREMENT,
+        card INT NOT NULL
+    );
+    
+    INSERT INTO class (card) VALUES
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20));
+    
+    INSERT INTO book (card) VALUES
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20));
+    ```
+
+* 查询需求：查询所有书对应的类别及其他信息
+* 未建索引情况下的查询
+    ```mysql
+    EXPLAIN
+    SELECT *
+    FROM book
+    LEFT OUTER JOIN class
+    ON class.card = book.card;
+    ```
+    ![](../images/explain_两表1.png)  
+    
+    **结论**
+    ```text
+    type均为ALL，不好
+    ```
+* 优化1：book表添加索引index (card)
+    ```mysql
+    ALTER TABLE book ADD INDEX idx_book_card(card);
+    SHOW INDEX FROM book;
+    
+    -- case1_1：book表左外连接class表
+    EXPLAIN
+    SELECT *
+    FROM book
+    LEFT OUTER JOIN class
+    ON class.card = book.card;
+    ```
+    ![](../images/explain_两表2_1.png)  
+    
+    **结论**  
+    ```text
+    book表的类型为index，Extra为Using index，rows为12行
+    class表的为ALL，Extra为Using where; Using join buffer (Block Nested Loop)
+    ```
+    
+    ```mysql
+    -- case1_2：book表右外连接class表
+    EXPLAIN
+    SELECT *
+    FROM book
+    RIGHT OUTER JOIN class
+    ON class.card = book.card;
+    ```
+    ![](../images/explain_两表2_2.png)  
+    
+    **结论**
+    ```text
+    book表的类型为ref，比上面的查询更好一些，Extra为Using index，rows为1行
+    class表的为ALL，Extra为NULL
+    ```  
+
+    ```mysql
+    -- 内连接
+    EXPLAIN
+    SELECT *
+    FROM class
+    INNER JOIN book
+    ON class.card = book.card;
+    
+    EXPLAIN
+    SELECT *
+    FROM book
+    INNER JOIN class
+    ON class.card = book.card;
+    ```
+    ![](../images/explain_两表inner_join.png)  
+    
+
+    
+## 索引失效
 
 
 

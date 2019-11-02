@@ -322,6 +322,7 @@ FROM class
 INNER JOIN book
 ON class.card = book.card;
 
+-- 
 EXPLAIN
 SELECT *
 FROM book
@@ -351,9 +352,9 @@ SELECT *
 FROM book
 LEFT OUTER JOIN class
 ON class.card = book.card;
-# 结论
+# 观察结果
 /*
-book表的类型为ref，比上面的查询更好一些，Extra为Using index，rows为1行
+book表的类型为ref，效果不错，Extra为Using index，rows为1行
 class表的为ALL，Extra为NULL
 */
 
@@ -363,6 +364,12 @@ SELECT *
 FROM book
 RIGHT OUTER JOIN class
 ON class.card = book.card;
+
+# 观察结果
+/*
+book表的类型为index，Extra为Using index，rows为12行
+class表的为ALL，Extra为Using where; Using join buffer (Block Nested Loop)
+*/
 
 --
 EXPLAIN
@@ -378,16 +385,11 @@ FROM book
 INNER JOIN class
 ON class.card = book.card;
 
-# 结论
-/*
-book表的类型为index，Extra为Using index，rows为12行
-class表的为ALL，Extra为Using where; Using join buffer (Block Nested Loop)
-*/
 
 
 # 两表连接查询总结
 /*
-对于左外连接、有外连接查询，在连接条件的字段建索引，把索引建在从表上性能更好。
+对于左外连接、右外连接查询，在连接条件的字段建索引，把索引建在从表上性能更好。
 因为从表值查询相同部分的行，主表查询所有行。
 用行数少的表驱动大表，即在行数少的表上建索引效果更好
 

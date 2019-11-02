@@ -491,7 +491,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
 
 
 ## 索引优化
-### 单表分析
+### 单表查询分析
 * 表结构
     ```mysql
     CREATE TABLE IF NOT EXISTS article (
@@ -525,7 +525,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     ```
     ![](../images/explain_单表.png)  
     
-    **结论**  
+    **观察与分析**  
     ```text
     type为ALL，最坏情况。
     Extra中出现了Using filesort，也最坏的情况
@@ -548,7 +548,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     ```
     ![](../images/explain_单表2.png)  
     
-    **结论**  
+    **观察与分析**  
     ```text
     type变成了range,这时可以忍受的。
     但是Extra为Using filesort，这个情况任然很坏
@@ -598,7 +598,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     ```
     ![](../images/explain_单表4.png)  
     
-    **结论**  
+    **观察与分析**  
     ```text
     type为ref
     Extra为Using where; Backward index scan，已经没有Using filesort情况了
@@ -606,7 +606,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     这是一种非常理想的情况
     ```
 
-### 两表分析
+### 两表连接查询分析
 * 表结构
     ```mysql
     DROP TABLE IF EXISTS class;
@@ -661,7 +661,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     ```
     ![](../images/explain_两表1.png)  
     
-    **结论**
+    **观察与分析**
     ```text
     type均为ALL，不好
     ```
@@ -679,7 +679,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     ```
     ![](../images/explain_两表2_1.png)  
     
-    **结论**  
+    **观察与分析**  
     ```text
     book表的类型为index，Extra为Using index，rows为12行
     class表的为ALL，Extra为Using where; Using join buffer (Block Nested Loop)
@@ -695,7 +695,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     ```
     ![](../images/explain_两表2_2.png)  
     
-    **结论**
+    **观察与分析**
     ```text
     book表的类型为ref，比上面的查询更好一些，Extra为Using index，rows为1行
     class表的为ALL，Extra为NULL
@@ -717,8 +717,175 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     ```
     ![](../images/explain_两表inner_join.png)  
     
-
+    **观察与分析**  
+    ```text
+    book表的type为ref，Extra为Using index，rows为1行，key为idx_book_card，ref为testdb.class.card
+    class表的为ALL，rows为12行，其他为NULL
+    ```
     
+* 优化2：只在class表添加索引
+    ```mysql
+    DROP INDEX idx_book_card ON book;
+    
+    ALTER TABLE class ADD INDEX idx_class_card (card);
+    SHOW INDEX FROM book;
+    SHOW INDEX FROM class;
+    
+    -- case2_1：book表左外连接class表
+    EXPLAIN
+    SELECT *
+    FROM book
+    LEFT OUTER JOIN class
+    ON class.card = book.card;
+    ```
+    ![](../images/explain_两表3_1.png)  
+    
+    **观察与分析**  
+    ```text
+    class表的类型为ref，Extra为Using index，rows为1行
+    book表的为ALL，Extra为NULL
+    ```
+    
+    ```mysql
+    -- case2_2：book表右外连接class表
+    EXPLAIN
+    SELECT *
+    FROM book
+    RIGHT OUTER JOIN class
+    ON class.card = book.card;
+    ```
+    ![](../images/explain_两表3_2.png)  
+
+    **观察与分析**  
+    ```text
+    class表的类型为index，Extra为Using index，rows为12行
+    book表的为ALL，Extra为Using where; Using join buffer (Block Nested Loop)
+    ```
+    
+    ```mysql
+    -- case2_3：内连接
+    --
+    EXPLAIN
+    SELECT *
+    FROM class
+    INNER JOIN book
+    ON class.card = book.card;
+    
+    -- 
+    EXPLAIN
+    SELECT *
+    FROM book
+    INNER JOIN class
+    ON class.card = book.card;
+    ```
+    ![](../images/explain_两表3_inner_join.png)  
+    
+    **观察与分析**  
+    ```text
+    class表的type为ref，Extra为Using index，rows为1行，key为idx_class_card，ref为testdb.book.card
+    book表的为ALL，rows为12行，其他为NULL
+    ```
+
+#### 两表join连接查询优化总结
+```text
+对于左外连接、右外连接查询，把连接条件的字段建为索引，且把索引建在从表上性能更好。对于内连接无此差别
+因为从表值只查询两表相同部分的行，主表查询所有行。
+用行数少的表驱动大表，即在行数少的表上建索引效果更好
+```
+
+### 三表连接查询分析
+* 表结构
+    ```mysql
+    -- 两表连接查询分析的表结构下，再加一张表，删除class、book表建的索引
+    CREATE TABLE phone (
+        phoneid INT PRIMARY KEY AUTO_INCREMENT,
+        card INT NOT NULL
+    );
+    
+    INSERT INTO phone (card) VALUES
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20)),
+    (CEIL(RAND() * 20));
+    
+    -- 把 class、book表的索引都删除
+    DROP INDEX idx_class_card ON class;
+    DROP INDEX idx_book_card ON book;
+    ```
+
+* 查询需求：查询所有书对应的类别、手机号对应类别的所有连接信息
+* 未建索引情况下的查询
+    ```mysql
+    EXPLAIN
+    SELECT *
+    FROM class c
+    LEFT OUTER JOIN book b
+    ON c.card = b.card
+    LEFT OUTER JOIN phone p
+    ON c.card = p.card;
+    ```
+    ![](../images/explain_3表1.png)  
+    
+    **观察与分析**  
+    ```text
+    class、book、phone三张表的type均为ALL，非常差
+    ```
+    
+    ```mysql
+    EXPLAIN
+    SELECT *
+    FROM class c
+    INNER JOIN book b
+    ON c.card = b.card
+    INNER JOIN phone p
+    ON c.card = p.card;
+    ```
+    ![](../images/explain_3表1_2.png)  
+    
+* 优化1：根据两表连接查询的分析结论，在从表上建索引
+    ```mysql
+    ALTER TABLE book ADD INDEX idx_book_card (card);
+    ALTER TABLE phone ADD INDEX idx_phone_card (card);
+    
+    EXPLAIN
+    SELECT *
+    FROM class c
+    LEFT OUTER JOIN book b
+    ON c.card = b.card
+    LEFT OUTER JOIN phone p
+    ON c.card = p.card;
+    ```
+    ![](../images/explain_3表2.png)  
+    
+    **观察与分析**  
+    ```text
+    表book、phone的type都为ref,rows都为1, Extra都为Using index
+    优化良好，效果不错。
+    
+    索引要建在经常查询的字段中
+    ```
+
+#### 三表join连接查询优化总结
+```text
+* 尽可能减少join语句中的嵌套循环总次数
+
+* 永远用小结果集驱动大结果集，即在小结果集表的字段中建索引
+
+* 优先优化嵌套循环的内层循环
+
+* 保证join语句中被驱动表上join条件字段已经被索引，被驱动的表为从表(结果集行数大的表)
+
+* 当无法保证被驱动表的join条件字段被索引且内存资源充足的情况下，把my.cnf配置文件中join_buffer_size设置大点
+```
+
 ## 索引失效
 
 

@@ -506,11 +506,11 @@ ALTER TABLE staffs ADD INDEX idx_staffs_name_age_pos (NAME, age ,pos);
 
 SHOW INDEX FROM staffs;
 
--- 情况1
+-- 情况1_1
 EXPLAIN
 SELECT * FROM staffs WHERE `name` = 'July';
 
--- 情况2
+-- 情况1_2
 EXPLAIN
 SELECT * 
 FROM staffs 
@@ -518,7 +518,7 @@ WHERE `name` = 'July'
 AND age = 23
 ;
 
--- 情况3
+-- 情况1_3
 EXPLAIN
 SELECT * FROM staffs
 WHERE `name` = 'July'
@@ -526,7 +526,9 @@ AND age = 23
 AND pos = 'dev'
 ;
 
--- 情况4
+
+
+-- 情况2_1
 EXPLAIN
 SELECT *
 FROM staffs
@@ -534,14 +536,14 @@ WHERE age = 23
 AND pos = 'dev'
 ;
     
--- 情况5
+-- 情况2_2
 EXPLAIN
 SELECT *
 FROM staffs
 WHERE pos = 'dev'
 ;
 
--- 情况6
+-- 情况2_3
 EXPLAIN
 SELECT *
 FROM staffs
@@ -551,8 +553,173 @@ AND pos = 'dev'
 
 -- 观察与分析
 /*
-使用了索引的一部分，即name
+使用了索引的name字段，age、pos字段没有使用到
 */
+
+
+-- 情况3_1
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` = 'July'
+;
+/*
+同情况1_1
+*/
+
+-- 情况3_2
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE LEFT(`name`, 4) = 'July'
+;
+
+/*
+LEFT(str, len)
+取字符串str左边len个字符
+
+函数导致索引失效
+
+*/
+
+
+-- 情况3_3
+-- 数值转字符串
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` = '33'
+AND age = 23
+;
+
+
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` = 33
+AND age = 23
+;
+/*
+`name` = 33中，name字段为字符型，33数值转换成字符串
+索引失效
+*/
+
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` = 'July'
+AND age = '23'
+;
+/*
+age = '23'，'23'字符串转数值，仍使用上了索引name、age字段
+*/
+
+-- 情况4_1
+EXPLAIN
+SELECT * 
+FROM staffs
+WHERE `name` = 'z3'
+AND age = 11
+AND pos = 'manager'
+;
+
+-- vs
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` = 'z3'
+AND age > 11
+AND pos = 'manager'
+;
+
+/*
+观察与分析
+索引用到了name、age字段
+没有用到pos字段
+*/
+
+-- 情况5
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` = 'July'
+AND age = 23
+AND pos = 'dev'
+;
+/*
+同情况1_3
+*/
+
+-- 5_2
+EXPLAIN
+SELECT `name`, age, pos
+FROM staffs
+WHERE `name` = 'July'
+AND age = 23
+AND pos = 'dev'
+;
+
+-- 5_3
+EXPLAIN
+SELECT `name`, age, pos
+FROM staffs
+WHERE `name` = 'July'
+AND age > 23
+AND pos = 'dev'
+;
+
+-- vs
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` = 'July'
+AND age > 23
+AND pos = 'dev'
+;
+
+
+-- 5_4
+EXPLAIN
+SELECT `name`, age, pos
+FROM staffs
+WHERE `name` = 'July'
+AND age = 23
+;
+
+--
+EXPLAIN
+SELECT pos
+FROM staffs
+WHERE `name` = 'July'
+AND age = 23
+;
+
+EXPLAIN
+SELECT pos, age
+FROM staffs
+WHERE `name` = 'July'
+AND age = 23
+;
+
+EXPLAIN
+SELECT `name`
+FROM staffs
+WHERE `name` = 'July'
+AND age = 23
+;
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

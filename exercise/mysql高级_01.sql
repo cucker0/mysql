@@ -446,9 +446,7 @@ ON c.card = p.card;
 
 -- 优化1：在从表book、phone中建的索引在关联字段上
 ALTER TABLE book ADD INDEX idx_book_card (card);
-
 ALTER TABLE phone ADD INDEX idx_phone_card (card);
-
 
 EXPLAIN
 SELECT *
@@ -481,6 +479,11 @@ ON c.card = p.card;
 */
 
 
+-- 索引失效分析
+-- 
+
+USE testdb;
+
 -- 员工表
 CREATE TABLE staffs (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -498,10 +501,58 @@ INSERT INTO staffs (`name`, age, pos, add_time) VALUES
 
 SELECT * FROM staffs;
 
-
+-- 建索引
 ALTER TABLE staffs ADD INDEX idx_staffs_name_age_pos (NAME, age ,pos);
 
+SHOW INDEX FROM staffs;
 
+-- 情况1
+EXPLAIN
+SELECT * FROM staffs WHERE `name` = 'July';
+
+-- 情况2
+EXPLAIN
+SELECT * 
+FROM staffs 
+WHERE `name` = 'July'
+AND age = 23
+;
+
+-- 情况3
+EXPLAIN
+SELECT * FROM staffs
+WHERE `name` = 'July'
+AND age = 23
+AND pos = 'dev'
+;
+
+-- 情况4
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE age = 23
+AND pos = 'dev'
+;
+    
+-- 情况5
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE pos = 'dev'
+;
+
+-- 情况6
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` = 'July'
+AND pos = 'dev'
+;
+
+-- 观察与分析
+/*
+使用了索引的一部分，即name
+*/
 
 
 

@@ -588,7 +588,7 @@ LEFT(str, len)
 EXPLAIN
 SELECT *
 FROM staffs
-WHERE `name` = '33'
+WHERE `name` = '2000'
 AND age = 23
 ;
 
@@ -596,11 +596,11 @@ AND age = 23
 EXPLAIN
 SELECT *
 FROM staffs
-WHERE `name` = 33
+WHERE `name` = 2000
 AND age = 23
 ;
 /*
-`name` = 33中，name字段为字符型，33数值转换成字符串
+`name` = 2000中，name字段为字符型，2000数值转换成字符串
 索引失效
 */
 
@@ -923,12 +923,7 @@ FROM tbl_user
 WHERE `name` LIKE '%aa%'
 ;
 
-EXPLAIN
-SELECT `name`, id, age
-FROM tbl_user
-WHERE `name` LIKE '%aa%'
-;
-
+-- 补充
 EXPLAIN
 SELECT `name`, age, id
 FROM tbl_user
@@ -936,12 +931,19 @@ WHERE `name` LIKE '%aa%'
 ;
 
 EXPLAIN
+SELECT `name`, id, age
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+
+EXPLAIN
 SELECT age, id, `name`
 FROM tbl_user
 WHERE `name` LIKE '%aa%'
 ;
 /*
-8_5_2_1, 8_5_2_6以及后面3个示例
+8_5_2_1, 8_5_2_6以及后面补充的示例
 
 以上皆为覆盖索引的应用
 type为index，key为idx_tbl_user__name_age，Extra为Using where; Using index
@@ -971,11 +973,54 @@ type为ALL，key为NULL，Extra为Using where
 
 
 
+/*
+解决like'%字符串%'索引不被使用问题的方法
+
+1、可以使用主键索引
+2、使用覆盖索引，查询字段必须是建立覆盖索引字段
+3、当覆盖索引指向的字段是varchar(380)及380以上的字段时，覆盖索引会失效！
+*/
 
 
 
+-- 情况9：字符串类型值不加单引号索引失效 
+-- 
+/*
+见情况3_3
+*/
 
 
 
+-- 情况10
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` = 'July'
+OR `name` = 'z3'
+;
+/*
+-- 与情况1_1对比
 
+情况1_1：type为ref
 
+mysql 8中
+type为range，Extra为Using index condition，使用到了索引，比情况1_1要稍差
+
+在mysql 5.7 及以下版中
+type为ALL，key为NULL，说明为全表扫描，没有使用到索引
+*/
+
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` = 'July'
+OR `name` = 'z3' 
+AND age > 18
+;
+/*
+mysql 8:
+type为range，Extra为Using index condition，使用到了索引(name,age字段)
+
+mysql 5.7
+type为ALL，key为NULL，说明为全表扫描，没有使用到索引
+*/

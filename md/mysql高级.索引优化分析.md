@@ -387,6 +387,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
  
     此情况的性能不错
     ```
+    <span id = "covering_index"></span>
     * covering index覆盖索引
         ```text
         select的数据只用从索引中就能够得到，不必去读取数据行。
@@ -495,7 +496,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     4. id:(NULL) 最后执行，合并id 1 与id 4的结果集，类型为UNION RESULT
 
 
-## 索引优化
+## 连接查询索引优化
 ### 单表查询分析
 * 表结构
     ```mysql
@@ -905,11 +906,270 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
 * 当无法保证被驱动表的join条件字段被索引且内存资源充足的情况下，把my.cnf配置文件中join_buffer_size设置大点
 ```
 
-## 索引失效
+## 索引失效案例
+测试示例表结构如下，添加数据，并建立索引 idx_staffs_name_age_pos (name, age ,pos)
+
+```mysql
+-- 员工表
+CREATE TABLE staffs (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    `name` VARCHAR(24) NOT NULL DEFAULT '' COMMENT '姓名',
+    age INT NOT NULL DEFAULT 1 COMMENT '年龄',
+    pos VARCHAR(20) NOT NULL DEFAULT '' COMMENT '职位',
+    add_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '入职时间'
+) CHARSET utf8 COMMENT '员工表';
+
+
+INSERT INTO staffs (`name`, age, pos, add_time) VALUES
+('z3', 22, 'manager', NOW()),
+('July', 23,'dev', NOW()),
+('2000', 23,'dev', NOW());
+
+SELECT * FROM staffs;
+
+
+-- 建索引
+ALTER TABLE staffs ADD INDEX idx_staffs_name_age_pos (`name`, age ,pos);
+
+SHOW INDEX FROM staffs;
+```
+
+### 全值匹配我最爱
+* 情况1_1
+    ```mysql
+    -- 情况1_1
+    EXPLAIN
+    SELECT * FROM staffs WHERE `name` = 'July';
+    ```
+    ![](../images/索引失效测试1_1.png)  
+    使用到索引name字段
+    
+* 情况1_2
+    ```mysql
+    -- 情况1_2
+    EXPLAIN
+    SELECT * 
+    FROM staffs 
+    WHERE `name` = 'July'
+    AND age = 23
+    ;
+    ```
+    ![](../images/索引失效测试1_2.png)  
+    使用到索引name,age字段
+    
+* 情况1_3
+    ```mysql
+    -- 情况1_3
+    EXPLAIN
+    SELECT * FROM staffs
+    WHERE `name` = 'July'
+    AND age = 23
+    AND pos = 'dev'
+    ;
+    ```
+    ![](../images/索引失效测试1_3.png)  
+    使用到索引name,age,pos字段
+
+### 最佳左前缀法则
+```text
+如果索引了多例，要遵守最左前缀法则。
+指的是查询从索引的最左前列开始并且不跳过索引中的列。
+```
+
+* 情况2_1
+    ```mysql
+    -- 情况2_1
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE age = 23
+    AND pos = 'dev'
+    ;
+    ```
+    ![](../images/索引失效测试2_1,2.png)  
+    **观察与分析**
+    ```
+    type为ALL，key为NULL，全表扫描，未使用到索引，因为没有用索引的主要字段name
+    ```
+
+* 情况2_2
+    ```mysql
+    -- 情况2_2
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE pos = 'dev'
+    ;
+    ``` 
+    ![](../images/索引失效测试2_1,2.png)  
+    **观察与分析**
+    ```
+    type为ALL，key为NULL，全表扫描，未使用到索引，因为没有用索引的主要字段name
+    ```
+    
+* 情况2_3
+    ```mysql
+    -- 情况2_3
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` = 'July'
+    AND pos = 'dev'
+    ;
+    ``` 
+    ![](../images/索引失效测试2_3.png)  
+    **观察与分析**
+    ```
+    使用了索引的name字段，age、pos字段没有使用到
+    ```
+
+### 不在索引列上做任何操作
+```text
+在索引列上做操作如：计算、函数、类型转换(自动or手动)，
+会导致索引失效而转向全表扫描
+```
+
+* 情况3_1
+[同情况1_1](#全值匹配我最爱)
+    ```mysql
+    -- 情况3_1
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` = 'July'
+    ;
+    ```
+
+* 情况3_2
+    ```mysql
+    -- 情况3_2
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE LEFT(`name`, 4) = 'July'
+    ;
+    ```
+    ![](../images/索引失效测试3_2.png)  
+    **观察与分析**
+    ```text
+    LEFT(str, len)
+    取字符串str左边len个字符
+    
+    函数导致索引失效
+    ```
+
+* 情况3_3
+    ```mysql
+    -- 情况3_3
+    -- 数值转字符串
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` = '2000'
+    AND age = 23
+    ;
+    /*
+    使用上了索引
+    */
+    ```
+    ![](../images/索引失效测试3_3_1,3.png)  
+    
+    ```text
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` = 2000
+    AND age = 23
+    ;
+    /*
+    `name` = 2000中，name字段为字符型，2000数值转换成字符串
+    索引失效
+    */
+    ```
+    ![](../images/索引失效测试3_3_2.png)  
+
+    ```mysql
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` = 'July'
+    AND age = '23'
+    ;
+    /*
+    age = '23'，'23'字符串转数值，仍使用上了索引name、age字段
+    */
+    ```
+    ![](../images/索引失效测试3_3_1,3.png)  
+
+
+### 索引范围条件右边的索引列失效
+```mysql
+-- 情况4_1
+EXPLAIN
+SELECT * 
+FROM staffs
+WHERE `name` = 'z3'
+AND age = 11
+AND pos = 'manager'
+;
+
+-- vs
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` = 'z3'
+AND age > 11
+AND pos = 'manager'
+;
+```
+
+**观察与分析**  
+```text
+索引用到了name、age字段
+没有用到pos字段
+```
+
+### 尽量使用覆盖索引
+查询字段尽量使用索引的字段，多使用[覆盖索引](#covering_index)，少用select *
 
 
 
 
 
 
+
+
+
+
+
+
+
+
+### 避免索引失效优化小结
+```text
+假设为表创建了索引index (a, b, c)
+```
+
+where语句 |索引是否有被使用 |备注 
+:--- |:--- |:--- 
+where a = 3 | 是，使用到a |
+where a = 3 and b = 5 | 是，使用到了a,b |
+where a = 3 and b = 5 and c = 4 | 是，使用到了a,b,c |
+where b = 3 <br>或where b = 3 and c = 4 <br>或where c = 4 | 否，都没有使用到索引 |
+where a  = 3 and c = 5 | 是，使用部分索引字段，使用到了a，<br>字段b中断了 |
+where a = 3 and b > 4 and c = 5 | 是，使用部分索引字段，使用到了a,b， <br>到字段b这中断了，因为b为范围 |`>, <, <=, >=, between A and B为范围`
+where a = 3 and b like 'kk%' and c = 4 | 是，使用到了a,b,c |kk% 相当于 常量
+where a = 3 and b like '%kk' and c = 4 | 是，只用到了a |%kk 相当于 范围
+where a = 3 and b like '%kk%' and c = 4 | 是，只用到了a |%kk% 相当于 范围
+where a = 3 and b like 'k%kk%' and c = 4 | 是，使用到了a,b,c |k%kk% 相当于 常量
+
+### 优化小总结口诀
+```text
+全值匹配我最爱，最左前缀要遵守；
+带头大哥不能死，中间兄弟不能断；
+索引列上少计算，范围之后全失效；
+like % 写最右，覆盖索引不写星；
+不等null值还有or，索引失效要少用；
+字符类型引号不可丢，SQL高级也不难！
+```
 

@@ -347,3 +347,4 @@ MySQL核心技术
 * 其他
     * [NavicatPremium客户端工具](md/NavicatPremium.md)
     * [SQLYog客户端工具](md/SQLYog.md)
+    * [MySQL、PostgreSQL 、Oracle在线资料](https://www.techonthenet.com/mysql/index.php)

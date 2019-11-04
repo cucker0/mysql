@@ -387,7 +387,8 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
  
     此情况的性能不错
     ```
-    <span id = "covering_index"></span>
+    <span id = "covering_index"> </span>
+    
     * covering index覆盖索引
         ```text
         select的数据只用从索引中就能够得到，不必去读取数据行。

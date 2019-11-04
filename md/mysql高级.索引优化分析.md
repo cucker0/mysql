@@ -387,7 +387,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
  
     此情况的性能不错
     ```
-    <span id = "covering_index"> </span>
+    <span id = "covering_index"></span>
     
     * covering index覆盖索引
         ```text

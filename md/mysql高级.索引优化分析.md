@@ -347,11 +347,10 @@ UNCACHEABLE UNION |union中的第二个或者后面的不能被缓存的子查�
 实际使用的索引。
 NULL：没有使用索引
 
-索引字段包含(覆盖)查询select的所有字段，则使用了覆盖索引
-
 要想强制MySQL使用或不使用possible_keys列中的索引，
 在查询中使用FORCE INDEX、USE INDEX或者IGNORE INDEX。
 ```
+索引字段包含(覆盖)查询select的所有字段，则使用了[覆盖索引](#covering_index)
 
 #### key_len
 ```text
@@ -957,7 +956,8 @@ SHOW INDEX FROM staffs;
     ```
     ![](../images/索引失效测试1_2.png)  
     使用到索引name,age字段
-    
+
+<span id = "情况1_3"></span>
 * 情况1_3
     ```mysql
     -- 情况1_3
@@ -1069,26 +1069,28 @@ SHOW INDEX FROM staffs;
     WHERE `name` = '2000'
     AND age = 23
     ;
-    /*
-    使用上了索引
-    */
     ```
     ![](../images/索引失效测试3_3_1,3.png)  
+    使用上了索引
     
-    ```text
-    EXPLAIN
-    SELECT *
-    FROM staffs
-    WHERE `name` = 2000
-    AND age = 23
-    ;
-    /*
-    `name` = 2000中，name字段为字符型，2000数值转换成字符串
-    索引失效
-    */
-    ```
-    ![](../images/索引失效测试3_3_2.png)  
-
+    * 字符型值没有加引号，类型转换后，索引失效
+        <span id = "类型转换索引失效"></span>
+        ```text
+        EXPLAIN
+        SELECT *
+        FROM staffs
+        WHERE `name` = 2000
+        AND age = 23
+        ;
+        ```
+        ![](../images/索引失效测试3_3_2.png)  
+        
+        **观察与分析**  
+        ```text
+        `name` = 2000中，name字段为字符型，2000数值转换成字符串
+        索引失效
+        ```
+    
     ```mysql
     EXPLAIN
     SELECT *
@@ -1096,12 +1098,13 @@ SHOW INDEX FROM staffs;
     WHERE `name` = 'July'
     AND age = '23'
     ;
-    /*
-    age = '23'，'23'字符串转数值，仍使用上了索引name、age字段
-    */
     ```
     ![](../images/索引失效测试3_3_1,3.png)  
-
+    
+    **观察与分析**  
+    ```text
+    age = '23'，'23'字符串转数值，仍使用上了索引name、age字段
+    ```
 
 ### 索引范围条件右边的索引列失效
 ```mysql
@@ -1133,18 +1136,491 @@ AND pos = 'manager'
 ### 尽量使用覆盖索引
 查询字段尽量使用索引的字段，多使用[覆盖索引](#covering_index)，少用select *
 
+* 情况5_1
+    ```mysql
+    -- 情况5
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` = 'July'
+    AND age = 23
+    AND pos = 'dev'
+    ;
+    ```
+    [同情况1_3](#情况1_3)  
+
+* 情况5_2
+    ```mysql
+    -- 5_2
+    EXPLAIN
+    SELECT `name`, age, pos
+    FROM staffs
+    WHERE `name` = 'July'
+    AND age = 23
+    AND pos = 'dev'
+    ;
+    ```
+    ![](../images/索引失效测试5_2.png)  
+    **观察与分析**  
+    ```text
+    相对于情况1_3更好，使用到了索引，type为ref，关键是Extra为Using index
+    ```
+    
+* 情况5_3
+    ```mysql
+    -- 5_3
+    EXPLAIN
+    SELECT `name`, age, pos
+    FROM staffs
+    WHERE `name` = 'July'
+    AND age > 23
+    AND pos = 'dev'
+    ;
+    
+    -- vs
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` = 'July'
+    AND age > 23
+    AND pos = 'dev'
+    ;
+    ```
+    ![](../images/索引失效测试5_3.png)  
+    -- vs  
+    ![](../images/索引失效测试5_3_2.png)  
+    **观察与分析**  
+    ```text
+    前者更优，因为Extra为Using index
+    ```
+    
+* 情况5_4
+    ```mysql
+    -- 5_4
+    EXPLAIN
+    SELECT `name`, age, pos
+    FROM staffs
+    WHERE `name` = 'July'
+    AND age = 23
+    ;
+    
+    --
+    EXPLAIN
+    SELECT pos
+    FROM staffs
+    WHERE `name` = 'July'
+    AND age = 23
+    ;
+    
+    EXPLAIN
+    SELECT pos, age
+    FROM staffs
+    WHERE `name` = 'July'
+    AND age = 23
+    ;
+    
+    EXPLAIN
+    SELECT `name`
+    FROM staffs
+    WHERE `name` = 'July'
+    AND age = 23
+    ;
+    ```
+    以上均使用了覆盖索引，计划分析结果均为：
+    ![](../images/索引失效测试5_4_1,2,3,4.png)  
 
 
+### 使用不等于(!=或者<>)的时索引失效导致全表扫描
+* 情况6_1
+    ```text
+    -- 6_1
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` = 'July'
+    ;
+    ```
+    [同情况1_1](全值匹配我最爱)  
+
+* 情况6_2
+    ```mysql
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` != 'July'
+    ;
+    
+    --
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` <> 'July'
+    ;
+    ```
+    ![](../images/索引失效测试6_2.png)
+    
+    **观察与分析**  
+    ```text
+    两种写法是一个意思
+    
+    mysql 8: 
+    type为range, rows为2行，Extra为Using index condition
+    
+    mysql 5.7: 
+    type为ALL，
+    ```
 
 
+### is null、is not null无法使用索引
+* 情况7_1
+    ```mysql
+    -- 7_1
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` IS NULL
+    ;
+    ```
+    ![](../images/索引失效测试7_1.png)
+
+* 情况7_2
+    ```mysql
+    -- 7_2
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` IS NOT NULL
+    ;
+    ```
+    ![](../images/索引失效测试7_2.png)
 
 
+### like以通配符开头，索引失效导致全表扫描
+* 情况8_1
+    ```mysql
+    -- 8_1
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` = 'July'
+    ;
+    ```
+    [同情况1_1](全值匹配我最爱)   
+
+* 情况8_2
+    ```mysql
+    -- 8_2
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` LIKE '%July%'
+    ;
+    --
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` LIKE '_July_'
+    ;
+    ```
+
+* 情况8_3
+    ```mysql
+    -- 8_3
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` LIKE '%July'
+    ;
+    
+    --
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` LIKE '_July'
+    ;
+    ```
+    ![](../images/索引失效测试8_2,3.png)  
+    
+    **观察与分析**  
+    ```text
+    情况8_2、情况8_3结果相同
+    type为ALL，全表扫描，key为NULL没有使用索引，Extra为Using where
+    ```
+
+* 情况8_4
+    ```mysql
+    -- 8_4
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` LIKE 'July%'
+    ;
+    --
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` LIKE 'July_'
+    ;
+    ```
+    ![](../images/索引失效测试8_4.png)  
+    
+    **观察与分析**  
+    ```text
+    type为range，使用到了索引，Extra为Using index condition
+    ```
+
+### 解决like '%字符串%' 索引失效方法
+表结果
+```mysql
+-- 8_5
+CREATE TABLE tbl_user (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    `name` VARCHAR(20),
+    age INT DEFAULT 1,
+    email VARCHAR(20)
+);
 
 
+INSERT INTO tbl_user(`name`, age, email) VALUES
+('1aa1', 21, 'a@163.com'),
+('2aa2', 22, 'b@163.com'),
+('3aa3', 23, 'c@163.com'),
+('4aa4', 21, 'd@163.com');
+```
 
 
+#### 情况8_5_1: 未建索引
+    ```mysql
+    -- 8_5_1_1
+    EXPLAIN
+    SELECT id
+    FROM tbl_user
+    WHERE `name` LIKE '%aa%'
+    ;
+    
+    -- 8_5_1_2
+    EXPLAIN
+    SELECT `name`
+    FROM tbl_user
+    WHERE `name` LIKE '%aa%'
+    ;
+    
+    -- 8_5_1_3
+    EXPLAIN
+    SELECT age
+    FROM tbl_user
+    WHERE `name` LIKE '%aa%'
+    ;
+    
+    -- 
+    -- 8_5_1_4
+    EXPLAIN
+    SELECT id, `name`
+    FROM tbl_user
+    WHERE `name` LIKE '%aa%'
+    ;
+    
+    -- 8_5_1_5
+    EXPLAIN
+    SELECT id, `name`, age
+    FROM tbl_user
+    WHERE `name` LIKE '%aa%'
+    ;
+    
+    -- 8_5_1_6
+    EXPLAIN
+    SELECT `name`, age
+    FROM tbl_user
+    WHERE `name` LIKE '%aa%'
+    ;
+    
+    -- 
+    -- 8_5_1_7
+    EXPLAIN
+    SELECT *
+    FROM tbl_user
+    WHERE `name` LIKE '%aa%'
+    ;
+    
+    -- 8_5_1_8
+    EXPLAIN
+    SELECT id, `name`, age, email
+    FROM tbl_user
+    WHERE `name` LIKE '%aa%'
+    ;
+    ```
+    ![](../images/索引失效测试8_5_1_all.png)  
+    **观察与分析**  
+    以上查询的分析结果相同，均为全表扫描，无索引  
+    
+#### 情况8_5_2: 建立索引，index (name, age)
+```mysql
+-- 8_5_2: 建立索引，index (name, age)
+ALTER TABLE tbl_user ADD INDEX idx_tbl_user__name_age(`name`, age);
+SHOW INDEX FROM tbl_user;
+```
+
+* 覆盖索引
+    ```mysql
+    -- 8_5_2_1
+    EXPLAIN
+    SELECT id
+    FROM tbl_user
+    WHERE `name` LIKE '%aa%'
+    ;
+    
+    -- 8_5_2_2
+    EXPLAIN
+    SELECT `name`
+    FROM tbl_user
+    WHERE `name` LIKE '%aa%'
+    ;
+    
+    -- 8_5_2_3
+    EXPLAIN
+    SELECT age
+    FROM tbl_user
+    WHERE `name` LIKE '%aa%'
+    ;
+    
+    -- 
+    -- 8_5_2_4
+    EXPLAIN
+    SELECT id, `name`
+    FROM tbl_user
+    WHERE `name` LIKE '%aa%'
+    ;
+    
+    -- 8_5_2_5
+    EXPLAIN
+    SELECT id, `name`, age
+    FROM tbl_user
+    WHERE `name` LIKE '%aa%'
+    ;
+    
+    -- 8_5_2_6
+    EXPLAIN
+    SELECT `name`, age
+    FROM tbl_user
+    WHERE `name` LIKE '%aa%'
+    ;
+    
+    -- 补充
+    EXPLAIN
+    SELECT `name`, age, id
+    FROM tbl_user
+    WHERE `name` LIKE '%aa%'
+    ;
+    
+    EXPLAIN
+    SELECT `name`, id, age
+    FROM tbl_user
+    WHERE `name` LIKE '%aa%'
+    ;
+    
+    
+    EXPLAIN
+    SELECT age, id, `name`
+    FROM tbl_user
+    WHERE `name` LIKE '%aa%'
+    ;
+    ```
+    ![](../images/索引失效测试8_5_2_1,6.png)  
+    ```text
+    8_5_2_1 至 8_5_2_6以及后面补充的示例
+    
+    以上皆为覆盖索引的应用
+    type为index，key为idx_tbl_user__name_age，Extra为Using where; Using index
+    
+    为什么查询中包含id字段，也使用到了覆盖索引，因为id为primary key，可以通过索引查找到
+    ```
+
+* 超出覆盖索引
+    ```mysql
+    -- 8_5_2_7
+    EXPLAIN
+    SELECT *
+    FROM tbl_user
+    WHERE `name` LIKE '%aa%'
+    ;
+    
+    -- 8_5_2_8
+    EXPLAIN
+    SELECT id, `name`, age, email
+    FROM tbl_user
+    WHERE `name` LIKE '%aa%'
+    ;
+    ```
+    ![](../images/索引失效测试8_5_2_7,8.png)  
+    
+    **观察分析**  
+    ```text
+    8_5_2_7, 8_5_2_8
+    type为ALL，key为NULL，Extra为Using where
+    没有使用到索引，因为查询的字段多出了email字段
+    ```
 
 
+#### 解决like'%字符串%'索引不被使用问题的方法小结
+```text
+1、可以使用主键索引
+2、使用覆盖索引，查询字段必须是建立覆盖索引字段
+3、当覆盖索引指向的字段是varchar(380)及380以上的字段时，覆盖索引会失效！
+```
+
+
+### 字符串不加单引号索引失效
+[见情况3_3](#类型转换索引失效)
+
+
+### 少用or，用它连接时索引失效
+* 情况10_1
+    ```mysql
+    -- 情况10
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` = 'July'
+    OR `name` = 'z3'
+    ;
+    ```
+    mysql 8  
+    ![](../images/索引失效测试10_1(mysql8).png)  
+    
+    -- mysql 5.7
+    ![](../images/索引失效测试10_(mysql5.7).png)  
+    
+    **观察与分析**  
+    -- 与情况1_1对比  
+    [情况1_1](#全值匹配我最爱)：type为ref
+    ```text
+    mysql 8中
+    type为range，Extra为Using index condition，使用到了索引，比情况1_1要稍差
+    
+    在mysql 5.7 及以下版中
+    type为ALL，key为NULL，说明为全表扫描，没有使用到索引
+    ```
+
+* 情况10_2
+    ```mysql
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` = 'July'
+    OR `name` = 'z3' 
+    AND age > 18
+    ;
+    ```
+    ![](../images/索引失效测试10_2(mysql8).png)  
+    
+    **观察与分析**  
+    ```text
+    mysql 8:
+    type为range，Extra为Using index condition，使用到了索引(name,age字段)
+    
+    mysql 5.7
+    type为ALL，key为NULL，说明为全表扫描，没有使用到索引
+    ```
 
 ### 避免索引失效优化小结
 ```text

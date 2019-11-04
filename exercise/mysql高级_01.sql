@@ -502,7 +502,7 @@ INSERT INTO staffs (`name`, age, pos, add_time) VALUES
 SELECT * FROM staffs;
 
 -- 建索引
-ALTER TABLE staffs ADD INDEX idx_staffs_name_age_pos (NAME, age ,pos);
+ALTER TABLE staffs ADD INDEX idx_staffs_name_age_pos (`name`, age ,pos);
 
 SHOW INDEX FROM staffs;
 
@@ -710,10 +710,264 @@ AND age = 23
 
 
 
+-- 情况6
+-- 6_1
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` = 'July'
+;
+/*
+同情况1_1
+*/
+
+
+-- vs
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` != 'July'
+;
+
+--
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` <> 'July'
+;
+/*
+观察与分析
+后面两种写法是一个意思
+type为range, rows为2行，Extra为Using index condition
+*/
+
+
+-- 情况7
+-- 7_1
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` IS NULL
+;
+
+-- 7_2
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` IS NOT NULL
+;
+
+
+-- 情况8
+-- 8_1
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` = 'July'
+;
+/*
+同情况1_1
+*/
+
+-- 8_2
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` LIKE '%July%'
+;
+
+-- 8_3
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` LIKE '%July'
+;
+/*
+8_2,3
+
+type为ALL，全表扫描，key为NULL没有使用索引，Extra为Using where
+*/
+
+-- 8_4
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` LIKE 'July%'
+;
+/*
+type为range，使用到了索引，Extra为Using index condition
+*/
+
+
+-- 8_5
+CREATE TABLE tbl_user (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    `name` VARCHAR(20),
+    age INT DEFAULT 1,
+    email VARCHAR(20)
+);
+
+
+INSERT INTO tbl_user(`name`, age, email) VALUES
+('1aa1', 21, 'a@163.com'),
+('2aa2', 22, 'b@163.com'),
+('3aa3', 23, 'c@163.com'),
+('4aa4', 21, 'd@163.com');
+
+-- 8_5_1: 未建索引
+-- 8_5_1_1
+EXPLAIN
+SELECT id
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+-- 8_5_1_2
+EXPLAIN
+SELECT `name`
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+-- 8_5_1_3
+EXPLAIN
+SELECT age
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+-- 
+-- 8_5_1_4
+EXPLAIN
+SELECT id, `name`
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+-- 8_5_1_5
+EXPLAIN
+SELECT id, `name`, age
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+-- 8_5_1_6
+EXPLAIN
+SELECT `name`, age
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+-- 
+-- 8_5_1_7
+EXPLAIN
+SELECT *
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+-- 8_5_1_8
+EXPLAIN
+SELECT id, `name`, age, email
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+
+-- 8_5_2: 建立索引，index (name, age)
+ALTER TABLE tbl_user ADD INDEX idx_tbl_user__name_age(`name`, age);
+SHOW INDEX FROM tbl_user;
 
 
 
+-- 8_5_2_1
+EXPLAIN
+SELECT id
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
 
+-- 8_5_2_2
+EXPLAIN
+SELECT `name`
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+-- 8_5_2_3
+EXPLAIN
+SELECT age
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+-- 
+-- 8_5_2_4
+EXPLAIN
+SELECT id, `name`
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+-- 8_5_2_5
+EXPLAIN
+SELECT id, `name`, age
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+-- 8_5_2_6
+EXPLAIN
+SELECT `name`, age
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+EXPLAIN
+SELECT `name`, id, age
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+EXPLAIN
+SELECT `name`, age, id
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+EXPLAIN
+SELECT age, id, `name`
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+/*
+8_5_2_1, 8_5_2_6以及后面3个示例
+
+以上皆为覆盖索引的应用
+type为index，key为idx_tbl_user__name_age，Extra为Using where; Using index
+
+为什么查询中包含id字段，也使用到了覆盖索引，因为id为primary key，可以通过索引查找到
+*/
+
+-- 
+-- 8_5_2_7
+EXPLAIN
+SELECT *
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+-- 8_5_2_8
+EXPLAIN
+SELECT id, `name`, age, email
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+/*
+8_5_2_7, 8_5_2_8
+type为ALL，key为NULL，Extra为Using where
+没有使用到索引，因为查询的字段多出了email字段
+*/
 
 
 

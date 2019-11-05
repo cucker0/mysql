@@ -55,8 +55,16 @@ mysql索引一般使用的是Btree索引
     >一个索引包含多个列
 
 **复合索引示意图**  
+```text
+ALTER TABLE area_map ADD INDEX idx_area_map__province_city_stat (province, city, stat); 
+idx_area_map__province_city_stat (province, city, stat)
+province 为索引主要字段
+city 为索引次要字段2
+stat 为索引次要字段3
+```
+![](../images/area_map索引.png)  
 ![](../images/复合索引示意图.png)  
-![](../images/复合索引示意图2.png)
+![](../images/复合索引示意图2.png)  
 
 
 ### 索引类型
@@ -155,7 +163,7 @@ mysql索引一般使用的是Btree索引
     ```
 
 
-## mysql性能分析
+## mysql性能分析和相关指标
 * 内置的Optimizer优化器
     ```text
     mysql内置有Optimizer sql优化器，主要功能：通过计算分析系统中收集到的统计信息，
@@ -235,7 +243,7 @@ UNCACHEABLE UNION |union中的第二个或者后面的不能被缓存的子查�
 * `<unionM,N>`: M行和N行结果的union
 * `<derivedN>`: 派生自N行的结果
 * `<subqueryN>`: 引用N行的物化的子查询
-#### partitions
+
 #### type
 * system
     ```text
@@ -333,15 +341,20 @@ UNCACHEABLE UNION |union中的第二个或者后面的不能被缓存的子查�
     ```text
     全表扫描，来找到匹配的行
     ```
-**性能从好到差：system > const > eq_ref > ref > range > index > ALL**  
-**一般来说，把查询优化到range级别，最好达到ref**
+##### type性能比较 
+* 性能从好到差
+```text
+system > const > eq_ref > ref > range > index > ALL
+```
+* 一般来说，把查询优化到range级别，最好达到ref
 
 #### possible_keys
-    ```text
-    显示可能应用在这张表中的索引,一个或多个。
-    查询涉及的字段上若存在索引，则该索引将被列出，
-    但不一定被查询实际使用
-    ```
+```text
+显示可能应用在这张表中的索引,一个或多个。
+查询涉及的字段上若存在索引，则该索引将被列出，
+但不一定被查询实际使用
+```
+
 #### key
 ```text
 实际使用的索引。
@@ -374,7 +387,8 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
 
 1. Using filesort
     ```text
-    未使用表内的索引进行排序，而是使用索引外的字段进行排序
+    未使用表内的索引进行排序。
+    索引是已经对表数据排好序，正是因为使用不到索引，所以只好另外再对表数据进行一次临时排序
     
     发生Using filesort情况，性能是相当的！
     ```
@@ -432,6 +446,14 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     ```text
     优化Distinct，在找到第一个匹配的行之后，它将停止搜索与当前行相同的值
         ```  
+
+##### Extra性能比较
+```text
+优先比较type性能。
+在type值相同的情况下，从上往下，性能由差到好，最差的为Using temporary，
+
+一般出现Using temporary、Using filesort需要特别注意，考虑优化
+```
 
 ### explain示例
 * 表结构
@@ -1230,7 +1252,7 @@ AND pos = 'manager'
     ![](../images/索引失效测试5_4_1,2,3,4.png)  
 
 
-### 使用不等于(!=或者<>)的时索引失效导致全表扫描
+### 使用不等于(!=或者<>)时索引失效导致全表扫描
 * 情况6_1
     ```text
     -- 6_1
@@ -1257,7 +1279,11 @@ AND pos = 'manager'
     WHERE `name` <> 'July'
     ;
     ```
-    ![](../images/索引失效测试6_2.png)
+    mysql 8  
+    ![](../images/索引失效测试6_2(mysql8).png)
+    
+    mysql 5.7  
+    ![](../images/索引失效测试6_2(mysql5.7).png)
     
     **观察与分析**  
     ```text
@@ -1267,7 +1293,7 @@ AND pos = 'manager'
     type为range, rows为2行，Extra为Using index condition
     
     mysql 5.7: 
-    type为ALL，
+    type为ALL，key为NULL，没有使用到索引
     ```
 
 
@@ -1369,7 +1395,7 @@ AND pos = 'manager'
     type为range，使用到了索引，Extra为Using index condition
     ```
 
-### 解决like '%字符串%' 索引失效方法
+### 解决like '%字符串%' 索引失效方法:覆盖索引
 表结果
 ```mysql
 -- 8_5
@@ -1583,17 +1609,26 @@ SHOW INDEX FROM tbl_user;
     WHERE `name` = 'July'
     OR `name` = 'z3'
     ;
+
+    -- 
+    EXPLAIN
+    SELECT *
+    FROM staffs
+    WHERE `name` IN ('July', 'z3')
+    ;
     ```
     mysql 8  
     ![](../images/索引失效测试10_1(mysql8).png)  
     
     -- mysql 5.7
-    ![](../images/索引失效测试10_(mysql5.7).png)  
+    ![](../images/索引失效测试10_1(mysql5.7).png)  
     
     **观察与分析**  
     -- 与情况1_1对比  
     [情况1_1](#全值匹配我最爱)：type为ref
     ```text
+    以上两语句在mysql 8、mysql 5.7中的分析结果一样  
+  
     mysql 8中
     type为range，Extra为Using index condition，使用到了索引，比情况1_1要稍差
     
@@ -1611,8 +1646,11 @@ SHOW INDEX FROM tbl_user;
     AND age > 18
     ;
     ```
+    mysql 8
     ![](../images/索引失效测试10_2(mysql8).png)  
     
+    mysql 5.7
+    ![](../images/索引失效测试10_2(mysql5.7).png)  
     **观察与分析**  
     ```text
     mysql 8:
@@ -1622,7 +1660,32 @@ SHOW INDEX FROM tbl_user;
     type为ALL，key为NULL，说明为全表扫描，没有使用到索引
     ```
 
-### 避免索引失效优化小结
+* 情况10_3
+```mysql
+EXPLAIN
+SELECT `name`, age
+FROM staffs
+WHERE `name` = 'July'
+OR `name` = 'z3'
+;
+
+-- 
+EXPLAIN
+SELECT `name`, age
+FROM staffs
+WHERE `name` IN ('July', 'z3')
+;
+```
+![](../images/索引失效测试10_3.png)  
+**观察与分析**  
+```text
+mysql 8、mysql 5.7结果相同
+type为range，key为idx_staffs_name_age_pos，Extra为Using where; Using index
+
+所有使用OR或IN的情况下，使用覆盖索引来避免索引失效
+```
+
+### 索引案例小结
 ```text
 假设为表创建了索引index (a, b, c)
 ```
@@ -1640,7 +1703,7 @@ where a = 3 and b like '%kk' and c = 4 | 是，只用到了a |%kk 相当于 范�
 where a = 3 and b like '%kk%' and c = 4 | 是，只用到了a |%kk% 相当于 范围
 where a = 3 and b like 'k%kk%' and c = 4 | 是，使用到了a,b,c |k%kk% 相当于 常量
 
-### 优化小总结口诀
+### 索引优化小总结口诀
 ```text
 全值匹配我最爱，最左前缀要遵守；
 带头大哥不能死，中间兄弟不能断；

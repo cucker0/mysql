@@ -80,6 +80,9 @@ SELECT province, city, stat, postcode
 FROM area_map
 ORDER BY province, city, stat;
 
+ALTER TABLE area_map ADD INDEX idx_area_map__province_city_stat (province, city, stat); 
+
+SHOW INDEX FROM area_map;
 
 -- explain分析sql语句
 EXPLAIN
@@ -992,11 +995,19 @@ type为ALL，key为NULL，Extra为Using where
 
 
 -- 情况10
+-- 情况10_1
 EXPLAIN
 SELECT *
 FROM staffs
 WHERE `name` = 'July'
 OR `name` = 'z3'
+;
+
+--
+EXPLAIN
+SELECT *
+FROM staffs
+WHERE `name` IN ('July', 'z3')
 ;
 /*
 -- 与情况1_1对比
@@ -1010,6 +1021,7 @@ type为range，Extra为Using index condition，使用到了索引，比情况1_1
 type为ALL，key为NULL，说明为全表扫描，没有使用到索引
 */
 
+-- 情况10_2
 EXPLAIN
 SELECT *
 FROM staffs
@@ -1024,3 +1036,26 @@ type为range，Extra为Using index condition，使用到了索引(name,age字段
 mysql 5.7
 type为ALL，key为NULL，说明为全表扫描，没有使用到索引
 */
+
+-- 情况10_3
+EXPLAIN
+SELECT `name`, age
+FROM staffs
+WHERE `name` = 'July'
+OR `name` = 'z3'
+;
+
+-- 
+EXPLAIN
+SELECT `name`, age
+FROM staffs
+WHERE `name` IN ('July', 'z3')
+;
+/*
+mysql 8、mysql 5.7结果相同
+type为range，key为idx_staffs_name_age_pos，Extra为Using where; Using index
+
+
+所有使用OR或IN的情况下，使用覆盖索引来避免索引失效
+*/
+

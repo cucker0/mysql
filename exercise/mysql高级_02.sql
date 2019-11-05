@@ -39,17 +39,20 @@ EXPLAIN SELECT * FROM test03 WHERE c1 = 'a1' AND c2 = 'a2' AND c3 = 'a3' AND c4 
 
 -- 
 -- 2
-EXPLAIN SELECT * FROM test03
+EXPLAIN 
+SELECT * FROM test03
 WHERE c1 = 'a1' AND c2 = 'a2' AND c4 = 'a4' AND c3 = 'a3';
 
-EXPLAIN SELECT * FROM test03
+EXPLAIN 
+SELECT * FROM test03
 WHERE c4 = 'a4' AND c3 = 'a3' AND c2 = 'a2' AND c1 = 'a1';
 /*
 以上两个SQL语句，会被mysql的Optimizer优化器优化，把顺序调整为与索引字段顺序一致的查询语句
 */
 
 -- 3
-EXPLAIN SELECT * FROM test03
+EXPLAIN 
+SELECT * FROM test03
 WHERE c1 = 'a1' AND c2 = 'a2' AND c3 > 'a3' AND c4 = 'a4';
 /*
 使用到了索引c1,c2,c3
@@ -63,7 +66,8 @@ WHERE c1 = 'a1' AND c2 = 'a2' AND c4 > 'a4' AND c3 = 'a3';
 */
 
 -- 5
-EXPLAIN SELECT * FROM test03
+EXPLAIN 
+SELECT * FROM test03
 WHERE c1 = 'a1' AND c2 = 'a2' AND c4 = 'a4'
 ORDER BY c3;
 /*
@@ -79,7 +83,8 @@ ORDER BY c3;
 */
 
 -- 7
-EXPLAIN SELECT * FROM test03
+EXPLAIN 
+SELECT * FROM test03
 WHERE c1 = 'a1' AND c2 = 'a2'
 ORDER BY c4;
 /*
@@ -94,11 +99,12 @@ WHERE c1 = 'a1' AND c5 = 'a5'
 ORDER BY c2, c3;
 /*
 用到了索引c1，另外c2, c3使用索引排序，
-type为ref，ref为const，Extra为Using where;
+type为ref，ref为const，Extra为Using where
 */
 
 -- 8_2
-EXPLAIN SELECT * FROM test03
+EXPLAIN 
+SELECT * FROM test03
 WHERE c1 = 'a1' AND c5 = 'a5'
 ORDER BY c3, c2;
 /*
@@ -107,10 +113,75 @@ type为ref，ref为const，Extra为Using where; Using filesort，做了一次临
 */
 
 
--- 9
+-- 9_1
 EXPLAIN SELECT * FROM test03
 WHERE c1 = 'a1' AND c2 = 'a2'
 ORDER BY c2, c3;
 
+-- 9_2
+EXPLAIN
+SELECT * FROM test03
+WHERE c1 = 'a1' AND c2 = 'a2' AND c5 = 'c5'
+ORDER BY c2, c3;
+/*
+都用到了c1,c2索引，c2, c3用于排序，没有出现Using filesort
+*/
+
+-- 10
+-- 10_1
+EXPLAIN
+SELECT * FROM test03
+WHERE c1 = 'a1' AND c2 = 'a2' AND c5 = 'c5'
+ORDER BY c3, c2;
+/*
+用到了索引c1,c2，
+type为ref，ref为const,const，Extra为Using where
+
+这里为什么没有出现Using filesort呢？
+这里主要是因为 c2 = 'a2'是一个const常量，既然只有一个常量，那么c2就无需排序了
+ORDER BY c3, c2最终优化为ORDER BY c3
+
+如果c2不是常量，如下面的示例
+*/
+
+-- 10_2
+EXPLAIN
+SELECT * FROM test03
+WHERE c1 = 'a1' AND c2 > 'a2' AND c5 = 'c5'
+ORDER BY c3, c2;
+/*
+用了索引c1,c2
+type为range，Extra为Using index condition; Using where; Using filesort
+这种情况下生产了Using filesort
+*/
+-- 与8_2的对比
+
+
+-- 11_1
+EXPLAIN
+SELECT COUNT(*) FROM test03
+WHERE c1 = 'a1' AND c4 = 'a4'
+GROUP BY c2, c3;
+/*
+用到了索引c1，
+type为ref，Extra为Using where; Using index
+*/
+
+-- 11_2
+EXPLAIN
+SELECT COUNT(*) FROM test03
+WHERE c1 = 'a1' AND c4 = 'a4'
+GROUP BY c3, c2;
+/*
+mysql 8
+用到了索引c1，
+type为ref，Extra为Using where; Using index; Using temporary
+产生了Using temporary临时表
+
+mysql 5.7
+用到了索引c1，
+type为ref，Extra为Using where; Using index; Using temporary; Using filesort
+产生了Using temporary临时表、Using filesort排序
+*/
 
 

@@ -1416,68 +1416,68 @@ INSERT INTO tbl_user(`name`, age, email) VALUES
 
 
 #### 情况8_5_1: 未建索引
-    ```mysql
-    -- 8_5_1_1
-    EXPLAIN
-    SELECT id
-    FROM tbl_user
-    WHERE `name` LIKE '%aa%'
-    ;
-    
-    -- 8_5_1_2
-    EXPLAIN
-    SELECT `name`
-    FROM tbl_user
-    WHERE `name` LIKE '%aa%'
-    ;
-    
-    -- 8_5_1_3
-    EXPLAIN
-    SELECT age
-    FROM tbl_user
-    WHERE `name` LIKE '%aa%'
-    ;
-    
-    -- 
-    -- 8_5_1_4
-    EXPLAIN
-    SELECT id, `name`
-    FROM tbl_user
-    WHERE `name` LIKE '%aa%'
-    ;
-    
-    -- 8_5_1_5
-    EXPLAIN
-    SELECT id, `name`, age
-    FROM tbl_user
-    WHERE `name` LIKE '%aa%'
-    ;
-    
-    -- 8_5_1_6
-    EXPLAIN
-    SELECT `name`, age
-    FROM tbl_user
-    WHERE `name` LIKE '%aa%'
-    ;
-    
-    -- 
-    -- 8_5_1_7
-    EXPLAIN
-    SELECT *
-    FROM tbl_user
-    WHERE `name` LIKE '%aa%'
-    ;
-    
-    -- 8_5_1_8
-    EXPLAIN
-    SELECT id, `name`, age, email
-    FROM tbl_user
-    WHERE `name` LIKE '%aa%'
-    ;
-    ```
-    ![](../images/索引失效测试8_5_1_all.png)  
-    **观察与分析**  
-    以上查询的分析结果相同，均为全表扫描，无索引  
+```mysql
+-- 8_5_1_1
+EXPLAIN
+SELECT id
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+-- 8_5_1_2
+EXPLAIN
+SELECT `name`
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+-- 8_5_1_3
+EXPLAIN
+SELECT age
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+-- 
+-- 8_5_1_4
+EXPLAIN
+SELECT id, `name`
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+-- 8_5_1_5
+EXPLAIN
+SELECT id, `name`, age
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+-- 8_5_1_6
+EXPLAIN
+SELECT `name`, age
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+-- 
+-- 8_5_1_7
+EXPLAIN
+SELECT *
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+
+-- 8_5_1_8
+EXPLAIN
+SELECT id, `name`, age, email
+FROM tbl_user
+WHERE `name` LIKE '%aa%'
+;
+```
+![](../images/索引失效测试8_5_1_all.png)  
+**观察与分析**  
+以上查询的分析结果相同，均为全表扫描，无索引  
     
 #### 情况8_5_2: 建立索引，index (name, age)
 ```mysql
@@ -1713,3 +1713,298 @@ like % 写最右，覆盖索引不写星；
 字符类型引号不可丢，SQL高级也不难！
 ```
 
+
+## 索引使用示例
+* 表结构和索引
+```mysql
+-- 表结构
+CREATE TABLE test03 (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    c1 CHAR(10),
+    c2 CHAR(10),
+    c3 CHAR(10),
+    c4 CHAR(10),
+    c5 CHAR(10)
+);
+
+INSERT INTO test03 (c1, c2, c3, c4, c5) VALUES
+('a1', 'a2', 'a3', 'a4', 'a5'),
+('b1', 'b2', 'b3', 'b4', 'b5'),
+('c1', 'c2', 'c3', 'c4', 'c5'),
+('d1', 'd2', 'd3', 'd4', 'd5'),
+('e1', 'e2', 'e3', 'e4', 'e5');
+
+SELECT * FROM test03;
+
+-- 创建索引
+ALTER TABLE test03 ADD INDEX idx_test03_c1_c2_c3_c4 (c1, c2, c3, c4);
+SHOW INDEX FROM test03;
+```
+
+### 根据上面创建的索引idx_test03_c1_c2_c3_c4 (c1, c2, c3, c4), 分析以下SQL语句使用索引的情况
+* 情况1
+    ```mysql
+    -- 1
+    EXPLAIN SELECT * FROM test03 WHERE c1 = 'a1';
+    -- 用到了索引c1
+    
+    EXPLAIN SELECT * FROM test03 WHERE c1 = 'a1' AND c2 = 'a2';
+    -- 用到了索引c1,c2
+    
+    EXPLAIN SELECT * FROM test03 WHERE c1 = 'a1' AND c2 = 'a2' AND c3 = 'a3';
+    -- 用到了索引c1,c2,c3
+    
+    EXPLAIN SELECT * FROM test03 WHERE c1 = 'a1' AND c2 = 'a2' AND c3 = 'a3' AND c4 = 'a4';
+    -- 用到了索引c1,c2,c3,c4
+    ```
+    ![](../images/索引使用示例1.png)  
+
+
+* 情况2
+    ```mysql
+    -- 2
+    EXPLAIN 
+    SELECT * FROM test03
+    WHERE c1 = 'a1' AND c2 = 'a2' AND c4 = 'a4' AND c3 = 'a3';
+    
+    -- 
+    EXPLAIN 
+    SELECT * FROM test03
+    WHERE c4 = 'a4' AND c3 = 'a3' AND c2 = 'a2' AND c1 = 'a1';
+    ```
+    ![](../images/索引使用示例2.png)  
+    
+    **观察与分析**  
+    ```text
+    以上两个SQL语句，会被mysql的Optimizer优化器优化，把顺序调整为与索引字段顺序一致的查询语句
+    ```
+    
+* 情况3
+    ```mysql
+    -- 3
+    EXPLAIN 
+    SELECT * FROM test03
+    WHERE c1 = 'a1' AND c2 = 'a2' AND c3 > 'a3' AND c4 = 'a4';
+    ```
+    ![](../images/索引使用示例3.png)  
+    
+    **观察与分析**  
+    ```text
+    使用到了索引c1,c2,c3
+    ```
+* 情况4
+    ```mysql
+    -- 4
+    EXPLAIN SELECT * FROM test03
+    WHERE c1 = 'a1' AND c2 = 'a2' AND c4 > 'a4' AND c3 = 'a3';
+    /*
+    使用到了索引c1,c2,c3,c4，Optimizer优化器进行了SQL优化
+    */
+    ```
+    ![](../images/索引使用示例4.png)  
+    
+    **观察与分析**  
+    ```text
+    使用到了索引c1,c2,c3,c4，Optimizer优化器进行了SQL优化
+    c3 = 'a3'是一常量，这样c1 = 'a1' AND c2 = 'a2' AND c4 > 'a4' AND c3 = 'a3' 等价于
+    c1 = 'a1' AND c2 = 'a2' AND c3 = 'a3' AND c4 > 'a4';
+    ```
+
+* 情况5
+    ```mysql
+    -- 5
+    EXPLAIN 
+    SELECT * FROM test03
+    WHERE c1 = 'a1' AND c2 = 'a2' AND c4 = 'a4'
+    ORDER BY c3;
+    ```
+    ![](../images/索引使用示例5.png)  
+    
+    **观察与分析**  
+    ```text
+    使用到了索引c1,c2,另外c3用于排序而非查找, Extra为Using index condition
+    ```
+
+* 情况6
+    ```mysql
+    -- 6
+    EXPLAIN SELECT * FROM test03
+    WHERE c1 = 'a1' AND c2 = 'a2'
+    ORDER BY c3;
+    /*
+    使用到了索引c1,c2,另外c3用于排序而非查找
+    */
+    ```
+    ![](../images/索引使用示例6.png)  
+    
+    **观察与分析**  
+    ```text
+    使用到了索引c1,c2,另外c3用于排序而非查找
+    ```
+
+* 情况7
+    ```mysql
+    -- 7
+    EXPLAIN 
+    SELECT * FROM test03
+    WHERE c1 = 'a1' AND c2 = 'a2'
+    ORDER BY c4;
+    ```
+    ![](../images/索引使用示例7.png)  
+    
+    **观察与分析**  
+    ```text
+    type为ref,使用到了索引c1,c2，
+    Extra为Using filesort
+    ```
+* 情况8_1
+    ```mysql
+    -- 8_1
+    EXPLAIN SELECT * FROM test03
+    WHERE c1 = 'a1' AND c5 = 'a5'
+    ORDER BY c2, c3;
+    ```
+    ![](../images/索引使用示例8_1.png)  
+    
+    **观察与分析**  
+    ```text
+    用到了索引c1，另外c2, c3使用索引排序，
+    type为ref，ref为const，Extra为Using where
+    ```
+
+<span id = "索引使用示例情况8_2"></span>
+* 情况8_2
+    ```mysql
+    -- 8_2
+    EXPLAIN 
+    SELECT * FROM test03
+    WHERE c1 = 'a1' AND c5 = 'a5'
+    ORDER BY c3, c2;
+    ```
+    ![](../images/索引使用示例8_1.png)  
+    
+    **观察与分析**  
+    ```text
+    使用到了索引c1，另外c3, c2排序没有用到索引，因为索引列的顺序为c1,c2,c3,c4，而ORDER BY c2, c3没有按照索引列顺序，所以排序时索引失效了
+    type为ref，ref为const，Extra为Using where; Using filesort，做了一次临时排序(filesort)
+    ```
+
+* 情况9_1
+    ```mysql
+    -- 9_1
+    EXPLAIN SELECT * FROM test03
+    WHERE c1 = 'a1' AND c2 = 'a2'
+    ORDER BY c2, c3;
+    ``` 
+    ![](../images/索引使用示例9_1.png) 
+
+* 情况9_2
+    ```mysql
+    -- 9_2
+    EXPLAIN
+    SELECT * FROM test03
+    WHERE c1 = 'a1' AND c2 = 'a2' AND c5 = 'c5'
+    ORDER BY c2, c3;
+    /*
+    都用到了c1,c2索引，c2, c3用于排序，没有出现Using filesort
+    */
+    ```
+    ![](../images/索引使用示例9_2.png)  
+    
+    **观察与分析**  
+    ```text
+    情况9_1、情况9_2，都用到了c1,c2索引，c2, c3用于排序，没有出现Using filesort
+    ```
+
+* 情况10_1
+    ```mysql
+    -- 10_1
+    EXPLAIN
+    SELECT * FROM test03
+    WHERE c1 = 'a1' AND c2 = 'a2' AND c5 = 'c5'
+    ORDER BY c3, c2;
+    ```
+    ![](../images/索引使用示例10_1.png)  
+    
+    **观察与分析**  
+    ```text
+    用到了索引c1,c2，
+    type为ref，ref为const,const，Extra为Using where
+    
+    这里为什么没有出现Using filesort呢？
+    ==================================
+    这里主要是因为 c2 = 'a2'是一个const常量，既然只有一个常量，那么c2就无需排序了
+    ORDER BY c3, c2最终优化为ORDER BY c3
+    如果c2不是常量，如下面的示例
+    ```
+
+* 情况10_2
+    ```mysql
+    -- 10_2
+    EXPLAIN
+    SELECT * FROM test03
+    WHERE c1 = 'a1' AND c2 > 'a2' AND c5 = 'c5'
+    ORDER BY c3, c2;
+    ```
+    ![](../images/索引使用示例10_2.png)  
+    
+    **观察与分析**  
+    ```text
+    用了索引c1,c2
+    type为range，Extra为Using index condition; Using where; Using filesort
+    这种情况下生产了Using filesort
+    ```
+    [与8_2的对比](#索引使用示例情况8_2)  
+
+* 情况11_1
+    ```mysql
+    -- 11_1
+    EXPLAIN
+    SELECT COUNT(*) FROM test03
+    WHERE c1 = 'a1' AND c4 = 'a4'
+    GROUP BY c2, c3;
+    ```
+    ![](../images/索引使用示例11_1.png)  
+    
+    **观察与分析**  
+    ```text
+    用到了索引c1，
+    type为ref，Extra为Using where; Using index
+    ```    
+
+* 情况11_2
+    ```mysql
+    -- 11_2
+    EXPLAIN
+    SELECT COUNT(*) FROM test03
+    WHERE c1 = 'a1' AND c4 = 'a4'
+    GROUP BY c3, c2;
+    ```
+    mysql 8
+    ![](../images/索引使用示例11_2(mysql8).png)  
+    
+    mysql 5.7
+    ![](../images/索引使用示例11_2(mysql5.7).png)  
+    
+    **观察与分析**  
+    ```text
+    mysql 8
+    用到了索引c1，
+    type为ref，Extra为Using where; Using index; Using temporary
+    产生了Using temporary临时表
+    
+    mysql 5.7
+    用到了索引c1，
+    type为ref，Extra为Using where; Using index; Using temporary; Using filesort
+    产生了Using temporary临时表、Using filesort排序
+    ``` 
+
+### 小结
+* where定值或范围条件，order by指定按哪些字段排序
+* group by大多需要进行排序，会产生临时表
+
+## 索引优化一般性建议
+* 对于单键索引，尽量选择针对当前query过滤性更好的索引
+* 使用择组合索引的时，索引字段顺序中越靠左越好的字段过滤性能越好
+* 使用择组合索引的时，尽量使用覆盖索引，即尽量都用索引中的字段作变查询字段
+* 尽可能通过分析统计信息和调整query的写法来达到选择合适索引的目的

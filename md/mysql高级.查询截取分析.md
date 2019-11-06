@@ -69,7 +69,7 @@ index效率 > filesort效率
 
 因为
 index: 只扫描索引完成排序 
-filesort: 扫描表数据完成排序
+filesort: 通过扫描表数据完成排序
 ```
 
 * 表结构
@@ -113,8 +113,8 @@ filesort: 扫描表数据完成排序
     ![](../images/order_by_1_1.png)  
     **观察与分析**  
     ```text
-    排序方式：
-    Extra为
+    排序方式：index
+    Extra为Using where; Using index
     用到了索引age,birth
     ```
 * 情况1_2
@@ -128,8 +128,8 @@ filesort: 扫描表数据完成排序
     ![](../images/order_by_1_2.png)  
     **观察与分析**  
     ```text
-    排序方式：
-    Extra为
+    排序方式：index
+    Extra为Using where; Using index
     用到了索引age,birth
     ```
 <span id = "order_by_1_3"></span>
@@ -144,8 +144,8 @@ filesort: 扫描表数据完成排序
     ![](../images/order_by_1_3.png)  
     **观察与分析**  
     ```text
-    排序方式：
-    Extra为
+    排序方式：index、filesort
+    Extra为Using where; Using index; Using filesort
     用到了索引age,birth
     ```
 * 情况1_4
@@ -159,8 +159,8 @@ filesort: 扫描表数据完成排序
     ![](../images/order_by_1_4.png)  
     **观察与分析**  
     ```text
-    排序方式：
-    Extra为
+    排序方式：index、filesort
+    Extra为Using where; Using index; Using filesort
     用到了索引age,birth
     ```
 * 情况2_1
@@ -233,9 +233,64 @@ filesort: 扫描表数据完成排序
 以下任意一种情况
 ```
 * order by语句满足索引最佳左前缀法则(索引最左前列)
-* 使用where子句与order by子句条件组合满足索引最佳左前缀法则
+* order by子句条件与where子句字段组合满足索引最佳左前缀法则
 
+### filesort排序的两种算法
+* 双路排序算法
+* 单路排序算法
 
+#### 双路排序算法
+```text
+MySQL 4.1之前是使用双路排序，需要两次扫描磁盘，最终得到数据。
+读取行指针和order by列，对他们进行排序，然后扫描已经排序好的列表，
+按照列表中的值重新从列表中读取对应的数据传输
+```
+
+```text
+第一次IO：从磁盘取排序字段，在buffer进行排序，
+第二次IO：然后以buffer中的顺序，再从磁盘取其他字段。
+IO是比较耗时的
+```
+
+#### 单路算法
+```text
+从磁盘读取查询需要的所有列，按照order by列在buffer对它们进行排序，然后扫描buffer中排序后的列表进行输出，
+它的效率更快一些，避免了第二次读取数据，并且把随机IO变成顺序IO，
+但是它会使用更多的内存空间，因为它把每一行都保存在内存中了。
+```
+
+* 单路排序的弊端
+    ```text
+    由于单路是后出来的，总体而言好过双路
+    
+    但是用单路有问题
+    当从磁盘读取查询需要的所有列的数据总大小超过sort_buffer容量时，
+    导致每次只能取sort_buffer容量大小的数据，进行排序(创建tmp文件，多路合并)，
+    排完序在重复取，再排...
+    多次从磁盘取数据，即多次IO
+    ```
+
+### order by相关的优化策略
+* 增大sort_buffer_size参数的设置
+* 增大max_length_for_sort_data参数的设置
+* 尽量只select需要的列
+
+```text
+有order by子句时尽量避免用select *
+
+* 当查询的字段大小总和小于max_length_for_sort_data，并且order by
+字段不是TEXT或IBLOB类型时，会用单路排序算法，否则用多路排序算法
+
+* 两种算法的数据都有可能超出sort_buffer容量(sort_buffer_size值)，
+超出后，会创建tmp文件进行合并排序，导致多次IO。
+当时单路算法的风险更大些，所以要提高sort_buffer_size
+
+* sort_buffer_size是针对每个进程的
+
+* 尝试提高max_length_for_sort_data
+提高这个参数会增加使用单路排序算法的概率。
+但是设置得太高，数据总容量超出sort_buffer_size值的概率会增大，超过了这种情况也不好，提高了IO次数
+```
 
 ## 慢查询日志
 

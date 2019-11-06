@@ -345,6 +345,7 @@ MySQL核心技术
             * [循环示例](md/9_01_流程控制结构.md#循环示例)
         </details>
 * 其他
+    * [MySQL DBA技能](md/mysql_DBA技能.md)
     * [NavicatPremium客户端工具](md/NavicatPremium.md)
     * [SQLYog客户端工具](md/SQLYog.md)
     * [MySQL、PostgreSQL 、Oracle在线资料](https://www.techonthenet.com/mysql/index.php)

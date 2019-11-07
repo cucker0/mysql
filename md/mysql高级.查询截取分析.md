@@ -551,40 +551,127 @@ long_query_time 的默认值为10，即10秒。
 如果不是调优需求，一般不建议开启慢查询日志，因为开启会带来一定的性能影响。
 ```
 
-### 手动开启慢查询日志
-```mysql
-# 查看慢查询日志开启状态
-SHOW GLOBAL VARIABLES LIKE '%slow_query_log%';
+### 临时开启慢查询日志
+mysql服务重启后失效
 
-# 开启慢查询日志
-SET GLOBAL slow_query_log = 1;
-```
+* 开启慢查询日志
+    ```mysql
+    # 查看慢查询日志开启状态
+    SHOW GLOBAL VARIABLES LIKE '%slow_query_log%';
+    
+    # 开启慢查询日志
+    SET GLOBAL slow_query_log = 1;
+    ```
 
-* 设置慢查询sql的阈值
+* 设置慢查询sql的时间阈值
     ```mysql
     # 查看慢查询sql的阈值
     SHOW VARIABLES LIKE 'long_query_time%';
     
     # 设置设置慢查询sql阈值，单位为秒
     SET GLOBAL long_query_time = 3;
+    ```
 
-    -- 需要重新连接或者新开一个回话才能看到修改值。
+**在修改了全局的long_query_time时间之后建立的会话才会生效，因为每个会话都一个会话级的long_query_time**
+```text
+SHOW SESSION VARIABLES LIKE 'long_query_time';
+```
+
+* 其他相关参数
+    ```text
+    log_output  # 慢查询日志输出类型
+    slow_query_log_file  # 存放慢查询日志文件
+    log_queries_not_using_indexes  # 是否记录未使用索引的SQL语句
     ```
 
 ### 永久开启慢查询日志
+向my.cnf配置文件的[mysqld]块内添加下面内容
 ```text
-# 向my.cnf配置文件的[mysqld]块内添加下面内容
-
-# 添加慢查询日志
+# slow query log
 log_output = file
 slow_query_log = on
-slow_query_log_file = /var/log/mysql_slow.log
+slow_query_log_file = /var/lib/mysql/mysql_slow.log
 log_queries_not_using_indexes = on  # 如果值设置为ON,则会记录所有没有利用索引的查询(性能优化时开启此项,平时不要开启)
 long_query_time = 5  # 超过多少秒的查询就写入日志
 ```
 
-## 指数据脚本
+### 查看慢查询日志
+```bash
+在mysql服务器上，可以直接查看慢查询日志文件，shell命令：
+more /var/lib/mysql/centos8-slow.log
 
+格式
+====
+# Time: 执行此sql的时刻
+# User@Host: 用户  Id:    会话id
+# Query_time: 查询用时  Lock_time: 锁定时间 Rows_sent: 结果集行数  Rows_examined: 查检行数
+use testdb;
+SET timestamp=1573115172; # 执行此sql的时间戳
+SELECT SLEEP(8); SQL语句
+```
+![](../images/slow_query_log1.png)  
+
+* 查看当前系统中有多少条慢查询日志
+```mysql
+SHOW GLOBAL STATUS LIKE '%Slow_queries%';
+```
+
+
+### mysqldumpshow慢查询日志分析工具
+```test
+使用方法(shell命令)：
+mysqldumpslow [ OPTS... ] 日志文件路径
+
+相关选项：
+  --help       打印帮助信息
+
+  -v/--verbose 输入详细信息
+  -d/--debug   debug调度调试
+  -s ORDER     排序方式，可选项：(al, at, ar, c, l, r, t), 不写-s项，默认为at
+                al: average lock time 平均锁定时间
+                ar: average rows sent 平均返回记录的行数
+                at: average query time 平均查询时间
+                 c: count 访问次数
+                 l: lock time 锁定时间
+                 r: rows sent 返回记录集的行数
+                 t: query time 查询用时
+  -r           反转排序结果，原来第一个排最后一个
+  -t NUM       显示top NUM个
+  -a           don't abstract all numbers to N and strings to 'S' 数字不抽象为N，字符串不抽象为'S'
+  -n NUM       abstract numbers with at least n digits within names 名称中至少有n位的抽象
+  -g PATTERN   过虑模式，类似过虑grep过滤，忽略大小写。注意：只包含匹配关系
+  -h HOSTNAME  hostname of db server for *-slow.log filename (can be wildcard),
+               default is '*', i.e. match all
+  -i NAME      name of server instance (if using mysql.server startup script) mysql服务实例名
+  -l           don't subtract lock time from total time 不从总时间中减去锁定时间
+```
+
+#### mysqldumpshow工作常用参考
+* 查询返回记录集行数最多的前10个SQL语句
+    ```bash
+    mysqldumpslow -s r -t 10 -a /var/lib/mysql/centos8-slow.log
+    ```
+* 查询访问次数最多的前10个SQL语句
+    ```bash
+    mysqldumpslow -s c -t 10 /var/lib/mysql/centos8-slow.log
+    ```
+* 查询 查询用时最多，且SQL语句含有左连接的前10个SQL，
+    ```bash
+    mysqldumpslow -s t -t 10 -g "left join" /var/lib/mysql/centos8-slow.log
+    ```
+* 另外当查询的结果过多时，可用管道加more参数查看
+    ```bash
+    mysqldumpslow -s t -t 100 /var/lib/mysql/centos8-slow.log |more
+    ```
+
+
+## 批量插入数据脚本
+如插入1000万行数据，可以分批次插入，每批插入50万行，以减少数据库压力
+
+* 表结构
+```mysql
+
+```
 
 ## show profiles
 

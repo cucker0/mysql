@@ -1008,6 +1008,7 @@ SELECT * FROM emp ORDER BY id % 10, LENGTH(ename) LIMIT 150000;
 通过sys表查看性能
 sys表下有很多内置的view视图、存储过程和函数
 ```
+[sys Schema官网使用说明](https://dev.mysql.com/doc/refman/8.0/en/sys-schema-usage.html)  
 
 * 查看表的访问量(可以监控每张表访问量的情况，或者监控某个库的访问量的变化)
     ```mysql
@@ -1052,4 +1053,36 @@ sys表下有很多内置的view视图、存储过程和函数
 
 
 ## 全局查询日志
+```text
+全局查询日志用于保存所有的sql语句执行记录，记录到mysql.general_log库里
 
+该功能主要用于测试环境，
+在生产环境中永远不要开启该功能！！！
+```
+
+* 命令方式开启全局日志
+    ```text
+    SHOW GLOBAL VARIABLES LIKE 'general_log';
+    SET GLOBAL general_log = 1;
+    
+    SHOW GLOBAL VARIABLES LIKE 'log_output';
+    SET GLOBAL log_output = 'TABLE';
+    ```
+* 配置文件方式开启全局日志  
+    my.cnf文件的[mysqld]块中添加如下配置，然后重启mysql服务
+    ```mysql
+    [mysqld]
+    general_log = 1
+    general_log_file = /var/lib/mysql/general_log.log
+    log_output = FILE
+    ```
+* 全局日志格式
+    ```mysql
+    SELECT * FROM mysql.general_log;
+    ```
+    ![](../images/general_log.png)  
+    
+    ```bash
+    more /var/lib/mysql/general_log.log
+    ```
+    ![](../images/general_log_file.png)  

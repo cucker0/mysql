@@ -290,7 +290,7 @@ WHERE NESTING_EVENT_ID = 1094;
 NESTING_EVENT_ID 为上面查询到的 EVENT_ID
 */
 
-
+SELECT * FROM performance_schema.events_statements_summary_by_digest;
 
 -- 通过sys表查看性能
 -- sys表下有很多内置的view视图、存储过程和函数
@@ -325,3 +325,25 @@ WHERE db = '库名';
 SELECT FILE, avg_read + avg_write AS avg_io 
 FROM sys.io_global_by_file_by_bytes 
 ORDER BY avg_io DESC LIMIT 10;
+
+
+
+-- 全局日志
+-- 
+SHOW GLOBAL VARIABLES LIKE 'general_log';
+SET GLOBAL general_log = 1;
+
+SHOW GLOBAL VARIABLES LIKE 'log_output';
+SET GLOBAL log_output = 'TABLE';
+
+-- 日志path
+SHOW GLOBAL VARIABLES LIKE '%general%';
+
+USE mysql;
+SHOW TABLES;
+
+SELECT * FROM book;
+
+
+SELECT * FROM mysql.general_log;
+

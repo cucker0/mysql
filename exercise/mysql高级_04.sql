@@ -172,3 +172,10 @@ USE testdb;
 SELECT * FROM emp LIMIT 0, 100;
 
 
+-- show profiles与show profile
+-- 
+
+SHOW VARIABLES LIKE 'profiling';
+
+
+SELECT * FROM performance_schema.setup_actors;

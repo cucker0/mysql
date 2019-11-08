@@ -337,7 +337,7 @@ SHOW GLOBAL VARIABLES LIKE 'log_output';
 SET GLOBAL log_output = 'TABLE';
 
 -- 日志path
-SHOW GLOBAL VARIABLES LIKE '%general%';
+SHOW GLOBAL VARIABLES LIKE 'general_log%';
 
 USE mysql;
 SHOW TABLES;

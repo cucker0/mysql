@@ -637,7 +637,7 @@ mysqldumpslow [ OPTS... ] 日志文件路径
                  t: query time 查询用时
   -r           反转排序结果，原来第一个排最后一个
   -t NUM       显示top NUM个
-  -a           don't abstract all numbers to N and strings to 'S' 数字不抽象为N，字符串不抽象为'S'
+  -a           don't abstract all numbers to N and strings to 'S' SQL语句中的数字替换为为N、字符串不替换为为'S'
   -n NUM       abstract numbers with at least n digits within names 名称中至少有n位的抽象
   -g PATTERN   过虑模式，类似过虑grep过滤，忽略大小写。注意：只包含匹配关系
   -h HOSTNAME  hostname of db server for *-slow.log filename (can be wildcard),
@@ -672,8 +672,6 @@ mysqldumpslow [ OPTS... ] 日志文件路径
 
 另外也可以通过程序来批量插入数据，如python等
 ```
-
-
 
 * 表结构
     ```mysql
@@ -825,7 +823,7 @@ mysqldumpslow [ OPTS... ] 日志文件路径
 
 ## show profiles、show profile性能查看与分析
 ```text
-show profiles、show profile可以分析当前会话中语句执行的资源消耗情况，可用于SQL的调优测量。
+show profiles、show profile可以分析当前会话中SQL语句执行的各阶段用时、CPU、IO等资源消耗情况等，可用于SQL的调优测量。
 默认情况下profiling功能是关闭的
 
 从mysql 5.6.7开始show profiles、show profile被deprecated弃用，建议使用Performance Schema
@@ -833,12 +831,85 @@ show profiles、show profile可以分析当前会话中语句执行的资源消�
 [show profile官网说明](https://dev.mysql.com/doc/refman/8.0/en/show-profile.html)  
 
 
+### 开启性能收集功能
+```mysql
+-- 查看profiling性能信息收集功能是否开启
+SHOW VARIABLES LIKE 'profiling';
 
+-- 开启性能信息收集。会话级变量
+SET profiling = 1;
+
+
+-- 查看profiling历史容量，默认为15
+SHOW VARIABLES LIKE 'profiling_history_size';
+
+-- 设置profiling历史容量
+SET profiling_history_size = 100;
+
+SHOW VARIABLES LIKE 'profil%';
+```
+
+### show profiles
+```text
+显示当前会话最近执行的SQL语句列表
+```
+```mysql
+SHOW PROFILES;
+```
+![](../images/show_profiles.png)  
+
+### show profile
+查看单条SQL语句各个阶段的用时、CPU、IO等详情。诊断SQL语句
+
+* show profile语法
+    ```text  
+    SHOW PROFILE [type [, type] ... ]
+        [FOR QUERY n]
+        [LIMIT row_count [OFFSET offset]]
+    
+    ## 注意
+    FOR QUERY n 这里的n为：show profiles显示的Query_ID值
+    
+    默认只显示Status、Duration列 
+        Status：sql执行的阶段
+        Duration：此阶段用时，单位为秒
+        
+    type: {
+        ALL  显示所有下列所有类型的信息
+      | BLOCK IO  显示块IO输入、输出操作计数
+      | CONTEXT SWITCHES  显示上下文切换计数
+      | CPU  显示用户、系统CPU使用时间
+      | IPC  显示信息接收、发送的计数
+      | MEMORY  内存使用信息，此功能暂未实现
+      | PAGE FAULTS  显示主要页面、次要页面错误的计数
+      | SOURCE  显示源代码中函数的名称，以及函数所在文件的名称、行号
+      | SWAPS  显示交换计数
+    }
+    ```
+* 示例
+    ```mysql
+    SHOW PROFILE FOR QUERY 173;
+    ```
+    ![](../images/show_profile_1.png)  
+    ```mysql
+    SHOW PROFILE CPU, BLOCK IO FOR QUERY 173;
+    ```
+    ![](../images/show_profile_2.png)  
+
+### 日常开发需要注意的事项
+Status中出现下列情况
+* converting HEAP to MyISAM：查询结果太大，内存不够用了往磁盘上搬了。
+* Creating tmp table：创建临时表，拷贝数据到临时表，用完再删除
+* Copying to tmp table on disk：把内存中临时表复制到磁盘，危险！！！
+* locked
 
 ## Performance Schema性能查看与分析
-
-
+```text
+比show profiles、show profile更强大的性能查看与分析工具。
+```
 [Performance Schema官方说明](https://dev.mysql.com/doc/refman/8.0/en/performance-schema-query-profiling.html)
+
+
 
 ## 全局查询日志
 

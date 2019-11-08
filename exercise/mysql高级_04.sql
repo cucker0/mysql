@@ -172,3 +172,87 @@ USE testdb;
 SELECT * FROM emp LIMIT 0, 100;
 
 
+
+-- show profiles、show profile
+-- 
+
+-- 查看profiling性能信息收集功能是否开启
+SHOW VARIABLES LIKE 'profiling';
+
+-- 查看profiling历史容量
+SHOW VARIABLES LIKE 'profiling_history_size';
+
+-- profiling历史容量
+SET profiling_history_size = 100;
+
+SHOW VARIABLES LIKE 'profil%';
+
+-- 开启性能信息收集
+SET profiling = 1;
+
+
+SELECT * FROM dept;
+SELECT ename, CONCAT('group_', id % 10) AS 组 FROM emp LIMIT 150000;
+SELECT * FROM emp ORDER BY id % 10, LENGTH(ename) LIMIT 150000;
+SELECT SLEEP(3);
+SELECT * FROM book;
+SELECT * FROM t1,
+SELECT * FROM t2;
+
+-- 
+SHOW PROFILES;
+
+
+SHOW PROFILE FOR QUERY 173;
+
+SHOW PROFILE CPU, BLOCK IO FOR QUERY 189;
+
+
+
+
+
+-- Performance Schema性能查看与分析
+-- 
+
+-- 默认setup_actors设置器对所有前台线程(所有会话)进行监听、收集历史sql语句
+SELECT * FROM performance_schema.setup_actors;
+
+
+-- 设置对特定用户进行监听、收集历史sql语句
+-- 关闭所有前台线程(所有会话)进行监听、收集历史sql语句
+UPDATE performance_schema.setup_actors
+SET ENABLED = 'NO', HISTORY = 'NO'
+WHERE HOST = '%'
+AND USER = '%';
+
+-- 开启对特定用户进行监听、收集历史sql语句
+INSERT INTO performance_schema.setup_actors
+(HOST, USER, ROLE, ENABLED, HISTORY)
+VALUES('%','root','%','YES','YES');
+
+
+-- 确保statement、stage仪表开启
+-- 
+-- performance_schema.setup_instruments表中的name like '%statement/%'的记录的ENABLED字段为'YES', TIMED字段为'YES'
+SELECT * FROM performance_schema.setup_instruments
+WHERE NAME LIKE '%statement/%';
+
+UPDATE performance_schema.setup_instruments
+SET ENABLED = 'YES', TIMED = 'YES'
+WHERE NAME LIKE '%statement/%';
+
+
+-- performance_schema.setup_instruments表中的name like'%stage/%'的记录的ENABLED字段为'YES', TIMED字段为'YES'
+SELECT * FROM performance_schema.setup_instruments
+WHERE NAME LIKE '%stage/%';
+
+
+UPDATE performance_schema.setup_instruments
+SET ENABLED = 'YES', TIMED = 'YES'
+WHERE NAME LIKE '%stage/%';
+
+
+-- 
+
+
+

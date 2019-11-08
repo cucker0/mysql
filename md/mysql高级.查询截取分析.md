@@ -891,6 +891,7 @@ SHOW PROFILES;
     SHOW PROFILE FOR QUERY 173;
     ```
     ![](../images/show_profile_1.png)  
+    
     ```mysql
     SHOW PROFILE CPU, BLOCK IO FOR QUERY 173;
     ```
@@ -903,12 +904,151 @@ Status中出现下列情况
 * Copying to tmp table on disk：把内存中临时表复制到磁盘，危险！！！
 * locked
 
+
 ## Performance Schema性能查看与分析
 ```text
 比show profiles、show profile更强大的性能查看与分析工具。
+它是把收集的数据保存于performance_schema库中
 ```
 [Performance Schema官方说明](https://dev.mysql.com/doc/refman/8.0/en/performance-schema-query-profiling.html)
 
+### 使用Performance Schema准备工作
+* 默认setup_actors设置器对所有前台线程(所有会话)进行监听、收集历史sql语句，如下
+    ```mysql
+    SELECT * FROM performance_schema.setup_actors;
+    ```
+    ![](../images/performance_schema_1.png)  
+
+* 设置对特定用户进行监听、收集历史sql语句
+    ```mysql
+    -- 关闭所有前台线程(所有会话)进行监听、收集历史sql语句
+    UPDATE performance_schema.setup_actors
+    SET ENABLED = 'NO', HISTORY = 'NO'
+    WHERE HOST = '%'
+    AND USER = '%';
+
+    -- 开启对特定用户进行监听、收集历史sql语句
+    INSERT INTO performance_schema.setup_actors
+    (HOST, USER, ROLE, ENABLED, HISTORY)
+    VALUES('%','root','%','YES','YES');
+
+    -- 
+    SELECT * FROM performance_schema.setup_actors;
+    ```
+    ![](../images/performance_schema_2.png)  
+
+* 开启statement、stage生产者(instruments)
+    ```mysql
+    -- performance_schema.setup_instruments表中的name like '%statement/%'的记录的ENABLED字段为'YES', TIMED字段为'YES'
+    SELECT * FROM performance_schema.setup_instruments
+    WHERE NAME LIKE '%statement/%';
+    
+    UPDATE performance_schema.setup_instruments
+    SET ENABLED = 'YES', TIMED = 'YES'
+    WHERE NAME LIKE '%statement/%';
+    
+    
+    -- performance_schema.setup_instruments表中的name like'%stage/%'的记录的ENABLED字段为'YES', TIMED字段为'YES'
+    SELECT * FROM performance_schema.setup_instruments
+    WHERE NAME LIKE '%stage/%';
+    
+    UPDATE performance_schema.setup_instruments
+    SET ENABLED = 'YES', TIMED = 'YES'
+    WHERE NAME LIKE '%stage/%';
+    ```
+
+* 开启events_statements_*、events_stages_*消费者(consumers)
+    ```mysql
+    SELECT * FROM performance_schema.setup_consumers
+    WHERE NAME LIKE '%events_statements_%';
+    
+    UPDATE performance_schema.setup_consumers
+    SET ENABLED = 'YES'
+    WHERE NAME LIKE '%events_statements_%';
+    
+    --
+    SELECT * FROM performance_schema.setup_consumers
+    WHERE NAME LIKE '%events_stages_%';
+    
+    UPDATE performance_schema.setup_consumers
+    SET ENABLED = 'YES'
+    WHERE NAME LIKE '%events_stages_%';
+    ```
+
+### 执行要分析性能的SQL语句
+```mysql
+-- 如
+SELECT * FROM emp ORDER BY id % 10, LENGTH(ename) LIMIT 150000;
+```
+
+### Performance Schema查看性能与分析
+* 查看历史SQL语句列表
+    ```mysql
+    -- TIMER_WAIT时间需要装换，其值除以1000000000000即为秒
+    -- 可以用SQL_TEXT字段筛选
+    SELECT EVENT_ID, TRUNCATE(TIMER_WAIT/1000000000000,6) AS "Duration (s)", SQL_TEXT
+    FROM performance_schema.events_statements_history_long;
+    ```
+    ![](../images/performance_schema_3.png)  
+    
+* 查看单条SQL性能
+    ```mysql
+    SELECT event_name AS Stage, TRUNCATE(TIMER_WAIT/1000000000000,6) AS "Duration (s)"
+    FROM performance_schema.events_stages_history_long 
+    WHERE NESTING_EVENT_ID = 1094;
+    /*
+    NESTING_EVENT_ID 为上面查询到的 EVENT_ID
+    */
+    ```
+    ![](../images/performance_schema_4.png)  
+
+
+## sys Schema性能查看与分析
+```text
+通过sys表查看性能
+sys表下有很多内置的view视图、存储过程和函数
+```
+
+* 查看表的访问量(可以监控每张表访问量的情况，或者监控某个库的访问量的变化)
+    ```mysql
+    SELECT table_schema, table_name, SUM(io_read_requests + io_write_requests)
+    FROM sys.schema_table_statistics
+    GROUP BY table_schema, table_name;
+    
+    -- 或
+    SELECT table_schema,table_name, io_read_requests + io_write_requests AS io_total 
+    FROM sys.schema_table_statistics;
+    ```
+
+* 查询冗余索引
+    ```mysql
+    SELECT * FROM sys.schema_redundant_indexes;
+    ```
+
+* 查询未使用索引
+    ```mysql
+    SELECT * FROM sys.schema_unused_indexes;
+    ```
+    
+* 查看表自增ID使用情况
+    ```mysql
+    SELECT * FROM sys.schema_auto_increment_columns;
+    ```
+
+
+* 查询全表扫描的sql语句
+    ```mysql
+    SELECT * FROM sys.statements_with_full_table_scans
+    WHERE db = '库名';
+    ```
+
+* 查看实例消耗的磁盘IO情况，单位为：bytes
+    ```mysql
+    -- 查看io_global_by_file_by_bytes视图可以检查磁盘IO消耗过大的原因，定位问题
+    SELECT FILE, avg_read + avg_write AS avg_io 
+    FROM sys.io_global_by_file_by_bytes 
+    ORDER BY avg_io DESC LIMIT 10;
+    ```
 
 
 ## 全局查询日志

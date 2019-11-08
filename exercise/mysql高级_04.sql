@@ -231,7 +231,7 @@ INSERT INTO performance_schema.setup_actors
 VALUES('%','root','%','YES','YES');
 
 
--- 确保statement、stage仪表开启
+-- 开启statement、stage 生产者(instruments)
 -- 
 -- performance_schema.setup_instruments表中的name like '%statement/%'的记录的ENABLED字段为'YES', TIMED字段为'YES'
 SELECT * FROM performance_schema.setup_instruments
@@ -246,13 +246,82 @@ WHERE NAME LIKE '%statement/%';
 SELECT * FROM performance_schema.setup_instruments
 WHERE NAME LIKE '%stage/%';
 
-
 UPDATE performance_schema.setup_instruments
 SET ENABLED = 'YES', TIMED = 'YES'
 WHERE NAME LIKE '%stage/%';
 
 
+-- 开启events_statements_*、events_stages_* 消费者(consumers)
+SELECT * FROM performance_schema.setup_consumers
+WHERE NAME LIKE '%events_statements_%';
+
+UPDATE performance_schema.setup_consumers
+SET ENABLED = 'YES'
+WHERE NAME LIKE '%events_statements_%';
+
+--
+SELECT * FROM performance_schema.setup_consumers
+WHERE NAME LIKE '%events_stages_%';
+
+UPDATE performance_schema.setup_consumers
+SET ENABLED = 'YES'
+WHERE NAME LIKE '%events_stages_%';
+
+
+-- 已完成准备工作，执行要分析性能的SQL语句
+SELECT * FROM dept;
+SELECT ename, CONCAT('group_', id % 10) AS 组 FROM emp LIMIT 150000;
+SELECT * FROM emp ORDER BY id % 10, LENGTH(ename) LIMIT 150000;
+SELECT SLEEP(3);
+SELECT * FROM book;
+SELECT * FROM t1,
+SELECT * FROM t2;
+
+-- 查看历史SQL语句列表
+-- TIMER_WAIT时间需要装换，其值除以1000000000000即为秒
+SELECT EVENT_ID, TRUNCATE(TIMER_WAIT/1000000000000,6) AS "Duration (s)", SQL_TEXT
+FROM performance_schema.events_statements_history_long;
+
+-- 查看单条SQL性能
+SELECT event_name AS Stage, TRUNCATE(TIMER_WAIT/1000000000000,6) AS "Duration (s)"
+FROM performance_schema.events_stages_history_long 
+WHERE NESTING_EVENT_ID = 1094;
+/*
+NESTING_EVENT_ID 为上面查询到的 EVENT_ID
+*/
+
+
+
+-- 通过sys表查看性能
+-- sys表下有很多内置的view视图、存储过程和函数
 -- 
 
+USE sys;
 
+-- 查看表的访问量 (可以监控每张表访问量的情况，或者监控某个库的访问量的变化)
+SELECT table_schema, table_name, SUM(io_read_requests + io_write_requests)
+FROM sys.schema_table_statistics
+GROUP BY table_schema, table_name;
 
+-- 或
+SELECT table_schema,table_name, io_read_requests + io_write_requests AS io_total 
+FROM sys.schema_table_statistics;
+
+-- 查询冗余索引
+SELECT * FROM sys.schema_redundant_indexes;
+
+-- 查询未使用索引
+SELECT * FROM sys.schema_unused_indexes;
+
+-- 查看表自增ID使用情况
+SELECT * FROM sys.schema_auto_increment_columns;
+
+-- 查询全表扫描的sql语句
+SELECT * FROM sys.statements_with_full_table_scans
+WHERE db = '库名';
+
+-- 查看实例消耗的磁盘IO情况，单位为：bytes
+-- 查看io_global_by_file_by_bytes视图可以检查磁盘IO消耗过大的原因，定位问题
+SELECT FILE, avg_read + avg_write AS avg_io 
+FROM sys.io_global_by_file_by_bytes 
+ORDER BY avg_io DESC LIMIT 10;

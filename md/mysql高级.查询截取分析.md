@@ -637,7 +637,7 @@ mysqldumpslow [ OPTS... ] 日志文件路径
                  t: query time 查询用时
   -r           反转排序结果，原来第一个排最后一个
   -t NUM       显示top NUM个
-  -a           don't abstract all numbers to N and strings to 'S' 数字不抽象为N，字符串不抽象为'S'
+  -a           don't abstract all numbers to N and strings to 'S' SQL语句中的数字替换为为N、字符串不替换为为'S'
   -n NUM       abstract numbers with at least n digits within names 名称中至少有n位的抽象
   -g PATTERN   过虑模式，类似过虑grep过滤，忽略大小写。注意：只包含匹配关系
   -h HOSTNAME  hostname of db server for *-slow.log filename (can be wildcard),
@@ -672,8 +672,6 @@ mysqldumpslow [ OPTS... ] 日志文件路径
 
 另外也可以通过程序来批量插入数据，如python等
 ```
-
-
 
 * 表结构
     ```mysql
@@ -825,7 +823,7 @@ mysqldumpslow [ OPTS... ] 日志文件路径
 
 ## show profiles、show profile性能查看与分析
 ```text
-show profiles、show profile可以分析当前会话中语句执行的资源消耗情况，可用于SQL的调优测量。
+show profiles、show profile可以分析当前会话中SQL语句执行的各阶段用时、CPU、IO等资源消耗情况等，可用于SQL的调优测量。
 默认情况下profiling功能是关闭的
 
 从mysql 5.6.7开始show profiles、show profile被deprecated弃用，建议使用Performance Schema
@@ -833,12 +831,259 @@ show profiles、show profile可以分析当前会话中语句执行的资源消�
 [show profile官网说明](https://dev.mysql.com/doc/refman/8.0/en/show-profile.html)  
 
 
+### 开启性能收集功能
+```mysql
+-- 查看profiling性能信息收集功能是否开启
+SHOW VARIABLES LIKE 'profiling';
+
+-- 开启性能信息收集。会话级变量
+SET profiling = 1;
+
+
+-- 查看profiling历史容量，默认为15
+SHOW VARIABLES LIKE 'profiling_history_size';
+
+-- 设置profiling历史容量
+SET profiling_history_size = 100;
+
+SHOW VARIABLES LIKE 'profil%';
+```
+
+### show profiles
+```text
+显示当前会话最近执行的SQL语句列表
+```
+```mysql
+SHOW PROFILES;
+```
+![](../images/show_profiles.png)  
+
+### show profile
+查看单条SQL语句各个阶段的用时、CPU、IO等详情。诊断SQL语句
+
+* show profile语法
+    ```text  
+    SHOW PROFILE [type [, type] ... ]
+        [FOR QUERY n]
+        [LIMIT row_count [OFFSET offset]]
+    
+    ## 注意
+    FOR QUERY n 这里的n为：show profiles显示的Query_ID值
+    
+    默认只显示Status、Duration列 
+        Status：sql执行的阶段
+        Duration：此阶段用时，单位为秒
+        
+    type: {
+        ALL  显示所有下列所有类型的信息
+      | BLOCK IO  显示块IO输入、输出操作计数
+      | CONTEXT SWITCHES  显示上下文切换计数
+      | CPU  显示用户、系统CPU使用时间
+      | IPC  显示信息接收、发送的计数
+      | MEMORY  内存使用信息，此功能暂未实现
+      | PAGE FAULTS  显示主要页面、次要页面错误的计数
+      | SOURCE  显示源代码中函数的名称，以及函数所在文件的名称、行号
+      | SWAPS  显示交换计数
+    }
+    ```
+* 示例
+    ```mysql
+    SHOW PROFILE FOR QUERY 173;
+    ```
+    ![](../images/show_profile_1.png)  
+    
+    ```mysql
+    SHOW PROFILE CPU, BLOCK IO FOR QUERY 173;
+    ```
+    ![](../images/show_profile_2.png)  
+
+### 日常开发需要注意的事项
+Status中出现下列情况
+* converting HEAP to MyISAM：查询结果太大，内存不够用了往磁盘上搬了。
+* Creating tmp table：创建临时表，拷贝数据到临时表，用完再删除
+* Copying to tmp table on disk：把内存中临时表复制到磁盘，危险！！！
+* locked
 
 
 ## Performance Schema性能查看与分析
-
-
+```text
+比show profiles、show profile更强大的性能查看与分析工具。
+它是把收集的数据保存于performance_schema库中
+```
 [Performance Schema官方说明](https://dev.mysql.com/doc/refman/8.0/en/performance-schema-query-profiling.html)
 
-## 全局查询日志
+### 使用Performance Schema准备工作
+* 默认setup_actors设置器对所有前台线程(所有会话)进行监听、收集历史sql语句，如下
+    ```mysql
+    SELECT * FROM performance_schema.setup_actors;
+    ```
+    ![](../images/performance_schema_1.png)  
 
+* 设置对特定用户进行监听、收集历史sql语句
+    ```mysql
+    -- 关闭所有前台线程(所有会话)进行监听、收集历史sql语句
+    UPDATE performance_schema.setup_actors
+    SET ENABLED = 'NO', HISTORY = 'NO'
+    WHERE HOST = '%'
+    AND USER = '%';
+
+    -- 开启对特定用户进行监听、收集历史sql语句
+    INSERT INTO performance_schema.setup_actors
+    (HOST, USER, ROLE, ENABLED, HISTORY)
+    VALUES('%','root','%','YES','YES');
+
+    -- 
+    SELECT * FROM performance_schema.setup_actors;
+    ```
+    ![](../images/performance_schema_2.png)  
+
+* 开启statement、stage生产者(instruments)
+    ```mysql
+    -- performance_schema.setup_instruments表中的name like '%statement/%'的记录的ENABLED字段为'YES', TIMED字段为'YES'
+    SELECT * FROM performance_schema.setup_instruments
+    WHERE NAME LIKE '%statement/%';
+    
+    UPDATE performance_schema.setup_instruments
+    SET ENABLED = 'YES', TIMED = 'YES'
+    WHERE NAME LIKE '%statement/%';
+    
+    
+    -- performance_schema.setup_instruments表中的name like'%stage/%'的记录的ENABLED字段为'YES', TIMED字段为'YES'
+    SELECT * FROM performance_schema.setup_instruments
+    WHERE NAME LIKE '%stage/%';
+    
+    UPDATE performance_schema.setup_instruments
+    SET ENABLED = 'YES', TIMED = 'YES'
+    WHERE NAME LIKE '%stage/%';
+    ```
+
+* 开启events_statements_*、events_stages_*消费者(consumers)
+    ```mysql
+    SELECT * FROM performance_schema.setup_consumers
+    WHERE NAME LIKE '%events_statements_%';
+    
+    UPDATE performance_schema.setup_consumers
+    SET ENABLED = 'YES'
+    WHERE NAME LIKE '%events_statements_%';
+    
+    --
+    SELECT * FROM performance_schema.setup_consumers
+    WHERE NAME LIKE '%events_stages_%';
+    
+    UPDATE performance_schema.setup_consumers
+    SET ENABLED = 'YES'
+    WHERE NAME LIKE '%events_stages_%';
+    ```
+
+### 执行要分析性能的SQL语句
+```mysql
+-- 如
+SELECT * FROM emp ORDER BY id % 10, LENGTH(ename) LIMIT 150000;
+```
+
+### Performance Schema查看性能与分析
+* 查看历史SQL语句列表
+    ```mysql
+    -- TIMER_WAIT时间需要装换，其值除以1000000000000即为秒
+    -- 可以用SQL_TEXT字段筛选
+    SELECT EVENT_ID, TRUNCATE(TIMER_WAIT/1000000000000,6) AS "Duration (s)", SQL_TEXT
+    FROM performance_schema.events_statements_history_long;
+    ```
+    ![](../images/performance_schema_3.png)  
+    
+* 查看单条SQL性能
+    ```mysql
+    SELECT event_name AS Stage, TRUNCATE(TIMER_WAIT/1000000000000,6) AS "Duration (s)"
+    FROM performance_schema.events_stages_history_long 
+    WHERE NESTING_EVENT_ID = 1094;
+    /*
+    NESTING_EVENT_ID 为上面查询到的 EVENT_ID
+    */
+    ```
+    ![](../images/performance_schema_4.png)  
+
+
+## sys Schema性能查看与分析
+```text
+通过sys表查看性能
+sys表下有很多内置的view视图、存储过程和函数
+```
+[sys Schema官网使用说明](https://dev.mysql.com/doc/refman/8.0/en/sys-schema-usage.html)  
+
+* 查看表的访问量(可以监控每张表访问量的情况，或者监控某个库的访问量的变化)
+    ```mysql
+    SELECT table_schema, table_name, SUM(io_read_requests + io_write_requests)
+    FROM sys.schema_table_statistics
+    GROUP BY table_schema, table_name;
+    
+    -- 或
+    SELECT table_schema,table_name, io_read_requests + io_write_requests AS io_total 
+    FROM sys.schema_table_statistics;
+    ```
+
+* 查询冗余索引
+    ```mysql
+    SELECT * FROM sys.schema_redundant_indexes;
+    ```
+
+* 查询未使用索引
+    ```mysql
+    SELECT * FROM sys.schema_unused_indexes;
+    ```
+    
+* 查看表自增ID使用情况
+    ```mysql
+    SELECT * FROM sys.schema_auto_increment_columns;
+    ```
+
+
+* 查询全表扫描的sql语句
+    ```mysql
+    SELECT * FROM sys.statements_with_full_table_scans
+    WHERE db = '库名';
+    ```
+
+* 查看实例消耗的磁盘IO情况，单位为：bytes
+    ```mysql
+    -- 查看io_global_by_file_by_bytes视图可以检查磁盘IO消耗过大的原因，定位问题
+    SELECT FILE, avg_read + avg_write AS avg_io 
+    FROM sys.io_global_by_file_by_bytes 
+    ORDER BY avg_io DESC LIMIT 10;
+    ```
+
+
+## 全局日志
+```text
+全局查询日志用于保存所有的sql语句执行记录，记录到mysql.general_log库里
+该功能非常影响性能
+
+该功能主要用于测试环境，
+在生产环境中永远不要开启该功能！！！
+```
+
+* 命令方式开启全局日志
+    ```text
+    SHOW GLOBAL VARIABLES LIKE 'general_log';
+    SET GLOBAL general_log = 1;
+    
+    SHOW GLOBAL VARIABLES LIKE 'log_output';
+    SET GLOBAL log_output = 'TABLE';
+    ```
+* 配置文件方式开启全局日志  
+    my.cnf文件的[mysqld]块中添加如下配置，然后重启mysql服务
+    ```mysql
+    [mysqld]
+    general_log = 1
+    general_log_file = /var/lib/mysql/general_log.log
+    log_output = FILE
+    ```
+* 全局日志格式
+    ```mysql
+    SELECT * FROM mysql.general_log;
+    ```
+    ![](../images/general_log.png)  
+    
+    ```bash
+    more /var/lib/mysql/general_log.log
+    ```
+    ![](../images/general_log_file.png)  

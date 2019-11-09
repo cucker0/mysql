@@ -355,5 +355,3 @@ SELECT * FROM book;
 
 
 SELECT * FROM mysql.general_log;
-
->>>>>>> c51c2669e0c009ae65848b54a82da4709654826c

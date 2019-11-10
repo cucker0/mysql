@@ -28,6 +28,10 @@ mysql高级.锁机制
 
 ## 表锁
 ```text
+MyISAM引擎表的锁：表共享读锁(Table Read Lock)、表独占写锁(Table Write Lock)
+MyISAM在执行查询语句(SELECT)前，会自动给涉及的所有表加读锁，
+在执行更新操作(UPDATE、DELETE、INSERT等)前，会自动给涉及的表加写锁
+
 特点：偏向MyISAM存储引擎，开销小，加锁快，无死锁，锁定粒度大，
 发生锁冲突的概率最高，并发最低
 ```
@@ -82,6 +86,9 @@ unlock tables;
 * 测试
 ```text
 两个连接会话：session_1、session_2
+两个会话都把事务自动提交关闭，
+set autocommit = 0;
+
 ```
 
 case |session_1 |session_2 |备注
@@ -108,6 +115,8 @@ session_1对mylock表加读锁，<br>此为表级锁 |lock table mylock read; <b
 * 测试
 ```text
 两个连接会话：session_1、session_2
+两个会话都把事务自动提交关闭，
+set autocommit = 0;
 ```
 
 case |session_1 |session_2 |备注
@@ -157,8 +166,313 @@ session_1对mylock表加写锁，<br>此为表级锁 |lock table mylock write; <
     ```
 
 ## 行锁
+```text
+InnoDB引擎的表支持行锁，同时也存在表锁。
+
+与Oracle不同，mysql的行锁是通过索引加载的，
+要是对应的SQL语句没有走索引，则会全表扫描，
+这时行锁则无法实现，取而代之的是表锁！
+
+```
+
+### innodb表的表锁、行锁
+```text
+表锁：不会出现死锁，发生锁冲突几率高，并发低
+行锁：会出现死锁，发生锁冲突几率低，并发高
+
+锁冲突：例如说事务A将某几行上锁后，事务B又对其上锁，锁不能共存否则会出现锁冲突。
+    共享锁(读锁)可以共存，共享锁和排它锁(写锁)不能共存，排它锁和排他锁也不可以
+    
+死锁：例如说两个事务，事务A锁住了1~5行，同时事务B锁住了6~10行，
+此时事务A请求锁住6~10行，就会阻塞直到事务B施放6~10行的锁，
+而随后事务B又请求锁住1~5行，事务B也阻塞直到事务A释放1~5行的锁。
+死锁发生时，会产生Deadlock错误
+```
+
+* 表结构
+    ```mysql
+    CREATE TABLE test_innodb_lock (
+        a INT,
+        b VARCHAR(16)
+    ) ENGINE = INNODB;
+    
+    TRUNCATE TABLE test_innodb_lock;
+    INSERT INTO test_innodb_lock VALUES
+    (1, 'b2'),
+    (3, '3'),
+    (4, '4000'),
+    (5, '5000'),
+    (6, '6000'),
+    (7, '7000'),
+    (8, '8000'),
+    (9, '9000'),
+    (1, 'b1');
+    
+    SELECT * FROM test_innodb_lock;
+    
+    -- 创建索引
+    CREATE INDEX idx_test_innodb_lock__a ON test_innodb_lock (a);
+    
+    CREATE INDEX idx_test_innodb_lock__b ON test_innodb_lock (b);
+    ```
+
+### 准备工作
+```text
+两个连接会话：session_1、session_2
+两个会话都把事务自动提交关闭，
+set autocommit = 0;
+```
+![](../images/行锁_0_s1_1.png)  
+
+![](../images/行锁_0_s2_1.png)  
+
+###  行锁对于操作同一行将会阻塞
+1. session_1
+    ```mysql
+    update test_innodb_lock set b = '4001' where a = 4;  -- 这时锁定了a = 4 这行
+    
+    select * from test_innodb_lock;
+    ```
+    ![](../images/行锁_1_s1_1.png)  
+
+2. session_2
+    ```mysql
+    select * from test_innodb_lock where a = 4;  -- 查询是正常的
+    ```
+    ![](../images/行锁_1_s2_4.png)  
+3. session_2
+    ```mysql
+    
+    
+    update set test_innodb_lock set b = '4002' where a = 4;
+    -- 这时候出现阻塞，一直等待行锁的释放，时间过久了会超时
+    -- 第二张图因等待行锁的释放，用时48.41秒
+    ``` 
+    ![](../images/行锁_1_s2_1.png)  
+    
+4. session_1
+    ```mysql
+    commit;
+    -- 提交事务
+    ```
+    ![](../images/行锁_1_s1_2.png)  
+5. session_2
+    ```text
+    session_1事务一提交(行锁释放了)，阻塞的语句马上得到了执行
+    ```
+    ![](../images/行锁_1_s2_2.png)  
+
+6. session_1,session_2
+    ![](../images/行锁_1_s1_3.png)  
+    
+    ![](../images/行锁_1_s2_3.png)  
+
+### 行锁对操作不同的行互不影响
+```text
+筛选查找用不索引或没有建的索引的情况
+```
+1. session_1
+    ```mysql
+    update test_innodb_lock set b = '4004' where a = 4;
+    -- 然后下面的先不执行，在session_2窗口执行更新a = 9，
+    -- 在使用到了索引的情况下，更新不同的行，互不影响
+    -- 观察了session_2的结果后再执行commit;
+    ```
+    ![](../images/行锁_2_s1_1.png)  
+
+2. session_2
+    ```mysql
+    update test_innodb_lock set b = '9003' where a = 9;
+    ```
+    ![](../images/行锁_2_s2_1.png) 
+
+### 无索引行锁升级为表锁
+1. session_1
+    ```mysql
+    update test_innodb_lock set a = 51 where b = 5000;
+    /*
+    注意：b字段为varchar字符型，这里的筛选条件为 B = 5000，值是一个数值型，
+    mysql会将数值的转成字符，但索引会失效，这时出现全表扫描，这是一个写操作，于是就使用了表锁
+    可以用下面的语句来分析筛选条件是否用到索引
+    EXPLAIN SELECT * FROM test_innodb_lock WHERE b = 5000;
+    */
+    ```
+    ![](../images/行锁_3_s1_1.png)  
+
+2. session_2
+    ```mysql
+    select * from test_innodb_lock where b = 5000;
+    select * from test_innodb_lock where a = 9;
+    -- 不影响查询
+    ```
+    ![](../images/行锁_3_s2_0.png) 
+
+3. session_2
+    ```mysql
+    update test_innodb_lock set b = '9004' where a = 9;
+    -- 出现阻塞，等待表锁的释放
+    ```
+    ![](../images/行锁_3_s2_1.png) 
+4. session_1
+    ```mysql
+    commit;
+    -- 提交事务
+    ```
+    ![](../images/行锁_3_s1_2.png)  
+5. session_2
+    ```text
+    session_1事务一提交(表锁释放了)，阻塞的语句马上得到了执行
+    ```
+    ![](../images/行锁_3_s2_2.png) 
 
 
+### 表中存在了一个行锁，其他会话再上表锁将被阻塞
+1. session_1
+    ```mysql
+    update test_innodb_lock set b = '9005' where a = 9;
+    ```
+    ![](../images/行锁_4_s1_1.png)  
+2. session_2
+    ```mysql
+    update test_innodb_lock set a = 52 where b = 5000;
+    -- 这里将要使用表锁，因为没使用到索引
+    -- 上面的操作使test_innodb_lock存在一个行锁了，当前操作又需要给这表上表锁，于是阻塞，等待行锁的释放
+    ```
+    ![](../images/行锁_4_s2_1.png)  
+3. session_1
+    ```mysql
+    commit;
+    -- 提交事务
+    ```
+    ![](../images/行锁_4_s1_2.png)  
+4. session_2
+    ```text
+    session_1事务一提交(表锁释放了)，阻塞的语句马上得到了执行
+    ```
+    ![](../images/行锁_4_s2_2.png)  
+
+### 间隙锁危害
+```text
+间隙锁定义：
+
+当我们用范围条件而不是相等条件检索数据,并请求共享或排他锁时, 
+Innodb会给符合条件的已有数据记录的索引项加锁;
+对于键值在条件范围内但并不存在的记录,叫做“间隙(GAP)”，Innodb也会对这个“间隙”加锁,
+这种锁机制姚是所谓的间隙锁(Nextκey锁
+```
+1. session_1
+    ```mysql
+    update test_innodb_lock set b = 'ok' where a >= 1 and a <=6;
+    -- 已经包含了 a = 2的情况
+    ```
+    ![](../images/行锁_5_s1_1.png)  
+2. session_2
+    ```mysql
+    insert into test_innodb_lock values (2, 'woshi2000');
+    ```
+    ![](../images/行锁_5_s2_1.png)  
+3. session_1
+    ```mysql
+    commit;
+    -- 提交事务
+    ```
+    ![](../images/行锁_5_s1_2.png)  
+4. session_2
+    ```text
+    session_1事务一提交(表锁释放了)，阻塞的语句马上得到了执行
+    ```
+    ![](../images/行锁_5_s2_2.png) 
+    
+
+### innodb表手动锁定行
+手动给行上了update排它锁后，其他会话的可查询，但写操作会被阻塞
+* 语法
+    ```mysql
+    set autocommit = 0;
+    
+    begin;
+    select 索引列 from 表名 where 索引列 = 值 for update;
+    ... ... -- 需要进行的操作
+    commit;
+    
+    SET autocommit = 1;
+    
+    /*
+    注意：FOR关键字之前的查询能用上索引，才会写锁这行，
+    如果未用上索引，而是ALL全表扫描，则会锁定整个表
+    
+    锁定前可以分析索引使用情况: explain SELECT 索引列 FROM 表名 WHERE 索引列 = 值; 
+    再执行行锁定操作
+    */
+    ```
+
+
+### 补充
+* 表结构
+    ```mysql
+    CREATE TABLE test_innodb_lock2 (
+        a INT,
+        b VARCHAR(16),
+        note VARCHAR(64)
+    ) ENGINE = INNODB;
+    
+    TRUNCATE TABLE test_innodb_lock2;
+    INSERT INTO test_innodb_lock2 VALUES
+    (1, 'b1', 'n1'),
+    (3, 'b3', 'n3'),
+    (4, 'b4', 'n4'),
+    (5, 'b5', 'n5'),
+    (6, 'b6', 'n6'),
+    (7, 'b7', 'n7'),
+    (8, 'b8', 'n8');
+    
+    
+    -- 创建索引
+    CREATE INDEX idx_test_innodb_lock2__a ON test_innodb_lock2 (a);
+    CREATE INDEX idx_test_innodb_lock2__b ON test_innodb_lock2 (b);
+    
+    SHOW INDEX FROM test_innodb_lock2;
+    
+    SELECT * FROM test_innodb_lock2;
+    ```
+
+#### 充实示例1
+1. session_1
+![](../images/行锁_7_s1_1.png)  
+
+2. session_2
+![](../images/行锁_7_s2_1.png)  
+
+
+
+#### 充实示例2
+1. session_1
+    ```mysql
+    update test_innodb_lock2 set b = 'b55' where note = 'n5';
+    -- where筛选条件没有能够用到索引，这时候使用表锁
+    select * from test_innodb_lock2;
+    ```
+    ![](../images/行锁_8_s1_1.png)  
+2. session_2
+    ```mysql
+    update test_innodb_lock2 set b = 'b66' where note = 'n6';
+    -- 出现了阻塞
+    ```
+    ![](../images/行锁_8_s2_1.png)  
+
+3. session_1
+    ```mysql
+    commit;
+    -- 提交事务
+    ```
+    ![](../images/行锁_8_s1_2.png) 
+
+4. session_2
+    ```text
+    session_1事务一提交(表锁释放了)，阻塞的语句马上得到了执行
+    ```
+    ![](../images/行锁_8_s2_2.png)
+    
 
 ***
 <!--

@@ -145,3 +145,5 @@ Innodb_row_lock_waits：从系统启动到现在总共等待的次数
 
 
 
+SHOW STATUS LIKE 'table%';
+

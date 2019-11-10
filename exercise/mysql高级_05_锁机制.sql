@@ -126,5 +126,22 @@ SHOW INDEX FROM test_innodb_lock2;
 SELECT * FROM test_innodb_lock2;
 
 
+EXPLAIN
+SELECT * FROM test_innodb_lock2 WHERE note = '5000';
+
+EXPLAIN
+SELECT a FROM test_innodb_lock WHERE b = 5000;
+
+
+-- 行锁分析
+-- 
+
+SHOW STATUS LIKE 'innodb_row_lock%';
+Innodb_row_lock_current_waits：当前正在等待的锁的数量；
+Innodb_row_lock_time：从系统启动到现在锁定的总时间长度；时间单位：毫秒ms，下同
+Innodb_row_lock_time_avg：每次等待所花的平均时间；
+Innodb_row_lock_time_max：从系统启动到现在等待最长的一次所花的时间；
+Innodb_row_lock_waits：从系统启动到现在总共等待的次数
+
 
 

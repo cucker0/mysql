@@ -26,7 +26,7 @@ mysql高级.锁机制
     * 页锁
     * 行锁
 
-## 表锁
+## MyISAM表锁
 ```text
 MyISAM引擎表的锁：表共享读锁(Table Read Lock)、表独占写锁(Table Write Lock)
 MyISAM在执行查询语句(SELECT)前，会自动给涉及的所有表加读锁，
@@ -144,7 +144,7 @@ session_1对mylock表加写锁，<br>此为表级锁 |lock table mylock write; <
 写锁会阻塞其他会话的读写，允许当前会话所有操作
 ```
 
-### 分析表锁
+### 表锁分析
 * 查看哪些表被锁了
     ```mysql
     show open tables;
@@ -158,6 +158,8 @@ session_1对mylock表加写锁，<br>此为表级锁 |lock table mylock write; <
     ```text
     Table_locks_immediate: 产生表级锁的次数，表示立即获取锁的查询次数。每次立即获取锁，值加1
     Table_locks_waited: 出现表级锁争用而发生等待的次数，不能立即获取锁的次数，每等待一次值加1
+    
+    mysql服务重启后，以上各项数据全部重置为0
     ```
 * 另外
     ```text
@@ -165,7 +167,7 @@ session_1对mylock表加写锁，<br>此为表级锁 |lock table mylock write; <
     写锁后，其他线程不能做任务操作，大量的写操作会使查询很难得到锁，从而造成永远阻塞
     ```
 
-## 行锁
+## InnoDB行锁
 ```text
 InnoDB引擎的表支持行锁，同时也存在表锁。
 
@@ -390,7 +392,7 @@ Innodb会给符合条件的已有数据记录的索引项加锁;
     ```mysql
     set autocommit = 0;
     
-    begin;
+    begin;  -- 或start transaction; 表示开始一个新事务
     select 索引列 from 表名 where 索引列 = 值 for update;
     ... ... -- 需要进行的操作
     commit;
@@ -406,6 +408,20 @@ Innodb会给符合条件的已有数据记录的索引项加锁;
     */
     ```
 
+### 行锁分析
+```mysql
+SHOW STATUS LIKE 'innodb_row_lock%';
+```
+```text
+Innodb_row_lock_current_waits：当前正在等待的锁的数量
+Innodb_row_lock_time：从mysql服务启动到现在，锁定的总时间长度。时间单位：毫秒ms，下同
+Innodb_row_lock_time_avg：每次等待的平均时间
+Innodb_row_lock_time_max：从mysql服务启动到现在，等待最长的一次所花的时间
+Innodb_row_lock_waits：从mysql服务启动到现在，总共等待的次数
+
+mysql服务重启后，以上各项数据全部重置为0
+```
+![](../images/innodb行锁分析.png)  
 
 ### 补充
 * 表结构
@@ -473,6 +489,19 @@ Innodb会给符合条件的已有数据记录的索引项加锁;
     ```
     ![](../images/行锁_8_s2_2.png)
     
+
+### InnoDB表优化建议
+* 合理设计索引，尽量缩小锁的范围
+* 尽可能较少检索条件，避免间隙锁
+* 尽量控制事务大小，减少锁定资源量和时间长度
+* 尽可能低级别事务隔离(基本都采用默认的repeatable read)
+
+
+## BDB页锁
+```text
+BDB引擎，一次锁定相邻的一组记录
+开销和加锁时间界于表锁和行锁之间：会出现死锁；锁定粒度界于表锁和行锁之间，并发度一般。
+```
 
 ***
 <!--

@@ -351,11 +351,11 @@ MySQL核心技术
 ---
 
 **mysql高级**
+[相关脑图_html版](md/mysql_zhouyang.html)  
+[相关脑图_MindManager版](md/mysql_zhouyang_yuan.mmap)  
 <details>
 <summary>mysql架构介绍</summary>
 
-[相关脑图_html版](md/mysql_zhouyang.html)  
-[相关脑图_MindManager版](md/mysql_zhouyang_yuan.mmap)  
 * [mysql架构介绍](md/mysql高级_01.mysql架构介绍.md#mysql架构介绍)
     * [高级mysql主要工作内容](md/mysql高级_01.mysql架构介绍.md#高级mysql主要工作内容)
     * [修改mysql.cnf配置文件](md/mysql高级_01.mysql架构介绍.md#修改mysql.cnf配置文件)

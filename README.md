@@ -350,7 +350,8 @@ MySQL核心技术
 
 ---
 
-**mysql高级**
+**mysql高级**  
+
 [相关脑图_html版](md/mysql_zhouyang.html)  
 [相关脑图_MindManager版](md/mysql_zhouyang_yuan.mmap)  
 <details>

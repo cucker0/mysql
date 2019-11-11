@@ -482,7 +482,6 @@ MySQL核心技术
         * [充实示例2](md/mysql高级_04.锁机制.md#充实示例2)
     * [InnoDB表优化建议](md/mysql高级_04.锁机制.md#InnoDB表优化建议)
 * [BDB页锁](md/mysql高级_04.锁机制.md#BDB页锁)
-* [定义URL变量](md/mysql高级_04.锁机制.md#定义URL变量)
 </details>
 
 <details>

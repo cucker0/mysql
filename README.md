@@ -222,6 +222,7 @@ MySQL核心技术
             * [外键设置在主表删除记录时相关动作](md/4_04_DDL数据定义语言.常见约束.md#外键设置在主表删除记录时相关动作)
             * [级联删除(ON DELETE CASCADE)](md/4_04_DDL数据定义语言.常见约束.md#级联删除on-delete-cascade)
             * [级联置空(ON DELETE SET NULL)](md/4_04_DDL数据定义语言.常见约束.md#级联置空on-delete-set-null)
+    * [COMMENT注释](md/4_04_DDL数据定义语言.常见约束.md#comment注释)
     </details>
     
 * [**DCL数据控制语言**](md/5_01_DCL数据控制语言.TCL事务控制语言.md)

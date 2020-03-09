@@ -110,7 +110,7 @@ MySQL核心技术
     </details>
     
     <details>
-    <summary>分页查询</summary>
+    <summary>limit分页查询</summary>
     
     * [limit分页查询](md/2_09_DQL数据查询语言.分页查询.md)
         * [分页查询语法](md/2_09_DQL数据查询语言.分页查询.md#分页查询语法)

@@ -196,7 +196,7 @@ explain sql语句;
 ```
 
 ### explain查询结果各字段含义列表
-[explain输入格式 官方说明](https://dev.mysql.com/doc/refman/8.0/en/explain-output.html)
+[explain输出格式 官方说明](https://dev.mysql.com/doc/refman/8.0/en/explain-output.html)
 
 字段 |JSON Name |含义 |备注
 :--- |:--- |:--- |:---

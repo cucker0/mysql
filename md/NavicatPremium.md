@@ -107,7 +107,7 @@ LISTENER_ORCLCDB =
 
 ### 表创建语句
 <details>
-<summary>表创建语句(一对一关系)</summary>
+<summary>表创建语句(多对多关系)</summary>
 
 * auth_group_permissions
     ```mysql

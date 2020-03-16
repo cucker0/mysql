@@ -314,7 +314,8 @@ WHERE ROUTINE_NAME='myp8';
 
 
 -- 在存储过程中遍历查询结果集
--- 
+--
+DELIMITER $
 CREATE PROCEDURE curdemo()
 BEGIN
     -- ①设置一个标记，表示游标是否为最后一行，0：未到最后一行，1: 到了最后一行
@@ -349,4 +350,6 @@ BEGIN
     -- 关闭游标
     CLOSE cur;
 
-END
+END$
+
+DELIMITER ;

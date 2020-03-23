@@ -98,7 +98,7 @@ SELECT COUNT(1) FROM employees; -- 相当于SELECT *, 1 FROM employees;的每行
 SELECT COUNT(NULL) FROM employees; -- 0
 
 
-    -- 效率
+-- 效率
 MYISAM存储引擎下，COUNT(*)的效率高，有一个值专门统计行数，直接返回该值
 INNODB存储引擎下，COUNT(*)和COUNT(1)的效率差不多，比COUNT(字段)要高一些
 

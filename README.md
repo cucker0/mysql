@@ -71,6 +71,7 @@ MySQL核心技术
     * [分组函数](md/2_05_DQL数据查询语言.分组函数.md)
         * [分组函数概念与功能](md/2_05_DQL数据查询语言.分组函数.md#分组函数概念与功能)
         * [分组函数概览与总结](md/2_05_DQL数据查询语言.分组函数.md#分组函数概览与总结)
+        * [count(*)与count(id)与count(字段)](md/2_05_DQL数据查询语言.分组函数.md#count与countid与count字段)
     </details>
     
     <details>
@@ -531,3 +532,4 @@ MySQL核心技术
     * [NavicatPremium客户端工具](md/NavicatPremium.md)
     * [SQLYog客户端工具](md/SQLYog.md)
     * [MySQL、PostgreSQL 、Oracle在线资料](https://www.techonthenet.com/mysql/index.php)
+    * 

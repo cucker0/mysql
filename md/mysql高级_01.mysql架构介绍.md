@@ -150,7 +150,7 @@ default_character_set = utf8
 </details>
 
 ### MyiSAM与InnoDB引擎对比
-对比项 |MyiSAM |InnoDB
+对比项 |MyiSAM [ˈmɪsʌn] |InnoDB [ˈɪnoʊ db]
 :--- |:--- |:---
 主键、外键 |不支持 |支持 
 事务 |不支持 |支持 

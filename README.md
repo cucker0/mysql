@@ -116,7 +116,7 @@ MySQL核心技术
     * [子查询](md/2_08_DQL数据查询语言.子查询.md)
         * [子查询分类](md/2_08_DQL数据查询语言.子查询.md#子查询分类)
         * [where或having后面](md/2_08_DQL数据查询语言.子查询.md#where或having后面)
-            * [where或having后面子查询特点](md/2_08_DQL数据查询语言.子查询.md#where或having后面子查询特点)
+            * [where或having后面子查询特点, in/not in,  any/some,  all](md/2_08_DQL数据查询语言.子查询.md#where或having后面子查询特点)
             * [标量子查询](md/2_08_DQL数据查询语言.子查询.md#标量子查询)
             * [列子查询](md/2_08_DQL数据查询语言.子查询.md#列子查询)
             * [行子查询](md/2_08_DQL数据查询语言.子查询.md#行子查询)

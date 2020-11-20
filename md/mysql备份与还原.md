@@ -57,7 +57,7 @@ mysql备份与还原
     
 * 将指定的数据库转移到新服务器
     ```bash
-    mysqldump -uusername -ppassword databasename |mysql -host=Host -uUser -p -C 目标服务器上的数据名
+    mysqldump -uusername -ppassword databasename |mysql -h远程Host -uUser -p -C 目标服务器上的databasename
     ```
     
 

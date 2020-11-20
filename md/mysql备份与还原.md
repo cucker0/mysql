@@ -55,7 +55,7 @@ mysql备份与还原
     mysqldump --all-databases > allbackupfile.sql
     ```
     
-* 将指定的数据库转移到新服务器
+* 将指定的数据库转移到新服务器(远程服务器)
     ```bash
     mysqldump -uusername -ppassword databasename |mysql -h远程Host -uUser -p -C 目标服务器上的databasename
     ```

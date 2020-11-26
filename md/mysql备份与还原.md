@@ -23,6 +23,8 @@ mysql备份与还原
     DROP TABLE IF EXISTS `表名`; 
     
     加--skip-add-drop-table 选项可以在建表前不加删表语句
+    -l, --lock-tables   Lock all tables for read.
+                        (Defaults to on; use --skip-lock-tables to disable.)
     ```
     ```bash
     mysqldump --skip-add-drop-table -uusername -ppassword databasename > backupfile.sql

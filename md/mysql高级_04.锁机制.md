@@ -37,24 +37,61 @@ MyISAM在执行查询语句(SELECT)前，会自动给涉及的所有表加读锁
 ```
 
 ### 手动加表锁语法
-```text
-LOCK TABLES
-    tbl_name [[AS] alias] lock_type
-    [, tbl_name [[AS] alias] lock_type] ...
+* 锁定指定的表
+    ```text
+    LOCK TABLES
+        tbl_name [[AS] alias] lock_type
+        [, tbl_name [[AS] alias] lock_type] ...
 
-－－－－－
-lock_type: {
-    READ [LOCAL]
-  | [LOW_PRIORITY] WRITE
-}
+    －－－－－
+    lock_type: {
+        READ [LOCAL]
+      | [LOW_PRIORITY] WRITE
+    }
 
-常用：lock tables 表名1 read/write, 表名2  read/write;
-```
+    常用：lock tables 表名1 read/write, 表名2  read/write;
+    ```
+* 锁定所有库的所有表为只读，加全局读锁（适用于事务引擎、MyISAM引擎表）
+    ```
+    FLUSH TABLES WITH READ LOCK;
+    ```
 
 ### 查看表上加过的锁
 ```mysql
 SHOW OPEN TABLES [WHERE `database` = '库名'[ AND `table` = '表名']];
 ```
+
+### FLUSH语句
+https://dev.mysql.com/doc/refman/8.0/en/flush.html#flush-tables-with-read-lock
+```
+FLUSH [NO_WRITE_TO_BINLOG | LOCAL] {
+    flush_option [, flush_option] ...
+  | tables_option
+}
+
+flush_option: {
+    BINARY LOGS
+  | ENGINE LOGS
+  | ERROR LOGS
+  | GENERAL LOGS
+  | HOSTS
+  | LOGS
+  | PRIVILEGES
+  | OPTIMIZER_COSTS
+  | RELAY LOGS [FOR CHANNEL channel]
+  | SLOW LOGS
+  | STATUS
+  | USER_RESOURCES
+}
+
+tables_option: {
+    TABLES
+  | TABLES tbl_name [, tbl_name] ...
+  | TABLES WITH READ LOCK
+  | TABLES tbl_name [, tbl_name] ... WITH READ LOCK
+  | TABLES tbl_name [, tbl_name] ... FOR EXPORT
+}
+``` 
 
 ### 释放表锁(所有表)
 ```mysql

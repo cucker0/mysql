@@ -46,7 +46,7 @@ mysql备份与还原
     加--skip-add-drop-table 选项可以在建表前不加删表语句
     -l, --lock-tables   Lock all tables for read.即，默认是开启只读表锁，所以在备份过程中其他连接会话是不能更新数据的
                         (Defaults to on; use --skip-lock-tables to disable.)
-    --single-transaction  备份数据之前会启动一个事务，确保拿到一致性视图。由于MVCC的支持，这个过程中的数据是可以正常更新的
+    --single-transaction  备份数据之前会启动一个事务，确保拿到一致性视图。由于MVCC的支持，这个过程中的数据是可以正常更新的。仅支持innodb
     -q, --quick  Don't buffer query, dump directly to stdout.该选项用于转储大的表，它强制mysqldump从服务器一次一行地检索表中的行而不是检索所有行并在输出前将它缓存到内存中
     ```
     ```bash

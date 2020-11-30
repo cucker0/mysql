@@ -65,6 +65,7 @@ MyISAM在执行查询语句(SELECT)前，会自动给涉及的所有表加读锁
 在当前会话中锁定了一个表时，去select其他表时会报  Table 'table_xxx' was not locked with LOCK TABLES
 ```mysql
 SHOW OPEN TABLES [WHERE `database` = '库名'[ AND `table` = '表名']];
+SHOW OPEN TABLES WHERE In_use > 0;
 ```
  会查看到阻塞状态的会话，Waiting on
 ```

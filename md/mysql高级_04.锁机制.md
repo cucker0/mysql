@@ -56,9 +56,19 @@ MyISAM在执行查询语句(SELECT)前，会自动给涉及的所有表加读锁
     FLUSH TABLES WITH READ LOCK;
     ```
 
-### 查看表上加过的锁
+### 查看表上加了的锁
+注意查看表的
+* In_use
+   >表当前被查询使用的次数。表加锁后，该值会加1
+* Name_locked
+   >表名称是否被锁定。名称锁定用于取消表或对表进行重命名等操作
+在当前会话中锁定了一个表时，去select其他表时会报  Table 'table_xxx' was not locked with LOCK TABLES
 ```mysql
 SHOW OPEN TABLES [WHERE `database` = '库名'[ AND `table` = '表名']];
+```
+ 会查看到阻塞状态的会话，Waiting on
+```
+show processlist;
 ```
 
 ### FLUSH语句

@@ -9,6 +9,27 @@ mysql备份与还原
 
 
 ## 备份常用操作
+* 备份前手动锁表操作
+    * 锁定所有库的所有表为只读，加全局读锁（适用于事务引擎、MyISAM引擎表）
+        ```
+        FLUSH TABLES WITH READ LOCK;
+        ```
+    * 锁定指定的表
+        ```mysql 
+        lock tables 表名1 read/write, 表名2  read/write;
+        
+        -- read: 只读
+        -- write: 不允许读和写
+        ```
+    * 查看表上加了的锁
+        ```
+        SHOW OPEN TABLES [WHERE `database` = '库名'[ AND `table` = '表名']];
+        ```
+* 数据库还原后，手动释放表锁(所有表)
+    ```
+    unlock tables;
+    ```
+
 * 备份命令mysqldump格式
     ```text
     格式：mysqldump -h主机名  -P端口 -u用户名 -p密码 --no-defaults 数据库名 > 文件名.sql 

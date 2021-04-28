@@ -1,8 +1,19 @@
 Character Sets, Collations, Unicode
 ==
 
-
 参考[Character Sets, Collations, Unicode](https://dev.mysql.com/doc/refman/8.0/en/charset.html)
+
+## Table Of Contents
+* [基本概念](#基本概念)
+* [Collation Naming Conventions](#Collation-Naming-Conventions)
+* [Server Character Set and Collation](#Server-Character-Set-and-Collation)
+* [Database Character Set and Collation](#Database-Character-Set-and-Collation)
+* [Table Character Set and Collation](#Table-Character-Set-and-Collation)
+* [Column Character Set and Collation](#Column-Character-Set-and-Collation)
+* [Character String Literal Character Set and Collation](#Character-String-Literal-Character-Set-and-Collation)
+* [Connection Character Sets and Collations](#Connection-Character-Sets-and-Collations)
+* [综合配置示例](#综合配置示例)
+
 ## 基本概念
 * Character Set
     ```text
@@ -50,6 +61,15 @@ but you can specify character sets at the `server`, `database`, `table`, `column
 
 Character set issues affect not only data storage, but also communication between client programs and the MySQL server. 
 
+**utf8mb4_0900_ai_ci**
+```text
+属于 utf8mb4_unicode_ci 中的一种，具体含义如下：
+
+uft8mb4  字符集uft8mb4，每个字符最多占4个字节。
+0900  指的是 Unicode 校对算法版本。（Unicode归类算法是用于比较符合Unicode标准要求的两个Unicode字符串的方法）。
+ai  指的是口音不敏感。也就是说，排序时e，è，é，ê和ë之间没有区别。
+ci  表示不区分大小写。也就是说，排序时p和P之间没有区别。
+```
 
 ## Collation Naming Conventions
 Collation命名约定
@@ -253,4 +273,53 @@ SET character_set_results = charset_name;
 SET collation_connection = @@collation_database;
 ```
 
+## 综合配置示例
+/etc/my.cnf
+```text
+...
+[client] 
+default-character-set=utf8mb4
 
+[mysql] 
+default-character-set=utf8mb4
+
+[mysqld] 
+character-set-client-handshake=FALSE
+character-set-server=utf8mb4
+collation-server=utf8mb4_unicode_ci
+init_connect='SET NAMES utf8mb4'
+init_connect='SET collation_connection = utf8mb4_unicode_ci'
+...
+```
+
+重启并确认
+可以看到，系统编码、连接编码、服务器和客户端编码都设置为 UTF-8了：
+```bash
+mysql> show variables like "%char%";
++--------------------------------------+--------------------------------+
+| Variable_name                        | Value                          |
++--------------------------------------+--------------------------------+
+| character_set_client                 | utf8mb4                        |
+| character_set_connection             | utf8mb4                        |
+| character_set_database               | utf8mb4                        |
+| character_set_filesystem             | binary                         |
+| character_set_results                | utf8mb4                        |
+| character_set_server                 | utf8mb4                        |
+| character_set_system                 | utf8                           |
+| character_sets_dir                   | /usr/share/mysql-8.0/charsets/ |
+| validate_password.special_char_count | 1                              |
++--------------------------------------+--------------------------------+
+9 rows in set (0.00 sec)
+```
+MySQL 中字符集相关变量
+```text
+character_set_client： 客户端请求数据的字符集
+character_set_connection： 从客户端接收到数据，然后传输的字符集
+character_set_database： 默认数据库的字符集，无论默认数据库如何改变，都是这个字符集；
+                            如果没有默认数据库，那就使用 character_set_server指定的字符集，这个变量建议由系统自己管理，不要人为定义。
+character_set_filesystem： 把操作系统上的文件名转化成此字符集，
+                            即把 character_set_client转换character_set_filesystem， 默认binary是不做任何转换的
+character_set_results： 结果集的字符集
+character_set_server： 数据库服务器的默认字符集
+character_set_system： 存储系统元数据的字符集，总是 utf8，不需要设置
+```

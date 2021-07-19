@@ -73,6 +73,17 @@ stat 为索引次要字段3
 * FullText全文索引
 * RTree索引
 
+### 索引名的命名规范
+```test
+（primary key）主键索引名：PK_<table>_<column>_<column>
+（index）普通索引名：IX_<table>_<column>_<column>
+(unique key)唯一索引名：UN_<table>_<column>_<column>
+
+其中<table>是建立索引的表名，<column>是建立索引的字段名
+索引名限制在30个字符内。当索引名超过30字符时，可用缩写来减少索引名的长度，如description –> desc；information –> info；address –> addr等
+
+```
+
 ### 增查改删索引
 * 创建索引
     ```text

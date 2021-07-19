@@ -181,7 +181,7 @@ MySQL核心技术
     <details>
     <summary>库的管理</summary>
     
-    * [库的管理](md/4_01_DDL数据定义语言.库的管理.md)
+    * [库的管理(database)](md/4_01_DDL数据定义语言.库的管理.md)
         * [库的创建](md/4_01_DDL数据定义语言.库的管理.md#库的创建)
         * [库的修改](md/4_01_DDL数据定义语言.库的管理.md#库的修改)
         * [库的删除](md/4_01_DDL数据定义语言.库的管理.md#库的删除)
@@ -189,7 +189,7 @@ MySQL核心技术
     </details>
     
     <details>
-    <summary>表的管理</summary>
+    <summary>表的管理(table)</summary>
     
     * [表的管理](md/4_02_DDL数据定义语言.表的管理.md)
         * [COMMENT注释](md/4_02_DDL数据定义语言.表的管理.md#COMMENT注释)

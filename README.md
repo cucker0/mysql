@@ -536,6 +536,7 @@ MySQL核心技术
     * [SQLYog客户端工具](md/SQLYog.md)
     * [MySQL、PostgreSQL 、Oracle在线资料](https://www.techonthenet.com/mysql/index.php)
     * [sql分析方法](md/sql分析方法.md)
+    * [primary key类型的选择](md/primary_key_and_type.md)
     * [Character Sets, Collations, Unicode](md/CharacterSets,Collations,Unicode.md)
         * [基本概念](md/CharacterSets,Collations,Unicode.md#基本概念)
         * [Collation Naming Conventions](md/CharacterSets,Collations,Unicode.md#Collation-Naming-Conventions)

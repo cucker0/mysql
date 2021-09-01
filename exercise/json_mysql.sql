@@ -1,32 +1,4 @@
--- json数组
-SELECT JSON_ARRAY(1, "abc", NULL, TRUE, CURTIME());  -- CURTIME() 当前时间
-SELECT JSON_ARRAY('a', 1, NOW());  -- now() 当前日期时间
-
---  json对象
-SELECT JSON_OBJECT('id', 87, 'name', 'carrot');
-
--- 双引号包裹字符串
-SELECT JSON_QUOTE('null'), JSON_QUOTE('"null"');
-
-SELECT JSON_QUOTE('[1, 2, 3]');
-
--- 字符转为JSON对象
-SELECT CAST('[11, 22, 33]' AS JSON);
-SELECT CAST('{"k1": 11, "k2": 22}' AS JSON);
-
--- 多个json组合成一个json
-SELECT JSON_MERGE_PRESERVE('["a", 1]', '{"key": "value"}');
-
-SELECT JSON_VALID('null'), JSON_VALID('Null'), JSON_VALID('NULL');
-
-
-
-
-
-
-
 CREATE DATABASE jsontest CHARSET 'utf8mb4';
-
 
 USE jsontest;
 -- 创建json table
@@ -61,21 +33,394 @@ SELECT jdoc->>"$.key1" FROM json_tab
 SELECT * FROM json_tab WHERE jdoc->>"$.key1" = 'value1';
 
 
+CREATE TABLE department_tbl (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    `name` VARCHAR(64) NOT NULL
+);
+
+INSERT INTO department_tbl(`name`) VALUES
+('行政部'),
+('财务部'),
+('销售部'),
+('客服部')
+;
+
+
 -- user table
 CREATE TABLE employee (
     id INT PRIMARY KEY AUTO_INCREMENT,
     `name` VARCHAR(64) NOT NULL,
-    rest JSON COMMENT 'json类型的其它信息'
+    rest JSON COMMENT '其它信息(json类型)'
 );
 
 -- insert record
 INSERT INTO employee(`name`, rest) VALUES
-('Mally', '{"age":23, "gender":0, "salary": 56000, "positions": "cfo,ceo", "stock": 6000000}'),
-('Jakob', '{"age":22, "gender":1, "salary": 80000, "positions": "Mathematics consultant,cfa", "stock": 96000000}'),
+('Mally', '{"age":23, "gender":0, "salary": 56000, "positions": "cfo,ceo", "stock": 6000000, "department_id":1}'),
+('Jakob', '{"age":22, "gender":1, "salary": 80000, "positions": "Mathematics consultant,cfa", "stock": 96000000,"department_id":1}'),
 ('Einstein', '{"age":21, "gender":1, "salary": 80000, "positions": "Security consultant,cfa"}')
 ;
+
+
 
 SELECT * FROM employee;
 
 
 SELECT 17 MEMBER OF('[23, "abc", 17, "ab", 10]');
+
+SELECT 'ab' MEMBER OF('[23, "abc", 17, "ab", 10]');
+
+INSERT INTO employee(`name`, rest) VALUES
+('Kally', '[3,10,5,17,[22,44,66]]'),
+('Bakry', '[3,10,5,17,44]')
+;
+
+
+SELECT * FROM employee WHERE rest->"$[0]" = 3;
+
+SELECT rest->"$[4][1]" FROM employee;
+
+-- 以json的某个值作为连接条件
+SELECT e.id, e.name, e.rest->>"$.age", e.rest->>"$.salary", d.name department_name FROM department_tbl AS d
+INNER JOIN employee AS e 
+ON d.id = e.rest->>"$.department_id"
+;
+
+SELECT e.id, e.name, e.rest->>"$.age", e.rest->>"$.salary", d.name department_name FROM department_tbl AS d
+RIGHT OUTER JOIN employee AS e 
+ON d.id = e.rest->>"$.department_id"
+;
+
+
+## Functions That Create JSON Values  --start
+-- json数组
+SELECT JSON_ARRAY(1, "abc", NULL, TRUE, CURTIME());  -- CURTIME() 当前时间
+/*
+JSON_ARRAY(1, "abc", NULL, TRUE, CURTIME())  
+---------------------------------------------
+[1, "abc", null, true, "02:49:16.000000"]    
+*/
+
+SELECT JSON_ARRAY('a', 1, NOW());  -- now() 当前日期时间
+/*
+JSON_ARRAY('a', 1, NOW())               
+----------------------------------------
+["a", 1, "2021-09-01 02:48:58.000000"]  
+*/
+
+--  json对象
+SELECT JSON_OBJECT('id', 87, 'name', 'carrot');
+/*
+JSON_OBJECT('id', 87, 'name', 'carrot')  
+-----------------------------------------
+{"id": 87, "name": "carrot"}             
+*/
+
+
+-- 双引号包裹字符串
+SELECT JSON_QUOTE('null'), JSON_QUOTE('"null"');
+/*
+JSON_QUOTE('null')  JSON_QUOTE('"null"')  
+------------------  ----------------------
+"null"              "\"null\""            
+*/
+
+
+SELECT JSON_QUOTE('[1, 2, 3]'), JSON_QUOTE('{"total": 2300}');
+/*
+JSON_QUOTE('[1, 2, 3]')  JSON_QUOTE('{"total": 2300}')  
+-----------------------  -------------------------------
+"[1, 2, 3]"              "{\"total\": 2300}"                       
+*/
+
+## Functions That Create JSON Values  --end
+
+
+## Functions That Search JSON Values  --start
+### ->
+CREATE TABLE jemp (
+   g INT,
+   c JSON
+);
+
+INSERT INTO jemp(g, c) VALUES
+(1, '{"id": 1, "name": "Niki"}'),
+(2, '{"id": 2, "name": "Wilma"}'),
+(3, '{"id": 3, "name": "Barney"}'),
+(4, '{"id": 4, "name": "Betty"} ')
+;
+
+SELECT c, JSON_EXTRACT(c, "$.id"), g 
+FROM jemp
+WHERE JSON_EXTRACT(c, "$.id") > 1
+ORDER BY JSON_EXTRACT(c, "$.name")
+;
+/*
+c                            JSOn_EXTRACt(c, "$.id")       g  
+---------------------------  -----------------------  --------
+{"id": 3, "name": "Barney"}  3                               3
+{"id": 4, "name": "Betty"}   4                               4
+{"id": 2, "name": "Wilma"}   2                               2
+*/
+
+-- 等价于 上面的写法
+SELECT c, c->"$.id", g
+FROM jemp
+WHERE c->"$.id" > 1
+ORDER BY c->"$.name"
+;
+
+/*
+c                            c->"$.id"       g  
+---------------------------  ---------  --------
+{"id": 3, "name": "Barney"}  3                 3
+{"id": 4, "name": "Betty"}   4                 4
+{"id": 2, "name": "Wilma"}   2                 2
+*/
+
+
+ALTER TABLE jemp ADD COLUMN n INT;
+UPDATE jemp SET n=1 WHERE c->"$.id" = 4;
+
+SELECT c, c->"$.id", g, n
+FROM jemp
+WHERE c->"$.id" > 1
+ORDER BY c->"$.name"
+;
+/*
+c                            c->"$.id"       g       n  
+---------------------------  ---------  ------  --------
+{"id": 3, "name": "Barney"}  3               3    (NULL)
+{"id": 4, "name": "Betty"}   4               4         1
+{"id": 2, "name": "Wilma"}   2               2    (NULL)
+*/
+
+DELETE FROM jemp WHERE c->"$.id" = 4;
+
+SELECT c, c->"$.id", g, n
+FROM jemp
+WHERE JSON_EXTRACT(c, "$.id") > 1
+ORDER BY c->"$.name"
+;
+/*
+c                            c->"$.id"       g       n  
+---------------------------  ---------  ------  --------
+{"id": 3, "name": "Barney"}  3               3    (NULL)
+{"id": 2, "name": "Wilma"}   2               2    (NULL)
+*/
+
+#### 多层key
+INSERT INTO jemp(c, g) VALUES
+('{"kkk": {"kk": {"k": 111}}, "jjj": {"jj": {"j": 222}}}', 5);
+
+SELECT c->"$.kkk.kk" FROM jemp WHERE g=5;
+/*
+c->"$.kkk.kk"  
+---------------
+{"k": 111}     
+*/
+DELETE FROM jemp WHERE c->"$.kkk.kk.k" = 111;
+
+#### 数组
+INSERT INTO jemp(c, g) VALUES
+("[3,10,5,17,44]", 33),
+("[3,10,5,17,[22,44,66]]", 34);
+
+SELECT c->"$[4]" FROM jemp WHERE g >=33 AND g <= 34;
+/*
+c->"$[4]"     
+--------------
+44            
+[22, 44, 66] 
+*/
+
+SELECT * FROM jemp WHERE c->"$[0]" = 3;
+/*
+     g  c                                  n  
+------  ----------------------------  --------
+    33  [3, 10, 5, 17, 44]              (NULL)
+    34  [3, 10, 5, 17, [22, 44, 66]]    (NULL)
+*/
+
+#### 多维数组
+SELECT * FROM jemp
+WHERE c->"$[4][1]" IS NOT NULL;
+/*
+     g  c                                  n  
+------  ----------------------------  --------
+    34  [3, 10, 5, 17, [22, 44, 66]]    (NULL)
+*/
+
+#### map与list组合
+INSERT INTO jemp(c, g) VALUES
+('{"data": [{"hostname": "webserv1", "ip": "172.17.0.2"}, 11, 22, 33], "code": 0}', 35),
+('{"data": [{"hostname": "webserv2", "ip": "172.17.0.3"}, 44, 55, 66], "code": 0}', 36);
+
+SELECT c->"$.data[0].hostname" FROM jemp WHERE g = 35;
+
+
+### ->>
+SELECT c->"$.name" AS 'name' FROM jemp WHERE g > 2 AND g < 5;
+/*
+name      
+----------
+"Barney"  
+"Betty"  
+*/
+
+-- 以下两条SQL等价，查询结果也一样
+SELECT JSON_UNQUOTE(c->"$.name") AS 'name' FROM jemp WHERE g > 2 AND g < 5;
+SELECT c->>"$.name" AS 'name' FROM jemp WHERE g>2 AND g < 5;
+/*
+name    
+--------
+Barney  
+Betty  
+*/
+
+
+INSERT INTO jemp(c, g) VALUES
+('[3, 10, 5, "x", 44]', 37),
+('[3, 10, 5, 17, [22, "y" , 66]]', 38)
+;
+
+SELECT c->'$[3]', c->'$[4][1]' FROM jemp 
+WHERE g = 37 OR g = 38;
+/*
+c->'$[3]'  c->'$[4][1]'  
+---------  --------------
+"x"        (NULL)        
+17         "y"           
+*/
+
+SELECT c->>'$[3]', c->>'$[4][1]' FROM jemp 
+WHERE g = 37 OR g = 38;
+/*
+c->>'$[3]'  c->>'$[4][1]'  
+----------  ---------------
+x           (NULL)         
+17          y              
+*/
+
+
+### JSON_KEYS()
+SELECT JSON_KEYS('{"a": 1, "b": {"c": 30}}');
+/*
+JSON_KEYS('{"a": 1, "b": {"c": 30}}')  
+---------------------------------------
+["a", "b"]  
+*/
+
+SELECT JSON_KEYS('[11, 22, 33, {"k1": 100}]');
+-- 结果为 NULL
+
+SELECT c FROM jemp WHERE g = 5;
+/*
+c                                                       
+--------------------------------------------------------
+{"jjj": {"jj": {"j": 222}}, "kkk": {"kk": {"k": 111}}}  
+*/
+
+SELECT JSON_KEYS(c) FROM jemp WHERE g = 5;
+/*
+JSON_KEYs(c)    
+----------------
+["jjj", "kkk"]  
+*/
+
+SELECT JSON_KEYS(c, "$.kkk.kk") FROM jemp WHERE g = 5;
+/*
+JSON_KEYS(c, "$.kkk.kk")  
+--------------------------
+["k"]                     
+*/
+
+## Functions That Search JSON Values  --end
+### JSON_ARRAY_APPEND()
+SELECT c FROM jemp WHERE g = 38;
+/*
+c                              
+-------------------------------
+[3, 10, 5, 17, [22, "y", 66]]  
+*/
+
+
+SELECT JSON_ARRAY_APPEND(c, "$[4]", 99) FROM jemp
+WHERE g = 38;
+/*
+JSON_ARRAY_APPEND(c, "$[4]", 99)   
+-----------------------------------
+[3, 10, 5, 17, [22, "y", 66, 99]]  
+*/
+
+-- 更新JSON数组值
+UPDATE jemp SET c = JSON_ARRAY_APPEND(c, "$[4]", 99) WHERE g = 38;
+
+SELECT JSON_ARRAY_APPEND(c, "$[0]", 518) FROM jemp
+WHERE g = 38;
+/*
+JSON_ARRAY_APPEND(c, "$[0]", 518)     
+--------------------------------------
+[[3, 518], 10, 5, 17, [22, "y", 66]]  
+*/
+
+
+SELECT JSON_ARRAY_APPEND('["a", ["b", "c"], "d"]', "$[1]", 1);
+/*
+JSON_ARRAY_APPEND('["a", ["b", "c"], "d"]', "$[1]", 1)  
+--------------------------------------------------------
+["a", ["b", "c", 1], "d"]    
+*/
+
+SELECT JSON_ARRAY_APPEND('["a", ["b", "c"], "d"]', "$[0]", 2);
+/*
+JSON_ARRAY_APPEND('["a", ["b", "c"], "d"]', "$[0]", 2)  
+--------------------------------------------------------
+[["a", 2], ["b", "c"], "d"]   
+*/
+
+SELECT JSON_ARRAY_APPEND('["a", ["b", "c"], "d"]', "$[1][0]", 3);
+/*
+JSON_ARRAY_APPEND('["a", ["b", "c"], "d"]', "$[1][0]", 3)  
+-----------------------------------------------------------
+["a", [["b", 3], "c"], "d"]                                
+*/
+
+SELECT JSON_ARRAY_APPEND('{"a": 1, "b": [2, 3], "c": 4}', "$.b", 'x');
+/*
+JSON_ARRAY_APPEND('{"a": 1, "b": [2, 3], "c": 4}', "$.b", 'x')  
+----------------------------------------------------------------
+{"a": 1, "b": [2, 3, "x"], "c": 4}                              
+*/
+
+SELECT JSON_ARRAY_APPEND('{"a": 1, "b": [2, 3], "c": 4}', "$.c", 'yy');
+/*
+JSON_ARRAY_APPEND('{"a": 1, "b": [2, 3], "c": 4}', "$.c", 'yy')  
+-----------------------------------------------------------------
+{"a": 1, "b": [2, 3], "c": [4, "yy"]}                            
+*/
+
+SELECT JSON_ARRAY_APPEND('{"a": 1}', '$', 'z');
+/*
+JSON_ARRAY_APPEND('{"a": 1}', '$', 'z')  
+-----------------------------------------
+[{"a": 1}, "z"]                          
+*/
+
+
+
+## Functions That Modify JSON Values  --start
+
+
+
+## Functions That Modify JSON Values  --end
+
+-- 字符转为JSON对象
+SELECT CAST('[11, 22, 33]' AS JSON);
+SELECT CAST('{"k1": 11, "k2": 22}' AS JSON);
+
+-- 多个json组合成一个json
+SELECT JSON_MERGE_PRESERVE('["a", 1]', '{"key": "value"}');
+
+SELECT JSON_VALID('null'), JSON_VALID('Null'), JSON_VALID('NULL');
+
+

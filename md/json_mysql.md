@@ -87,11 +87,76 @@ mysql json指表字段支持JSON类型的数据(The JSON Data Type)
 * [JSON Function Reference](https://dev.mysql.com/doc/refman/8.0/en/json.html)
 
 ## 建表
+要使用JSON数据类型，指定表字段类型为 `JSON` 即可。
+
 ```mysql
+CREATE DATABASE jsontest CHARSET 'utf8mb4';
+USE jsontest;
+
+-- 员工表 
 CREATE TABLE employee (
     id INT PRIMARY KEY AUTO_INCREMENT,
     `name` VARCHAR(64) NOT NULL,
-    rest JSON COMMENT 'json类型的其它信息'
+    rest JSON COMMENT '其它信息(json类型)'
 );
+
+-- insert record
+INSERT INTO employee(`name`, rest) VALUES
+('Mally', '{"age":23, "gender":0, "salary": 56000, "positions": "cfo,ceo", "stock": 6000000, "department_id":1}'),
+('Jakob', '{"age":22, "gender":1, "salary": 80000, "positions": "Mathematics consultant,cfa", "stock": 96000000,"department_id":1}'),
+('Einstein', '{"age":21, "gender":1, "salary": 80000, "positions": "Security consultant,cfa"}')
+;
 ```
 
+## 插入JSON字段
+json字段写成json化的字符串
+```mysql
+INSERT INTO employee(`name`, rest) VALUES
+('Mally', '{"age":23, "gender":0, "salary": 56000, "positions": "cfo,ceo", "stock": 6000000, "department_id":1}')
+;
+```
+
+## JSON字段值的CRUD
+### 插入JSON值
+```mysql
+
+```
+
+### 查询JSON值
+
+### 更新JSON值
+
+### 删除JSON值
+
+
+### 使用json字段内的某个值作为连接条件
+* 创建部门表
+    ```mysql
+    CREATE TABLE department_tbl (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        `name` VARCHAR(64) NOT NULL
+    );
+    
+    -- insert data
+    INSERT INTO department_tbl(`name`) VALUES
+    ('行政部'),
+    ('财务部'),
+    ('销售部'),
+    ('客服部')
+    ;
+    ```
+* 连接查询
+    ```mysql
+    SELECT e.id, e.name, e.rest->>"$.age", e.rest->>"$.salary", d.name department_name FROM department_tbl AS d
+    INNER JOIN employee AS e 
+    ON d.id = e.rest->>"$.department_id"
+    ; 
+    ```
+
+    ```mysql
+    SELECT e.id, e.name, e.rest->>"$.age", e.rest->>"$.salary", d.name department_name FROM department_tbl AS d
+    RIGHT OUTER JOIN employee AS e 
+    ON d.id = e.rest->>"$.department_id"
+    ;
+    ```
+    

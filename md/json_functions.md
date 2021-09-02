@@ -16,8 +16,8 @@ JSON_CONTAINS()	|Whether JSON document contains specific object at path	<br>在j
 JSON_CONTAINS_PATH()	|Whether JSON document contains any data at path	<br>json文档给定的一个或多个path是否包含数据| | | 
 JSON_DEPTH()	|Maximum depth of JSON document	<br>JSON文档的最大深度 | | | 
 JSON_EXTRACT()	|Return data from JSON document <br>获取JSON文档指定path的值 | | | 
-JSON_INSERT()	|Insert data into JSON document	<br>插入数据到json文档中指定的path下，若path存在，则不插入| | | 
-JSON_KEYS()	|Array of keys from JSON document <br>获取指定JSON文档（或给定path下）的key集合，返回结果为数组 | | | 
+JSON_INSERT()	|Insert data into JSON document	<br>插入数据到json文档中指定的path处，若path存在，则不插入| | | 
+JSON_KEYS()	|Array of keys from JSON document <br>获取指定JSON文档（或给定path处）的key集合，返回结果为数组 | | | 
 JSON_LENGTH()	|Number of elements in JSON document <br>获取JSON文档的元素个数 | | | 
 JSON_MERGE()	|Merge JSON documents, preserving duplicate keys. <br>Deprecated synonym for JSON_MERGE_PRESERVE()	<br>合并多个JSON|	|Yes |`SELECT JSON_MERGE('[1, 2]', '[true, false]');` <br>结果为[1, 2, true, false] 
 JSON_MERGE_PATCH()	|Merge JSON documents, replacing values of duplicate keys。	<br>合并多个JSON，相同的path会被后面的JSON对应的值覆盖 | | |`SELECT JSON_MERGE_PATCH('[1, 2]', '[true, false]');` <br>结果为[true, false] <br>`SELECT JSON_MERGE_PATCH('{"name": "x"}', '{"id": 47}');` <br>结果为 {"id": 47, "name": "x"}
@@ -44,6 +44,15 @@ JSON_ARRAYAGG() |Aggregates a result set as a single JSON array whose elements c
 JSON_OBJECTAGG() |Takes two column names or expressions as arguments, the first of these being used as a key and the second as a value, and returns a JSON object containing key-value pairs. <br>将两个列名或表达式作为参数，第一个作为key，第二个作为value，并返回包含key-value对的JSON对象。| | | 
 
 
+## JSON path
+path写法总结：
+* path 需要使用双引号包裹(或用单引号包裹)。
+* 以`$`开头。`$`表示JSON本身。可以直接写`"$"`
+* key写法：.key
+* 数组下标：[index]，
+    * 暂时不支持`-1`这种倒序写法。
+    * index范围：>= 0的整数
+    
 ## Functions That Create JSON Values
 ### JSON_ARRAY()
 创建JSON数组，即list(类似Java，python中的list)
@@ -140,11 +149,6 @@ column->path 是 JSON_EXTRACT(json_doc, path)别名写法，它们是等价的�
     如：
     column->"$.data[0].hostname"
     ```
-    path写法总结：
-    * path 需要使用双引号包裹(或用单引号包裹)。
-    * 以`$`开头。`$`表示JSON本身
-    * key写法：.key
-    * 数组下标：[index]
  
 * map类型的JSON的值的操作
 
@@ -408,7 +412,9 @@ JSON_UNQUOTE( JSON_EXTRACT(column, path) )
     ```text
     JSON_ARRAY_APPEND(json_doc, path, val[, path, val] ...)
     ```
-    当不传任何参数时，返回NULL
+    * 当不传任何参数时，返回NULL
+    * json_doc不合法、或 path不合法、或path表达式中包含了`*` 和 `**`时，将发生错误。（下面的函数基本符合这条规则）
+
 
 * 更新JSON数组值
     ```mysql
@@ -433,6 +439,15 @@ JSON_UNQUOTE( JSON_EXTRACT(column, path) )
 
 * JSON_ARRAY_APPEND()函数其它用法示例
     ```mysql
+    SELECT JSON_ARRAY_APPEND(c->"$[4]", "$[1]", 88) FROM jemp WHERE g = 38;
+    SELECT JSON_ARRAY_APPEND(c->>"$[4]", "$[1]", 88) FROM jemp WHERE g = 38;
+    -- 上面两个SQL，查询结果都相同
+    /*
+    JSON_ARRAY_APPEND(c->"$[4]", "$[1]", 88)  
+    ------------------------------------------
+    [22, ["y", 88], 66, 99]                   
+    */    
+
     SELECT JSON_ARRAY_APPEND(c, "$[0]", 518) FROM jemp
     WHERE g = 38;
     /*
@@ -483,42 +498,251 @@ JSON_UNQUOTE( JSON_EXTRACT(column, path) )
     -----------------------------------------
     [{"a": 1}, "z"]                          
     */
+
+    -- 多个path-value对 JSON_ARRAY_APPEND操作
+    SELECT JSON_ARRAY_APPEND('[11, 22, 33, 44]', '$[0]', 66, '$[2]', 77);
+    /*
+    JSON_ARRAY_APPEND('[11, 22, 33, 44]', '$[0]', 66, '$[2]', 77)  
+    ---------------------------------------------------------------
+    [[11, 66], 22, [33, 77], 44]                                   
+    */
     ```
 
 ### JSON_ARRAY_INSERT()
-插入数据到JSON数组中，并返回更新后的JSON文档。
+插入数据到JSON数组的指定path处，并返回更新后的json_doc。
 
 * 语法
     ```text
     JSON_ARRAY_INSERT(json_doc, path, val[, path, val] ...)
     ```
+* JSON数组指定位置插入值
+    ```mysql
+    SELECT c FROM jemp WHERE g = 36;
+    /*
+    c                                                                                
+    ---------------------------------------------------------------------------------
+    {"code": 0, "data": [{"ip": "172.17.0.3", "hostname": "webserv2"}, 44, 55, 66]}  
+    */
+    
+    -- 在c["data"]数组的第三个位子插入777
+    SELECT JSON_ARRAY_INSERT(c, "$.data[2]", 777) FROM jemp WHERE g = 36;
+    /*
+    JSON_ARRAY_INSERT(c, "$.data[2]", 777)                                                
+    --------------------------------------------------------------------------------------
+    {"code": 0, "data": [{"ip": "172.17.0.3", "hostname": "webserv2"}, 44, 777, 55, 66]}  
+    */
+    
+    UPDATE jemp SET c = JSON_ARRAY_INSERT(c, "$.data[2]", 777)
+    WHERE g = 36;
+    ```
+
+* 其它示例
+    ```mysql
+    SELECT JSON_ARRAY_INSERT('["a", {"b": [1, 2]}, [3, 4]]', '$[1]', 'x');
+    /*
+    JSON_ARRAY_INSERT('["a", {"b": [1, 2]}, [3, 4]]', '$[1]', 'x')  
+    ----------------------------------------------------------------
+    ["a", "x", {"b": [1, 2]}, [3, 4]]                               
+    */
+    
+    -- 下标越界，直接插到数组的最后
+    SELECT JSON_ARRAY_INSERT('["a", {"b": [1, 2]}, [3, 4]]', '$[100]', 'x');
+    /*
+    JSON_ARRAY_INSERT('["a", {"b": [1, 2]}, [3, 4]]', '$[100]', 'x')  
+    ------------------------------------------------------------------
+    ["a", {"b": [1, 2]}, [3, 4], "x"]                                 
+    */
+    
+    SELECT JSON_ARRAY_INSERT('["a", {"b": [1, 2]}, [3, 4]]', '$[1].b[0]', 'x');
+    /*
+    JSON_ARRAY_INSERT('["a", {"b": [1, 2]}, [3, 4]]', '$[1].b[0]', 'x')  
+    ---------------------------------------------------------------------
+    ["a", {"b": ["x", 1, 2]}, [3, 4]]                                    
+    */
+    
+    -- 插入多个path-value对时，其执行过程从左到右，一对一对path-value来插入的，前面操作path-value会改变数组的下标
+    SELECT JSON_ARRAY_INSERT('["a", {"b": [1, 2]}, [3, 4]]', '$[0]', 'x', '$[2][1]', 'y');
+    /*
+    JSON_ARRAY_INSERT('["a", {"b": [1, 2]}, [3, 4]]', '$[0]', 'x', '$[2][1]', 'y')  
+    --------------------------------------------------------------------------------
+    ["x", "a", {"b": [1, 2]}, [3, 4]]                                               
+    */
+    
+    SELECT JSON_ARRAY_INSERT('["a", {"b": [1, 2]}, [3, 4]]', '$[2][1]', 'y', '$[0]', 'x');
+    -- 上面的写法与下面的等价
+    SELECT JSON_ARRAY_INSERT(
+            (SELECT JSON_ARRAY_INSERT('["a", {"b": [1, 2]}, [3, 4]]', '$[2][1]', 'y')), 
+            '$[0]', 
+            'x'
+        );
+    /*
+    JSON_ARRAY_INSERT('["a", {"b": [1, 2]}, [3, 4]]', '$[2][1]', 'y', '$[0]', 'x')  
+    --------------------------------------------------------------------------------
+    ["x", "a", {"b": [1, 2]}, [3, "y", 4]]                                          
+    */
+    ```
 
 ### JSON_INSERT()
+插入数据到JSON文档中，并返回更新后的json_doc。
+
+json_doc可以是JSON对象，也可以是JSON数组，当更适JSON对象类型的操作。
+
 
 * 语法
     ```text
     JSON_INSERT(json_doc, path, val[, path, val] ...)
     ```
+    * 插入多对 path-value时，从左到有求值，前一对path-value求值返回的结果作为后一对path-value求值的json_doc
+    * 当path存在时，插入操作将被忽略
+    
+* 示例
+    ```mysql
+    SELECT c FROM jemp WHERE g = 36;
+    /*
+    {"code": 0, "data": [{"ip": "172.17.0.3", "hostname": "webserv2"}, 44, 777, 55, 66]}  
+    */
+    
+    -- c["data[0]"] 添加网关key-value对，key: gateway, value: "172.17.0.1"
+    UPDATE jemp SET c = JSON_INSERT(c, '$.data[0].gateway', '172.17.0.1')
+    WHERE g = 36;
+    ```
+* 其他示例
+    ```mysql
+    SELECT JSON_INSERT('{ "a": 1, "b": [2, 3]}', '$.a', 10, '$.c', '[true, false]');
+    /*
+    JSON_INSERT('{ "a": 1, "b": [2, 3]}', '$.a', 10, '$.c', '[true, false]')  
+    --------------------------------------------------------------------------
+    {"a": 1, "b": [2, 3], "c": "[true, false]"}                               
+    
+    -- 因为 '$.a' path已经存在，所以JSON_INSERT操作忽略。
+    -- '$.c' path不存在，所以JSON_INSERT操作执行成功
+    */
+    
+    SELECT JSON_INSERT( '{ "a": 1, "b": [2, 3]}', '$.a', 10, '$.c', CAST('[true, false]' AS JSON) );
+    /*
+    JSON_INSERT( '{ "a": 1, "b": [2, 3]}', '$.a', 10, '$.c', CAST('[true, false]' as JSON) )  
+    ------------------------------------------------------------------------------------------
+    {"a": 1, "b": [2, 3], "c": [true, false]}                                                 
+    */
+    
+    -- JSON数组的插入
+    SELECT JSON_INSERT('[11, 22, 33]', '$[100]', 99);
+    /*
+    JSON_INSERT('[11, 22, 33]', '$[100]', 99)  
+    -------------------------------------------
+    [11, 22, 33, 99]                           
+    */
+    ```
+
 
 ### JSON_REPLACE()
+更新(替换)json_doc现有的值，并返回更新后的json_doc
 
 * 语法
     ```text
     JSON_REPLACE(json_doc, path, val[, path, val] ...)
     ```
+    * 插入多对 path-value时，从左到有求值，前一对path-value求值返回的结果作为后一对path-value求值的json_doc
+    * 当path不存在时，忽略JSON_REPLACE操作，结果不产生影响。即不替换
+
+* 示例
+    ```mysql
+    SELECT c FROM jemp WHERE g = 1;
+    /*
+    c                          
+    ---------------------------
+    {"id": 1, "name": "Niki"}  
+    */
+    
+    -- 更新name Niki为Nicki
+    UPDATE jemp SET c = JSON_REPLACE(c, '$.name', 'Nicki');
+    ```
+    
+* 其它操作示例
+    ```mysql
+    SELECT JSON_REPLACE('{ "a": 1, "b": [2, 3]}', '$.a', 10, '$.c', 66);
+    /*
+    JSON_REPLACE('{ "a": 1, "b": [2, 3]}', '$.a', 10, '$.c', 66)  
+    --------------------------------------------------------------
+    {"a": 10, "b": [2, 3]}                                        
+    */
+    ```
 
 ### JSON_SET()
+插入或更新json_doc的值，并返回更新后的json_doc
 
 * 语法
     ```text
     JSON_SET(json_doc, path, val[, path, val] ...)
     ```
+    * 插入多对 path-value时，从左到有求值，前一对path-value求值返回的结果作为后一对path-value求值的json_doc
+
+* 示例
+    ```mysql
+    SELECT JSON_SET('{ "a": 1, "b": [2, 3]}', '$.a', 10, '$.c', 66);
+    /*
+    JSON_SET('{ "a": 1, "b": [2, 3]}', '$.a', 10, '$.c', 66)  
+    ----------------------------------------------------------
+    {"a": 10, "b": [2, 3], "c": 66}                           
+    */
+    ```
+    
+### JSON_SET(), JSON_INSERT(), JSON_REPLACE()的对比
+* JSON_SET()  
+    replaces existing values and adds nonexisting values.
+    
+    值存在则替换，否则添加该值
+
+* JSON_INSERT()  
+    inserts values without replacing existing values.
+    
+    插入值，不替换已存在的值
+    
+* JSON_REPLACE()  
+    replaces only existing values.
+    
+    只替换已存在的值
+    
+* 示例
+    ```mysql
+    SELECT JSON_INSERT('{ "a": 1, "b": [2, 3]}', '$.a', 10, '$.c', 66);
+    /*
+    JSON_INSErT('{ "a": 1, "b": [2, 3]}', '$.a', 10, '$.c', 66)  
+    -------------------------------------------------------------
+    {"a": 1, "b": [2, 3], "c": 66}                               
+    */
+    
+    SELECT JSON_REPLACE('{ "a": 1, "b": [2, 3]}', '$.a', 10, '$.c', 66);
+    /*
+    JSON_REPLACE('{ "a": 1, "b": [2, 3]}', '$.a', 10, '$.c', 66)  
+    --------------------------------------------------------------
+    {"a": 10, "b": [2, 3]}                                        
+    */
+    
+    -- JSON_SET() 相当于是JSON_INSERT()和JSON_REPLACE() 的合并版
+    SELECT JSON_SET('{ "a": 1, "b": [2, 3]}', '$.a', 10, '$.c', 66);
+    /*
+    JSON_SET('{ "a": 1, "b": [2, 3]}', '$.a', 10, '$.c', 66)  
+    ----------------------------------------------------------
+    {"a": 10, "b": [2, 3], "c": 66}                           
+    */
+    ```
 
 ### JSON_REMOVE()
+从json_doc中删除指定path处的值。
 
 * 语法
     ```text
     JSON_REMOVE(json_doc, path[, path] ...)
+    ```
+* 示例
+    ```mysql
+    SELECT JSON_REMOVE('["a", ["b", "c"], "d"]', '$[1]');
+    /*
+    JSON_REMOVE('["a", ["b", "c"], "d"]', '$[1]')  
+    -----------------------------------------------
+    ["a", "d"]                                     
+    */
     ```
 
 ### JSON_MERGE()
@@ -540,8 +764,69 @@ JSON_UNQUOTE( JSON_EXTRACT(column, path) )
 
 
 ### JSON_UNQUOTE()
+取消JSON值的引号，并返回处理后的结果，此结果是一个utf8mb4字符串。
 
 * 语法
     ```text
     JSON_UNQUOTE(json_val)
+    ```
+* 特殊字符转义序列
+
+    Escape Sequence	|Character Represented by Sequence（序列表示的字符）
+    :--- |:--- 
+    \"	|A double quote (") character
+    \b	|A backspace character
+    \f	|A formfeed character
+    \n	|A newline (linefeed) character
+    \r	|A carriage return character
+    \t	|A tab character
+    \\	|A backslash (\) character
+    \uXXXX	|UTF-8 bytes for Unicode value XXXX
+    
+* 示例
+    ```mysql
+    SELECT JSON_UNQUOTE('"abc"');
+    /*
+    JSON_UNQUOTE('"abc"')  
+    -----------------------
+    abc                    
+    */
+    
+    SELECT JSON_UNQUOTE('[1, 2, 3]');
+    /*
+    JSON_UNQUOTE('[1, 2, 3]')  
+    ---------------------------
+    [1, 2, 3]                  
+    */
+    ```
+    
+    ```bash
+    mysql> SELECT @@sql_mode;
+    +-----------------------------------------------------------------------------------------------------------------------+
+    | @@sql_mode                                                                                                            |
+    +-----------------------------------------------------------------------------------------------------------------------+
+    | ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION |
+    +-----------------------------------------------------------------------------------------------------------------------+
+    
+    mysql> SELECT JSON_UNQUOTE('"\\t\\u0032"');
+    +------------------------------+
+    | JSON_UNQUOTE('"\\t\\u0032"') |
+    +------------------------------+
+    |       2                           |
+    +------------------------------+
+    
+    mysql> SET @@sql_mode = 'NO_BACKSLASH_ESCAPES';
+    mysql> SELECT JSON_UNQUOTE('"\\t\\u0032"');
+    +------------------------------+
+    | JSON_UNQUOTE('"\\t\\u0032"') |
+    +------------------------------+
+    | \t\u0032                     |
+    +------------------------------+
+    
+    mysql> SELECT JSON_UNQUOTE('"\t\u0032"');
+    +----------------------------+
+    | JSON_UNQUOTE('"\t\u0032"') |
+    +----------------------------+
+    |       2                         |
+    +----------------------------+
     ```

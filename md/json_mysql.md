@@ -86,6 +86,9 @@ mysql json指表字段支持JSON类型的数据(The JSON Data Type)
 * [JSON Function Reference](https://dev.mysql.com/doc/refman/8.0/en/json-function-reference.html)
 * [JSON Function Reference](https://dev.mysql.com/doc/refman/8.0/en/json.html)
 
+## json索引优化
+[参考 Multi-Valued Indexes](https://dev.mysql.com/doc/refman/8.0/en/create-index.html#create-index-multi-valued)
+
 ## 建表
 要使用JSON数据类型，指定表字段类型为 `JSON` 即可。
 

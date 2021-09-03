@@ -20,7 +20,7 @@ JSON_INSERT()	|Insert data into JSON document	<br>插入数据到json文档中�
 JSON_KEYS()	|Array of keys from JSON document <br>获取指定JSON文档（或给定path处）的key集合，返回结果为数组 | | | 
 JSON_LENGTH()	|Number of elements in JSON document <br>获取JSON文档的元素个数 | | | 
 JSON_MERGE()	|Merge JSON documents, preserving duplicate keys. <br>Deprecated synonym for JSON_MERGE_PRESERVE()	<br>合并多个JSON|	|Yes |`SELECT JSON_MERGE('[1, 2]', '[true, false]');` <br>结果为[1, 2, true, false] 
-JSON_MERGE_PATCH()	|Merge JSON documents, replacing values of duplicate keys。	<br>合并多个JSON，相同的path会被后面的JSON对应的值覆盖 | | |`SELECT JSON_MERGE_PATCH('[1, 2]', '[true, false]');` <br>结果为[true, false] <br>`SELECT JSON_MERGE_PATCH('{"name": "x"}', '{"id": 47}');` <br>结果为 {"id": 47, "name": "x"}
+JSON_MERGE_PATCH()	|Merge JSON documents, replacing values of duplicate keys。	<br>合并多个JSON，相同的path会被后面的JSON对应的值覆盖 |8.0.3 | |`SELECT JSON_MERGE_PATCH('[1, 2]', '[true, false]');` <br>结果为[true, false] <br>`SELECT JSON_MERGE_PATCH('{"name": "x"}', '{"id": 47}');` <br>结果为 {"id": 47, "name": "x"}
 JSON_MERGE_PRESERVE()	|Merge JSON documents, preserving duplicate keys <br>合并多个JSON，保存重复的key | | | 
 JSON_OBJECT()	|Create JSON object	<br>创建JSON对象| | |`SELECT JSON_OBJECT('id', 87, 'name', 'carrot');` 
 JSON_OVERLAPS()	|Compares two JSON documents, <br>returns TRUE (1) if these have any key-value pairs or array elements in common, <br>otherwise FALSE (0) <br>比较两个JSON，主要有一个key-value对或元素相同，返回true(1)，否则返回false(0) |8.0.17 | |`SELECT JSON_OVERLAPS("[1,3,5,7]", "[2,6,7]");` <br>结果为1 <br>`SELECT JSON_OVERLAPS('{"a":1,"b":10,"d":10}', '{"a":5,"e":10,"f":1,"d":20}');`  <br>结果为0
@@ -48,10 +48,13 @@ JSON_OBJECTAGG() |Takes two column names or expressions as arguments, the first 
 path写法总结：
 * path 需要使用双引号包裹(或用单引号包裹)。
 * 以`$`开头。`$`表示JSON本身。可以直接写`"$"`
-* key写法：.key
+* key写法：.key  
+    `'$.*'` 表示所有key  
+    `'$.*.*'`
 * 数组下标：[index]，
     * 暂时不支持`-1`这种倒序写法。
     * index范围：>= 0的整数
+    * `'$[*]'` 所有下标
     
 ## Functions That Create JSON Values
 ### JSON_ARRAY()
@@ -128,7 +131,7 @@ path写法总结：
 
 
 ### column->path
-获取JSON文档中指定path的值，返回的值被双引号包裹
+获取JSON_doc中指定path的值，返回的值被双引号包裹
 
 column->path 是 JSON_EXTRACT(json_doc, path)别名写法，它们是等价的，注意此时 JSON_EXTRACT 函数有两上参数。
 
@@ -337,13 +340,198 @@ JSON_UNQUOTE( JSON_EXTRACT(column, path) )
     */
     ```
 
-### JSON_EXTRACT(json_doc, path[, path] ...)
+### JSON_EXTRACT()
+获取json_doc指定path下的值。
 
+* 语法
+    ```text
+    JSON_EXTRACT(json_doc, path[, path] ...)
+    ```
+* 示例
+    ```mysql
+    SELECT JSON_EXTRACT('[10, 20, [30, 40]]', '$[1]');
+    /*
+    json_extract('[10, 20, [30, 40]]', '$[1]')  
+    --------------------------------------------
+    20                                          
+    */
+    
+    -- JSON_EXTRACT() 获取多个path位置的值，返回值组合成一个json数组
+    SELECT JSON_EXTRACT('[10, 20, [30, 40], 50]', '$[1]', '$[3]');
+    /*
+    json_extract('[10, 20, [30, 40], 50]', '$[1]', '$[3]')  
+    --------------------------------------------------------
+    [20, 50]                                                
+    */
+    
+    SELECT JSON_EXTRACT('[10, 20, [30, 40], 50]', '$[2][*]');
+    /*
+    JSON_EXTRACT('[10, 20, [30, 40], 50]', '$[2][*]')  
+    ---------------------------------------------------
+    [30, 40]                                           
+    */
+    ```
 
+* 有意思的例子(`'$[*][*]'`, `'$.*'`, `'$.*.*'`)
+    ```mysql
+    SELECT JSON_EXTRACT('[10, 20, [30, 40], 50]', '$[*][*]');
+    /*
+    JSON_EXTRACT('[10, 20, [30, 40], 50]', '$[*][*]')  
+    ---------------------------------------------------
+    [30, 40]                                           
+    */
+    
+    SELECT JSON_EXTRACT('[10, 20, [30, 40], 50, [311, 411]]', '$[*][*]');
+    /*
+    JSON_EXTRACT('[10, 20, [30, 40], 50, [311, 411]]', '$[*][*]')  
+    ---------------------------------------------------------------
+    [30, 40, 311, 411]                                             
+    */
+    
+    -- '$.*' 获取所有的值
+    SELECT JSON_EXTRACT('{"k1":11, "k2": [22, 33]}', '$.*');
+    /*
+    json_extract('{"k1":11, "k2": [22, 33]}', '$.*')  
+    --------------------------------------------------
+    [11, [22, 33]]                                    
+    */
+    
+    -- '$.*.*'
+    SELECT JSON_EXTRACT('{"k1":11, "k2": {"k21":21, "k22":22}}', '$.*.*');
+    /*
+    JSON_EXTRACT('{"k1":11, "k2": {"k21":21, "k22":22}}', '$.*.*')  
+    ----------------------------------------------------------------
+    [21, 22]                                                        
+    */
+    ```
 
-### JSON_CONTAINS(target, candidate[, path])
+### JSON_CONTAINS()
+判断给定的json_doc是否被包含在target json_doc中。
 
-### JSON_CONTAINS_PATH(json_doc, one_or_all, path[, path] ...)
+如果指定path，则表示 判断给定的json_doc是否被包含在target json_doc 指定的path中。
+
+返回值：1：是
+      0：否
+
+* 语法
+    ```text
+    JSON_CONTAINS(target, candidate[, path])
+    ```
+* 示例
+    ```mysql
+    SELECT JSON_CONTAINS('{"a":1, "b":2, "c":{"d":4}}', '1', '$.a');
+    /*
+    json_contains('{"a":1, "b":2, "c":{"d":4}}', '1', '$.a')  
+    ----------------------------------------------------------
+                                                             1
+    */
+    
+    SELECT JSON_CONTAINS('{"a":1, "b":2, "c":{"d":4}}', '1', '$.b');
+    /*
+    JSON_CONTAINS('{"a":1, "b":2, "c":{"d":4}}', '1', '$.b')  
+    ----------------------------------------------------------
+                                                             0
+    */
+    
+    SELECT JSON_CONTAINS('{"a":1, "b":2, "c":{"d":4}}', '{"d":4}', '$.b');
+    /*
+    json_contains('{"a":1, "b":2, "c":{"d":4}}', '{"d":4}', '$.b')  
+    ----------------------------------------------------------------
+    */
+    
+    SELECT JSON_CONTAINS('{"a":1, "b":2, "c":{"d":4}}', '{"d":4}', '$.c');
+    /*
+    JSON_CONTAINS('{"a":1, "b":2, "c":{"d":4}}', '{"d":4}', '$.c')  
+    ----------------------------------------------------------------
+                                                                   1
+    */
+    
+    SELECT JSON_CONTAINS('{"a":1, "b":2, "c":{"d":4}}', '1');
+    /*
+    JSON_CONTAINS('{"a":1, "b":2, "c":{"d":4}}', '1')  
+    ---------------------------------------------------
+                                                      0
+    */
+    
+    SELECT JSON_CONTAINS('{"a":1, "b":2, "c":{"d":4}}', '{"a":1}');
+    /*
+    JSON_CONTAINS('{"a":1, "b":2, "c":{"d":4}}', '{"a":1}')  
+    ---------------------------------------------------------
+                                                            1
+    */
+    
+    SELECT JSON_CONTAINS('[11, 22, 33, 44]', '[44]');
+    /*
+    JSON_CONTAINS('[11, 22, 33, 44]', '[44]')  
+    -------------------------------------------
+                                              1
+    */
+    
+    SELECT JSON_CONTAINS('[11, 22, 33, 44]', '44');
+    /*
+    JSON_CONTAINS('[11, 22, 33, 44]', '44')  
+    -----------------------------------------
+                                            1
+    */
+    
+    SELECT JSON_CONTAINS('[11, 22, 33, 44]', '[11, 33]');
+    /*
+    JSON_CONTAINS('[11, 22, 33, 44]', '[11, 33]')  
+    -----------------------------------------------
+                                                  1
+    */
+    
+    SELECT JSON_CONTAINS('[11, 22, 33, 44]', '11', '$[0]');
+    /*
+    JSON_CONTAINS('[11, 22, 33, 44]', '11', '$[0]')  
+    -------------------------------------------------
+                                                    1
+    */
+    ```
+
+### JSON_CONTAINS_PATH()
+判断在json_doc指定的一个path或多个path是否有数据。
+
+* 语法
+    ```text
+    JSON_CONTAINS_PATH(json_doc, one_or_all, path[, path] ...)
+    ```
+    * one_or_all
+        该参数的可选值：`'one'`, `'all'` .
+    * 'one'  
+        如果在指定的path中只要有一个path有数据，则返回`1`，否则返回`0`
+    * 'all'  
+        如果在指定的path中所有的path都有数据，则返回`1`，否则返回`0`
+* 示例
+    ```mysql
+    SELECT JSON_CONTAINS_PATH('{"a":1, "b":2, "c":{"d":4}}', 'one', '$.a', '$.e');
+    /*
+    json_contains_path('{"a":1, "b":2, "c":{"d":4}}', 'one', '$.a', '$.e')  
+    ------------------------------------------------------------------------
+                                                                           1
+    */
+    
+    SELECT JSON_CONTAINS_PATH('{"a":1, "b":2, "c":{"d":4}}', 'all', '$.a', '$.e');
+    /*
+    JSON_CONTAINS_PATH('{"a":1, "b":2, "c":{"d":4}}', 'all', '$.a', '$.e')  
+    ------------------------------------------------------------------------
+                                                                           0
+    */
+    
+    SELECT JSON_CONTAINS_PATH('{"a":1, "b":2, "c":{"d":4}}', 'one', '$.c.d');
+    /*
+    json_contains_path('{"a":1, "b":2, "c":{"d":4}}', 'one', '$.c.d')  
+    -------------------------------------------------------------------
+                                                                      1
+    */
+    
+    SELECT JSON_CONTAINS_PATH('{"a":1, "b":2, "c":{"d":4}}', 'one', '$.a.d');
+    /*
+    JSON_CONTAINS_PATH('{"a":1, "b":2, "c":{"d":4}}', 'one', '$.a.d')  
+    -------------------------------------------------------------------
+                                                                      0
+    */
+    ```
 
 ### JSON_KEYS(json_doc[, path])
 返回JSON对象的key集合，值为JSON数组。
@@ -388,7 +576,7 @@ JSON_UNQUOTE( JSON_EXTRACT(column, path) )
 
 
 ### JSON_OVERLAPS()
-比较两个JSON文本是否有相同的key-value或数组元素，
+比较两个JSON_doc是否有相同的key-value或数组元素，
 
 如果有返回true(1)，否则false(0)。
 
@@ -396,12 +584,118 @@ JSON_UNQUOTE( JSON_EXTRACT(column, path) )
     ```text
     JSON_OVERLAPS(json_doc1, json_doc2)
     ```
+    * When comparing objects, the result is true if they have at least one key-value pair in common.
+    
+* 示例
+    ```mysql
+    SELECT JSON_OVERLAPS('[1, 3, 5, 7]', '[2, 5, 7]');
+    /*
+    JSON_OVERLAPS('[1, 3, 5, 7]', '[2, 5, 7]')  
+    --------------------------------------------
+                                               1
+    */
+    
+    SELECT JSON_OVERLAPS('[1, 3, 5, 7]', '[100, 200, 7]');
+    /*
+    JSON_OVERLAPS('[1, 3, 5, 7]', '[100, 200, 7]')  
+    ------------------------------------------------
+                                                   1
+    */
+    
+    SELECT JSON_OVERLAPS('[1, 3, 5, 7]', '[100, 200, 300]');
+    /*
+    JSON_OVERLAPS('[1, 3, 5, 7]', '[100, 200, 300]')  
+    --------------------------------------------------
+                                                     0
+    */
+    
+    SELECT JSON_OVERLAPS('[1, 3, 5, 7]', '1');
+    /*
+    JSON_OVERLAPS('[1, 3, 5, 7]', '1')  
+    ------------------------------------
+                                       1
+    */
+    
+    -- 部分匹配视为不匹配
+    SELECT JSON_OVERLAPS('[[1,2], [3,4], 5]', '[1, [2,3]]');
+    /*
+    JSON_OVERLAPS('[[1,2], [3,4], 5]', '[1, [2,3]]')  
+    --------------------------------------------------
+                                                     0
+    */
+    
+    -- When comparing objects, the result is true if they have at least one key-value pair in common.
+    SELECT JSON_OVERLAPS('{"a":1, "b":10, "d":10}', '{"c":1, "e":10, "f":1, "d":10}');
+    /*
+    JSON_OVERLAPS('{"a":1,"b":10,"d":10}', '{"c":1,"e":10,"f":1,"d":10}')  
+    -----------------------------------------------------------------------
+                                                                         1
+    */
+    
+    SELECT JSON_OVERLAPS('{"a":1, "b":10, "d":10}', '{"a":5, "e":10, "f":1, "d":20}');
+    /*
+    JSON_OVERLAPS('{"a":1, "b":10, "d":10}', '{"a":5, "e":10, "f":1, "d":20}')  
+    ----------------------------------------------------------------------------
+                                                                               0
+    */
+    
+    SELECT JSON_OVERLAPS('5', '5');
+    /*
+    JSON_OVERLAPS('5', '5')  
+    -------------------------
+                            1
+    */
+    
+    SELECT JSON_OVERLAPS('5', '6');
+    /*
+    JSON_OVERLAPS('5', '6')  
+    -------------------------
+                            0
+    */
+    
+    SELECT JSON_OVERLAPS('[4, 5, 6, 7]', '6');
+    /*
+    JSON_OVERLAPS('[4,5,6,7]', '6')  
+    ---------------------------------
+                                    1
+    */
+    
+    SELECT JSON_OVERLAPS('[4, 5, "6", 7]', '6');
+    /*
+    JSON_OVERLAPS('[4,5,"6",7]', '6')  
+    -----------------------------------
+                                      0
+    */
+    
+    SELECT JSON_OVERLAPS('[4, 5, 6, 7]', '"6"');
+    /*
+    JSON_OVERLAPS('[4, 5, 6, 7]', '"6"')  
+    --------------------------------------
+                                         0
+    */
+    ```
 
-### JSON_SEARCH(json_doc, one_or_all, search_str[, escape_char[, path] ...])
+### JSON_SEARCH()
+
+* 语法
+    ```text
+    JSON_SEARCH(json_doc, one_or_all, search_str[, escape_char[, path] ...])
+    ```
 
 ### JSON_VALUE(json_doc, path)
 
+* 语法
+    ```text
+    JSON_VALUE(json_doc, path)
+    ```
+
 ### value MEMBER OF(json_array)
+
+
+* 语法
+    ```text
+    value MEMBER OF(json_array)
+    ```
 
 
 ## Functions That Modify JSON Values
@@ -735,7 +1029,21 @@ json_doc可以是JSON对象，也可以是JSON数组，当更适JSON对象类型
     ```text
     JSON_REMOVE(json_doc, path[, path] ...)
     ```
+    * 删除多个path时，从左到有求值，前一对path求值返回的结果作为后一对path求值的json_doc
+    
 * 示例
+    ```mysql
+    -- 删除 g=35的 code key-value
+    SELECT c FROM jemp WHERE g = 35;
+    /*
+    c                                                                                
+    ---------------------------------------------------------------------------------
+    {"code": 0, "data": [{"ip": "172.17.0.2", "hostname": "webserv1"}, 11, 22, 33]}  
+    */
+    
+    UPDATE jemp SET c = JSON_REMOVE(c, '$.code');
+    ```
+* 其他示例
     ```mysql
     SELECT JSON_REMOVE('["a", ["b", "c"], "d"]', '$[1]');
     /*
@@ -743,25 +1051,208 @@ json_doc可以是JSON对象，也可以是JSON数组，当更适JSON对象类型
     -----------------------------------------------
     ["a", "d"]                                     
     */
+    SELECT JSON_REMOVE('["a", ["b", "c"], "d"]', '$[0]', '$[1][0]');
+    /*
+    JSON_REMOVE('["a", ["b", "c"], "d"]', '$[0]', '$[1][0]')  
+    ----------------------------------------------------------
+    [["b", "c"]]                                              
+    */
     ```
 
 ### JSON_MERGE()
+合并两个或多个json_doc（对相同的path不覆盖，直接新增），返回合并后的json_doc。
+
+MySQL 8.0.3已经被弃用。
+
+可以使用 JSON_MERGE_PRESERVE() 代替。
 
 * 语法
     ```text
     JSON_MERGE(json_doc, json_doc[, json_doc] ...)
     ```
 
+* 示例
+    ```mysql
+    SELECT JSON_MERGE('[1, 2]', '[true, false]');
+    /*
+    JSON_MERGE('[1, 2]', '[true, false]')  
+    ---------------------------------------
+    [1, 2, true, false]                    
+    */
+    
+    SELECT JSON_MERGE('{"k1":11, "k2":22}', '{"k1":33, "k2":44}');
+    /*
+    JSON_MERGE('{"k1":11, "k2":22}', '{"k1":33, "k2":44}')  
+    --------------------------------------------------------
+    {"k1": [11, 33], "k2": [22, 44]}                        
+    */
+    ```
+
 ### JSON_MERGE_PATCH()
+合并两个或多个json_doc，对相同的path，第二json_doc将覆盖第一个json_doc，最后返回合并后的json_doc。
 
 * 语法
     ```text
     JSON_MERGE_PATCH(json_doc, json_doc[, json_doc] ...)
     ```
+* 示例
+    ```mysql
+    SELECT JSON_MERGE_PATCH('[1, 2]', '[true, false]');
+    /*
+    JSON_MERGE_PATCH('[1, 2]', '[true, false]')  
+    ---------------------------------------------
+    [true, false]                                
+    */
+    
+    SELECT JSON_MERGE_PATCH('{"name": "x"}', '{"id": 47}');
+    /*
+    JSON_MERGE_PATCH('{"name": "x"}', '{"id": 47}')  
+    -------------------------------------------------
+    {"id": 47, "name": "x"}                          
+    */
+    
+    SELECT JSON_MERGE_PATCH('1', 'true');
+    /*
+    JSON_MERGE_PATCH('1', 'true')  
+    -------------------------------
+    true                         
+    */
+    
+    -- JSON对象、JSON数组 进行JSON_MERGE_PATCH()操作，第二参数直接覆盖第一个参数
+    SELECT JSON_MERGE_PATCH('[1, 2]', '{"id": 47}');
+    /*
+    JSON_MERGE_PATCH('[1, 2]', '{"id": 47}')  
+    ------------------------------------------
+    {"id": 47}                                
+    */
+    
+    SELECT JSON_MERGE_PATCH('{"id": 47}', '[1, 2]');
+    /*
+    JSON_MERGE_PATCH('{"id": 47}', '[1, 2]')  
+    ------------------------------------------
+    [1, 2]                                    
+    */
+    
+    SELECT JSON_MERGE_PATCH('{"a":1, "b":2}', '{"a":3, "c":4}');
+    /*
+    JSON_MERGE_PATCH('{"a":1, "b":2}', '{"a":3, "c":4}')  
+    ------------------------------------------------------
+    {"a": 3, "b": 2, "c": 4}                              
+    */
+    
+    -- 多个json_doc合并
+    SELECT JSON_MERGE_PATCH('{"a":1, "b":2}', '{"a":3, "b":4}', '{"a":5, "d":6}');
+    /*
+    JSON_MERGE_PATCH('{"a":1, "b":2}', '{"a":3, "b":4}', '{"a":5, "d":6}')  
+    ------------------------------------------------------------------------
+    {"a": 5, "b": 4, "d": 6}                                                
+    */
+    
+    SELECT JSON_MERGE_PATCH('{"a":1, "b":2}', '{"b":null}');
+    /*
+    json_merge_patch('{"a":1, "b":2}', '{"b":null}')  
+    --------------------------------------------------
+    {"a": 1}                                          
+    */
+    
+    SELECT JSON_MERGE_PATCH('{"a":{"x":1}}', '{"a":{"y":2}}');
+    /*
+    json_merge_patch('{"a":{"x":1}}', '{"a":{"y":2}}')  
+    ----------------------------------------------------
+    {"a": {"x": 1, "y": 2}}                             
+    */
+    ```
 
+### JSON_MERGE_PRESERVE()
+合并两个或多个json_doc（把所有的元素都保留下来），返回合并后的json_doc。
+
+
+* 语法
+    ```text
+    JSON_MERGE_PRESERVE(json_doc, json_doc[, json_doc] ...)
+    ```
+    * 相邻的两个json数组 合并为 一个json数组.
+    * 相邻的两个json对象 合并为 一个json对象.
+    *  一个标量值与一个json数组合并时，标量值将自动包装为json数组，再进行合并.
+    * 一个json数组与一个json对象合并时，json对象将自动包装成json数组，再进行合并.
+* 示例
+    ```mysql
+    SELECT JSON_MERGE_PRESERVE('[1, 2]', '[true, false]');
+    /*
+    JSON_MERGE_PREserve('[1, 2]', '[true, false]')  
+    ------------------------------------------------
+    [1, 2, true, false]                             
+    */
+    
+    SELECT JSON_MERGE_PRESERVE('{"name":"x"}', '{"id":47}');
+    /*
+    json_merge_preserve('{"name":"x"}', '{"id":47}')  
+    --------------------------------------------------
+    {"id": 47, "name": "x"}                           
+    */
+    
+    -- 标量值 JSON_MERGE_PRESERVE()操作，会合并为 json数组
+    SELECT JSON_MERGE_PRESERVE("1", "true");
+    /*
+    json_merge_preserve("1", "true")  
+    ----------------------------------
+    [1, true]                         
+    */
+    
+    SELECT JSON_MERGE_PRESERVE('[1, 2]', '{"id":47}');
+    /*
+    json_merge_preserve('[1, 2]', '{"id":47}')  
+    --------------------------------------------
+    [1, 2, {"id": 47}]                          
+    */
+    
+    SELECT JSON_MERGE_PRESERVE('{"id":47}', '[1, 2]');
+    /*
+    json_merge_preserve('{"id":47}', '[1, 2]')  
+    --------------------------------------------
+    [{"id": 47}, 1, 2]                          
+    */
+    
+    SELECT JSON_MERGE_PRESERVE('{"a":1, "b":2}', '{"a":3, "c":4}');
+    /*
+    json_merge_preserve('{"a":1, "b":2}', '{"a":3, "c":4}')  
+    ---------------------------------------------------------
+    {"a": [1, 3], "b": 2, "c": 4}                            
+    */
+    
+    SELECT JSON_MERGE_PRESERVE('[1, 2]', '[true, false]', '[33, 44]');
+    /*
+    JSON_MERGE_PRESERVE('[1, 2]', '[true, false]', '[33, 44]')  
+    ------------------------------------------------------------
+    [1, 2, true, false, 33, 44]                                 
+    */
+    ```
+    
 ### JSON_MERGE_PATCH()对比JSON_MERGE_PRESERVE()
+* JSON_MERGE_PATCH() 
+    removes any member in the first object with a matching key in the second object  
+    第一个json对象与第二个json对象有相同的key，第一json对象中相同key部分的成员值将被删除，再合并。
+    provided that the value associated with the key in the second object is not JSON null.  
+    前提条件是，第二json对象相关联的key值不为NULL。
 
-
+* If the second object has a member with a key matching a member in the first object,   
+    在第二json对象与第一个json对象有相同的key的情况下：  
+    * JSON_MERGE_PATCH()  
+        replaces the value in the first object with the value in the second object,   
+        JSON_MERGE_PATCH()函数 用第二json对象对应的值替换(覆盖)第一json对象的值
+    * JSON_MERGE_PRESERVE()
+        appends the second value to the first value.  
+        JSON_MERGE_PRESERVE()函数 将第二json对象对应的值追加到第一json对象的值上，这两个值合并为局部的json数组
+* 示例
+    ```mysql
+    SELECT JSON_MERGE_PATCH('{"a":1, "b":2}', '{"a":3, "c":4}', '{"a":5, "b":6}') AS 'Patch',
+    JSON_MERGE_PRESERVE('{"a":1, "b":2}', '{"a":3, "c":4}', '{"a":5, "b":6}') AS 'Preserve';
+    /*
+    Patch                     Preserve                               
+    ------------------------  ---------------------------------------
+    {"a": 5, "b": 6, "c": 4}  {"a": [1, 3, 5], "b": [2, 6], "c": 4}  
+    */
+    ```
 
 ### JSON_UNQUOTE()
 取消JSON值的引号，并返回处理后的结果，此结果是一个utf8mb4字符串。

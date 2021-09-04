@@ -724,22 +724,359 @@ MySQL中暂未提供 JSON_VALUES() 函数，但可以通过其它的方式达到
     ```text
     JSON_SEARCH(json_doc, one_or_all, search_str[, escape_char[, path] ...])
     ```
+    * 当 `json_doc`、`search_str` 或 `path`中任意一个为NULL时，将返回`NULL`。
+    * 当`path`不存在于`json_doc`，或 `search_str` 不存在于`json_doc`时，返回`NULL`
+    * `json_doc`不合法、给定的任意一个`path`不合法、`one_or_all`参数不是`'one'`或`'all'`、
+        `escape_char`参数不是一个常量表达式时，将发生错误。
+        
+    * `'one'`  
+        `search_str`在json_doc匹配到第一个`path`时终止搜索，并返回该`path`。
+    * `'all'`  
+        返回所有 `search_str`在json_doc匹配到的`path`结果，不包括重复的`path`。  
+        如果有多个`path`则自动把结果包装为json数组。
+    * `search_str`中可以包含通配符，  
+        例如：`%`, `_` 与SQL中的LIKE操作类似。  
+        `%`：匹配0个或多个任意字符。
+        `_`：匹配一个任意的字符。  
+        如果要使用`%`, `_`的字面含义，可以在其见面加转义符，默认的转义符为`\ `
+    * `escape_char`  
+        指定转义符，必须是一个常量表达式。用法类似SQL中的`ESCAPE`
 
-### JSON_VALUE(json_doc, path)
+* 示例
+    ```mysql
+    SELECT JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'one',  'abc');
+    /*
+    JSON_search('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'one',  'abc')  
+    ---------------------------------------------------------------------------------------
+    "$[0]"                                                                                 
+    */
+    
+    SELECT JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all',  'abc');
+    /*
+    JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all',  'abc')  
+    ---------------------------------------------------------------------------------------
+    ["$[0]", "$[2].x"]                                                                     
+    */
+    
+    SELECT JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all',  'haha');
+    /*
+    JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all',  'haha')  
+    ---------------------------------------------------------------------------------------
+    NULL
+    */
+    
+    SELECT JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', 10);
+    /*
+    json_search('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', 10)  
+    -----------------------------------------------------------------------------------
+    "$[1][0].k"                                                                        
+    */
+    
+    SELECT JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', '10', NULL, '$');
+    /*
+    JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', '10', NULL, '$')  
+    ------------------------------------------------------------------------------------------------
+    "$[1][0].k"                                                                                     
+    */
+    
+    SELECT JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', '10', NULL, '$[*]');
+    /*
+    JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', '10', NULL, '$[*]')  
+    ---------------------------------------------------------------------------------------------------
+    "$[1][0].k"                                                                                        
+    */
+    
+    SELECT JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', '10', NULL, '$**.k');
+    /*
+    JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', '10', NULL, '$**.k')  
+    ----------------------------------------------------------------------------------------------------
+    "$[1][0].k"                                                                                         
+    */
+    
+    SELECT JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', '10', NULL, '$[*][0].k');
+    /*
+    JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', '10', NULL, '$[*][0].k')  
+    --------------------------------------------------------------------------------------------------------
+    "$[1][0].k"                                                                                             
+    */
+    
+    SELECT JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', '10', NULL, '$[1]');
+    /*
+    JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', '10', NULL, '$[1]')  
+    ---------------------------------------------------------------------------------------------------
+    "$[1][0].k"                                                                                        
+    */
+    
+    SELECT JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', '10', NULL, '$[1][0]');
+    /*
+    JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', '10', NULL, '$[1][0]')  
+    ------------------------------------------------------------------------------------------------------
+    "$[1][0].k"                                                                                           
+    */
+    
+    SELECT JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', 'abc', NULL, '$[2]');
+    /*
+    JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', 'abc', NULL, '$[2]')  
+    ----------------------------------------------------------------------------------------------------
+    "$[2].x"                                                                                            
+    */
+    
+    -- 通配符查找（模糊查找）
+    SELECT JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', '%d%');
+    /*
+    json_search('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', '%d%')  
+    --------------------------------------------------------------------------------------
+    ["$[1][1]", "$[3].y"]                                                                 
+    */
+    
+    SELECT JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', '%b%');
+    /*
+    json_search('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', '%b%')  
+    --------------------------------------------------------------------------------------
+    ["$[0]", "$[2].x", "$[3].y"]                                                          
+    */
+    
+    SELECT JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', '%b%', '', '$[3]');
+    /*
+    JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', '%b%', '', '$[3]')  
+    --------------------------------------------------------------------------------------------------
+    "$[3].y"                                                                                          
+    */
+    
+    SELECT JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', 'd_f');
+    /*
+    JSON_SEARCH('["abc", [{"k": "10"}, "def"], {"x":"abc"}, {"y":"bcd"}]', 'all', 'd_f')  
+    --------------------------------------------------------------------------------------
+    "$[1][1]"                                                                             
+    */
+    
+    -- 转义特殊字符
+    SELECT JSON_SEARCH('["a_bc", "agbc", [{"k": "10"}, "def"], {"x":"a%bc"}, {"y":"bcd"}]', 'all', 'a%bc');
+    /*
+    JSON_SEARCH('["a_bc", "agbc", [{"k": "10"}, "def"], {"x":"a%bc"}, {"y":"bcd"}]', 'all', 'a%bc')  
+    -------------------------------------------------------------------------------------------------
+    ["$[0]", "$[1]", "$[3].x"]                                                                       
+    */
+    
+    SELECT JSON_SEARCH('["a_bc", "agbc", [{"k": "10"}, "def"], {"x":"a%bc"}, {"y":"bcd"}]', 'all', 'a\%bc');
+    /*
+    JSON_SEARCH('["a_bc", "agbc", [{"k": "10"}, "def"], {"x":"a%bc"}, {"y":"bcd"}]', 'all', 'a\%bc')  
+    --------------------------------------------------------------------------------------------------
+    "$[3].x"                                                                                          
+    */
+    
+    -- 显示指定%转义为字面意思
+    SELECT JSON_SEARCH('["a_bc", "agbc", [{"k": "10"}, "def"], {"x":"a%bc"}, {"y":"bcd"}]', 'all', 'a$%bc', '$');
+    /*
+    JSON_SEARCH('["a_bc", "agbc", [{"k": "10"}, "def"], {"x":"a%bc"}, {"y":"bcd"}]', 'all', 'a$%bc', '$')  
+    -------------------------------------------------------------------------------------------------------
+    "$[3].x"                                                                                               
+    */
+    
+    SELECT JSON_SEARCH('["a_bc", "agbc", [{"k": "10"}, "def"], {"x":"a%bc"}, {"y":"bcd"}]', 'all', 'a_bc');
+    /*
+    JSON_SEARCH('["a_bc", "agbc", [{"k": "10"}, "def"], {"x":"a%bc"}, {"y":"bcd"}]', 'all', 'a_bc')  
+    -------------------------------------------------------------------------------------------------
+    ["$[0]", "$[1]", "$[3].x"]                                                                       
+    */
+    
+    -- _转义为字面意思
+    SELECT JSON_SEARCH('["a_bc", "agbc", [{"k": "10"}, "def"], {"x":"a%bc"}, {"y":"bcd"}]', 'all', 'a\_bc');
+    /*
+    JSON_SEARCH('["a_bc", "agbc", [{"k": "10"}, "def"], {"x":"a%bc"}, {"y":"bcd"}]', 'all', 'a\_bc')  
+    --------------------------------------------------------------------------------------------------
+    "$[0]"                                                                                            
+    */
+    
+    SELECT JSON_SEARCH('["a_bc", "agbc", [{"k": "10"}, "def"], {"x":"a%bc"}, {"y":"bcd"}]', 'all', 'a`_bc', '`');
+    /*
+    JSON_SEARCH('["a_bc", "agbc", [{"k": "10"}, "def"], {"x":"a%bc"}, {"y":"bcd"}]', 'all', 'a`_bc', '`')  
+    -------------------------------------------------------------------------------------------------------
+    "$[0]"                                                                                                 
+    */
+    ```
+  
+### JSON_VALUE()
+从指定的json_doc中 提取path处的值，返回提取的值，若指定返回的类型，返回的值会自动转换为指定的类型。
 
 * 语法
     ```text
-    JSON_VALUE(json_doc, path)
+    JSON_VALUE(json_doc, path [RETURNING type] [on_empty] [on_error])
+    
+    Option:
+        RETURNING type: 返回的类型。这里 RETURNING是SQL关键字，不能少。能指定的就是type
+        on_empty:
+            {NULL | ERROR | DEFAULT value} ON EMPTY
+      
+        on_error:
+            {NULL | ERROR | DEFAULT value} ON ERROR
+    ```
+    
+    * type支持的类型
+        * FLOAT
+        * DOUBLE
+        * DECIMAL
+        * SIGNED
+        * UNSIGNED
+        * DATE
+        * TIME
+        * DATETIME
+        * YEAR (MySQL 8.0.22 and later)
+        * YEAR (values of one or two digits are not supported.)
+        * CHAR
+        * JSON
+    
+* 下面个两个写法是等价
+    ```mysql
+    SELECT JSON_VALUE(json_doc, path RETURNING type);
+    
+    SELECT CAST(
+        JSON_UNQUOTE( JSON_EXTRACT(json_doc, path) )
+        AS type
+    );
+    ```
+
+* 示例
+    ```mysql
+    SELECT JSON_VALUE('{"fname":"Joe", "lname":"Palmer"}', '$.fname');
+    /*
+    json_value('{"fname":"Joe", "lname":"Palmer"}', '$.fname')  
+    ------------------------------------------------------------
+    Joe                                                         
+    */
+    
+    SELECT JSON_VALUE('{"item":"shoes", "price":"49.9502"}', '$.price' RETURNING DECIMAL(4,2)) AS 'price';
+    /*
+     price  
+    --------
+       49.95
+    */
+    ```
+
+* JSON_VALUE()可用于简化在JSON列上创建索引的过程
+    ```mysql
+    -- JSON_VALUE() 简化在JSON列上创建索引过程
+    -- t1、t2表 两表创建的索引效果相当.
+    CREATE TABLE t1(
+        j JSON,
+        INDEX i1 ( (JSON_VALUE(j, '$.id' RETURNING UNSIGNED)) )
+    );
+    
+    EXPLAIN SELECT * FROM t1 WHERE JSON_VALUE(j, '$.id' RETURNING UNSIGNED) = 123;
+    /*
+        id  select_type  table   partitions  type    possible_keys  key     key_len  ref       rows  filtered  Extra   
+    ------  -----------  ------  ----------  ------  -------------  ------  -------  ------  ------  --------  --------
+         1  SIMPLE       t1      (NULL)      ref     i1             i1      9        const        1    100.00  (NULL)  
+                                                                                                                       
+    */
+    
+    CREATE TABLE t2 (
+        j JSON,
+        g INT GENERATED ALWAYS AS (j->"$.id"),
+        INDEX i1 (g)
+    );
+    
+    EXPLAIN SELECT * FROM t2 WHERE g  = 123;
+    /*
+        id  select_type  table   partitions  type    possible_keys  key     key_len  ref       rows  filtered  Extra   
+    ------  -----------  ------  ----------  ------  -------------  ------  -------  ------  ------  --------  --------
+         1  SIMPLE       t2      (NULL)      ref     i1             i1      5        const        1    100.00  (NULL)  
+    */
     ```
 
 ### value MEMBER OF(json_array)
+判断value是否为给定的json数组的元素。
 
+返回true(1)，  
+false(0)
+
+Returns true (1) if value is an element of json_array, otherwise returns false (0).
+
+value must be a scalar or a JSON document; 
+
+if it is a scalar, the operator attempts to treat it as an element of a JSON array.
 
 * 语法
     ```text
     value MEMBER OF(json_array)
     ```
+    * value必须是一个标量或json_doc。
+    * 如果value是一个标量，则尝试把它当json数组的元素来处理
 
+* 示例
+    ```mysql
+    SELECT 17 MEMBER OF('[23, "abc", 17, "ab", 10]');
+    /*
+    17 member of('[23, "abc", 17, "ab", 10]')  
+    -------------------------------------------
+                                              1
+    */
+    
+    SELECT 'ab' MEMBER OF('[23, "abc", 17, "ab", 10]');
+    /*
+    'ab' member of('[23, "abc", 17, "ab", 10]')  
+    ---------------------------------------------
+                                                1
+    */
+    
+    -- 部分匹配不算匹配
+    SELECT 7 MEMBER OF('[23, "abc", 17, "ab", 10]');
+    /*
+    7 member of('[23, "abc", 17, "ab", 10]')  
+    ------------------------------------------
+                                             0
+    */
+    
+    SELECT 'a' MEMBER OF('[23, "abc", 17, "ab", 10]');
+    /*
+    'a' MEMBER OF('[23, "abc", 17, "ab", 10]')  
+    --------------------------------------------
+                                               0
+    */
+    
+    -- 不执行字符串自动转数字
+    SELECT 17 MEMBER OF('[23, "abc", "17", "ab", 10]'), 
+    "17" MEMBER OF('[23, "abc", 17, "ab", 10]');
+    /*
+    17 MEMBER OF('[23, "abc", "17", "ab", 10]')  "17" MEMBER OF('[23, "abc", 17, "ab", 10]')  
+    -------------------------------------------  ---------------------------------------------
+                                              0                                              0
+    */
+    
+    SELECT CAST('[4, 5]' AS JSON) MEMBER OF('[[3, 4], [4, 5]]');
+    /*
+    cast('[4, 5]' as json) member of('[[3, 4], [4, 5]]')  
+    ------------------------------------------------------
+                                                         1
+    */
+    
+    SELECT JSON_ARRAY(4, 5) MEMBER OF('[[3, 4], [4, 5]]');
+    /*
+    Json_ARRAY(4, 5) member of('[[3, 4], [4, 5]]')  
+    ------------------------------------------------
+                                                   1
+    */
+    ```
+
+* 其它示例
+    ```bash
+    mysql> SET @a = CAST('{"a":1}' AS JSON);
+    Query OK, 0 rows affected (0.00 sec)
+    
+    mysql> SET @b = JSON_OBJECT("b", 2);
+    Query OK, 0 rows affected (0.00 sec)
+    
+    mysql> SET @c = JSON_ARRAY(17, @b, "abc", @a, 23);
+    Query OK, 0 rows affected (0.00 sec)
+    
+    mysql> SELECT @a MEMBER OF(@c), @b MEMBER OF(@c);
+    +------------------+------------------+
+    | @a MEMBER OF(@c) | @b MEMBER OF(@c) |
+    +------------------+------------------+
+    |                1 |                1 |
+    +------------------+------------------+
+    1 row in set (0.00 sec)
+    ```
 
 ## Functions That Modify JSON Values
 ### JSON_ARRAY_APPEND()

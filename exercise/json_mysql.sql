@@ -379,6 +379,31 @@ json_extract('{"k1":11, "k2": [22, 33]}', '$.*')
 [11, [22, 33]]                                    
 */
 
+SELECT c FROM jemp WHERE g = 1;
+/*
+c                           
+----------------------------
+{"id": 1, "name": "Nicki"}  
+*/
+
+-- 类似 JSON_VALUES()，Mysql暂未提供 JSON_VALUES()函数
+SELECT c->'$.*' FROM jemp WHERE g = 1;
+SELECT c->>'$.*' FROM jemp WHERE g = 1;
+/*
+c->'$.*'      
+--------------
+[1, "Nicki"]  
+*/
+
+-- 等同上面的SQL效果
+SELECT JSON_EXTRACT(c, '$.*') FROM jemp WHERE g = 1;
+/*
+JSON_extract(c, '$.*')  
+------------------------
+[1, "Nicki"]            
+*/
+
+
 -- '$.*.*'
 SELECT JSON_EXTRACT('{"k1":11, "k2": {"k21":21, "k22":22}}', '$.*.*');
 /*

@@ -574,6 +574,47 @@ JSON_UNQUOTE( JSON_EXTRACT(column, path) )
     */
     ```
 
+### 类似JSON_VALUES()函数的SQL
+获取json_doc对象的所有值，返回一个json数组。
+
+MySQL中暂未提供 JSON_VALUES() 函数，但可以通过其它的方式达到同样的效果
+
+* 语法
+    ```text
+    json_doc->'$.*'
+    
+    json_doc->>'$.*'
+    
+    JSON_EXTRACT(json_doc, '$.*')
+    ```
+
+* 示例
+    ```mysql
+    SELECT c FROM jemp WHERE g = 1;
+    /*
+    c                           
+    ----------------------------
+    {"id": 1, "name": "Nicki"}  
+    */
+    
+    -- 类似 JSON_VALUES()，Mysql暂未提供 JSON_VALUES()函数
+    SELECT c->'$.*' FROM jemp WHERE g = 1;
+    SELECT c->>'$.*' FROM jemp WHERE g = 1;
+    /*
+    c->'$.*'      
+    --------------
+    [1, "Nicki"]  
+    */
+    
+    -- 等同上面的SQL效果
+    SELECT JSON_EXTRACT(c, '$.*') FROM jemp WHERE g = 1;
+    /*
+    JSON_extract(c, '$.*')  
+    ------------------------
+    [1, "Nicki"]            
+    */
+
+    ```
 
 ### JSON_OVERLAPS()
 比较两个JSON_doc是否有相同的key-value或数组元素，
@@ -676,6 +717,8 @@ JSON_UNQUOTE( JSON_EXTRACT(column, path) )
     ```
 
 ### JSON_SEARCH()
+获取给定的 字符串 在 json_doc中的path。
+
 
 * 语法
     ```text

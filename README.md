@@ -225,6 +225,57 @@ MySQL核心技术
     </details>
     
     <details>
+    <summary>JSON数据类型</summary>
+    
+    * [JSON Function 列表参考](md/json_functions.md#JSON-Function-Reference)
+    * [JSON path的表示](md/json_functions.md#JSON-path)
+    * [Functions That Create JSON Values](md/json_functions.md#Functions-That-Create-JSON-Values)
+        * [JSON_ARRAY()](md/json_functions.md#JSON_ARRAY)
+        * [JSON_OBJECT()](md/json_functions.md#JSON_OBJECT)
+        * [JSON_QUOTE()](md/json_functions.md#JSON_QUOTE)
+    * [Functions That Search JSON Values](md/json_functions.md#Functions-That-Search-JSON-Values)
+        * [column->path](md/json_functions.md#column-path)
+        * [column->>path](md/json_functions.md#column-path)
+        * [JSON_EXTRACT()](md/json_functions.md#JSON_EXTRACT)
+        * [JSON_CONTAINS()](md/json_functions.md#JSON_CONTAINS)
+        * [JSON_CONTAINS_PATH()](md/json_functions.md#JSON_CONTAINS_PATH)
+        * [JSON_KEYS(json_doc[, path])](md/json_functions.md#JSON_KEYSjson_doc-path)
+        * [类似JSON_VALUES()函数的SQL](md/json_functions.md#类似JSON_VALUES函数的SQL)
+        * [JSON_OVERLAPS()](md/json_functions.md#JSON_OVERLAPS)
+        * [JSON_SEARCH()](md/json_functions.md#JSON_SEARCH)
+        * [JSON_VALUE()](md/json_functions.md#JSON_VALUE)
+        * [value MEMBER OF(json_array)](md/json_functions.md#value-MEMBER-OFjson_array)
+    * [Functions That Modify JSON Values](md/json_functions.md#Functions-That-Modify-JSON-Values)
+        * [JSON_ARRAY_APPEND()](md/json_functions.md#JSON_ARRAY_APPEND)
+        * [JSON_ARRAY_INSERT()](md/json_functions.md#JSON_ARRAY_INSERT)
+        * [JSON_INSERT()](md/json_functions.md#JSON_INSERT)
+        * [JSON_REPLACE()](md/json_functions.md#JSON_REPLACE)
+        * [JSON_SET()](md/json_functions.md#JSON_SET)
+        * [JSON_SET(), JSON_INSERT(), JSON_REPLACE()的对比](md/json_functions.md#JSON_SET-JSON_INSERT-JSON_REPLACE的对比)
+        * [JSON_REMOVE()](md/json_functions.md#JSON_REMOVE)
+        * [JSON_MERGE()](md/json_functions.md#JSON_MERGE)
+        * [JSON_MERGE_PATCH()](md/json_functions.md#JSON_MERGE_PATCH)
+        * [JSON_MERGE_PRESERVE()](md/json_functions.md#JSON_MERGE_PRESERVE)
+        * [JSON_MERGE_PATCH()对比JSON_MERGE_PRESERVE()](md/json_functions.md#JSON_MERGE_PATCH对比JSON_MERGE_PRESERVE)
+        * [JSON_UNQUOTE()](md/json_functions.md#JSON_UNQUOTE)
+    * [Functions That Return JSON Value Attributes](md/json_functions.md#Functions-That-Return-JSON-Value-Attributes)
+        * [JSON_DEPTH(json_doc)](md/json_functions.md#JSON_DEPTHjson_doc)
+        * [JSON_LENGTH(json_doc[, path])](md/json_functions.md#JSON_LENGTHjson_doc-path)
+        * [JSON_TYPE(json_val)](md/json_functions.md#JSON_TYPEjson_val)
+        * [JSON_VALID(val)](md/json_functions.md#JSON_VALIDval)
+    * [JSON Table Functions](md/json_functions.md#JSON-Table-Functions)
+        * [JSON_TABLE()](md/json_functions.md#JSON_TABLE)
+    * [JSON Schema Validation Functions](md/json_functions.md#JSON-Schema-Validation-Functions)
+        * [JSON_SCHEMA_VALID()](md/json_functions.md#JSON_SCHEMA_VALID)
+        * [JSON_SCHEMA_VALIDATION_REPORT()](md/json_functions.md#JSON_SCHEMA_VALIDATION_REPORT)
+    * [JSON Utility Functions](md/json_functions.md#JSON-Utility-Functions)
+        * [JSON_PRETTY(json_val)](md/json_functions.md#JSON_PRETTYjson_val)
+        * [JSON_STORAGE_FREE(json_val)](md/json_functions.md#JSON_STORAGE_FREEjson_val)
+        * [JSON_STORAGE_SIZE(json_val)](md/json_functions.md#JSON_STORAGE_SIZEjson_val)
+        * [CAST()、CONVERT()](md/json_functions.md#CASTCONVERT)
+    </details>
+    
+    <details>
     <summary>常见约束</summary>
     
     * [常见约束](md/4_04_DDL数据定义语言.常见约束.md)

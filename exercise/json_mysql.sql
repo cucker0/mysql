@@ -1280,6 +1280,516 @@ Patch                     Preserve
 
 ## Functions That Modify JSON Values  --end
 
+
+
+## Functions That Return JSON Value Attributes  --start
+### JSON_DEPTH(json_doc)
+SELECT JSON_DEPTH('[]'), JSON_DEPTH('{}'), JSON_DEPTH('11');
+/*
+json_depth('[]')  json_depth('{}')  json_depth('11')  
+----------------  ----------------  ------------------
+               1                 1                   1
+*/
+
+SELECT JSON_DEPTH('hello world');
+/*
+错误代码： 3141
+Invalid JSON text in argument 1 to function json_depth: "Invalid value." at position 0.
+*/
+
+SELECT JSON_DEPTH('[10, 20]'), JSON_DEPTH('[[], {}]');
+/*
+json_depth('[10, 20]')  json_depth('[[], {}]')  
+----------------------  ------------------------
+                     2                         2
+*/
+
+SELECT JSON_DEPTH('[10, {"a":20}]');
+/*
+json_depth('[10, {"a":20}]')  
+------------------------------
+                             3
+*/
+
+### JSON_LENGTH(json_doc[, path])
+SELECT JSON_LENGTH('[1, 2, {"a":3}]');
+/*
+json_length('[1, 2, {"a":3}]')  
+--------------------------------
+                               3
+*/
+
+SELECT JSON_LENGTH('{"a":1, "b":{"c":30}}');
+/*
+json_length('{"a":1, "b":{"c":30}}')  
+--------------------------------------
+                                     2
+*/
+
+-- 获取json_doc指定path处的值的长度
+SELECT JSON_LENGTH('{"a":1, "b":{"c":30}}', '$.b');
+/*
+JSON_LENGTH('{"a":1, "b":{"c":30}}', '$.b')  
+---------------------------------------------
+                                            1
+*/
+
+### JSON_TYPE(json_val)
+SELECT JSON_TYPE('{"a":[10, true]}');
+/*
+json_type('{"a":[10, true]}')  
+-------------------------------
+OBJECT                         
+*/
+
+SELECT JSON_TYPE(JSON_EXTRACT('{"a":[10, true]}', '$.a'));
+/*
+json_type(json_extract('{"a":[10, true]}', '$.a'))  
+----------------------------------------------------
+ARRAY                                               
+*/
+
+SELECT JSON_TYPE(JSON_EXTRACT('{"a":[10, true]}', '$.a[0]'));
+/*
+JSON_TYPE(JSON_EXTRACT('{"a":[10, true]}', '$.a[0]'))  
+-------------------------------------------------------
+INTEGER                                                
+*/
+
+SELECT JSON_TYPE(JSON_EXTRACT('{"a":[10, true]}', '$.a[1]'));
+/*
+JSON_TYPE(JSON_EXTRACT('{"a":[10, true]}', '$.a[1]'))  
+-------------------------------------------------------
+BOOLEAN                                                
+*/
+
+SELECT JSON_TYPE(NULL);
+/*
+json_type(NULL)  
+---------------
+NULL
+*/
+
+SELECT JSON_TYPE(10);
+/*
+错误代码： 3146
+Invalid data type for JSON data in argument 1 to function json_type; a JSON string or JSON type is required.
+*/
+
+### JSON_VALID(val)
+SELECT JSON_VALID('{"a":1}');
+/*
+json_valid('{"a":1}')  
+-----------------------
+                      1
+*/
+
+SELECT JSON_VALID('hello'), JSON_VALID('"hello"');
+/*
+json_valid('hello')  json_valid('"hello"')  
+-------------------  -----------------------
+                  0                        1
+*/
+
+## Functions That Return JSON Value Attributes  --end
+
+## JSON Table Functions  --start
+### JSON_TABLE()
+SELECT * FROM 
+JSON_TABLE(
+    '[{"c1": null}]',
+    '$[*]' COLUMNS (c1 INT PATH '$.c1' ERROR ON ERROR)
+) AS jt;
+/*
+    c1  
+--------
+  (NULL)
+*/
+
+SELECT * FROM 
+JSON_TABLE(
+    '[{"a":3}, {"a":2}, {"b":1}, {"a":0}, {"a":[1, 2]}]',
+    '$[*]' COLUMNS(
+        rowid FOR ORDINALITY,
+        ac VARCHAR(100) PATH '$.a' 
+            DEFAULT '111' ON EMPTY 
+            DEFAULT '999' ON ERROR,
+        aj JSON PATH '$.a'
+            DEFAULT '{"x":333}' ON EMPTY,
+        bx INT EXISTS PATH '$.b'
+    )
+) AS tt;
+/*
+ rowid  ac      aj              bx  
+------  ------  ----------  --------
+     1  3       3                  0
+     2  2       2                  0
+     3  111     {"x": 333}         1
+     4  0       0                  0
+     5  999     [1, 2]             0
+*/
+
+SELECT * FROM 
+JSON_TABLE(
+    '[{"x":2, "y":"8"}, {"x":"3", "y":"7"}, {"x":"4", "y":6}]',
+    '$[*]' COLUMNS(
+        xval VARCHAR(100) PATH "$.x",
+        yval VARCHAR(100) PATH "$.y"
+    )
+) AS jt1;
+/*
+xval    yval    
+------  --------
+2       8       
+3       7       
+4       6       
+*/
+
+SELECT * FROM 
+JSON_TABLE(
+    '[{"x":2, "y":"8"}, {"x":"3", "y":"7"}, {"x":"4", "y":6}]',
+    '$[1]' COLUMNS(
+        xval VARCHAR(100) PATH "$.x",
+        yval VARCHAR(100) PATH "$.y"
+    )
+) AS jt1;
+/*
+xval    yval    
+------  --------
+3       7       
+*/
+
+-- NESTED嵌套
+SELECT * FROM 
+JSON_TABLE(
+    '[{"a":1, "b":[11, 111]}, {"a":2, "b":[22, 222]}, {"a":3}]',
+    '$[*]' COLUMNS(
+        a INT PATH '$.a',
+        NESTED PATH '$.b[*]' COLUMNS(
+            b INT PATH '$'
+        )
+    )
+) AS jt
+WHERE b IS NOT NULL
+;
+/*
+     a       b  
+------  --------
+     1        11
+     1       111
+     2        22
+     2       222
+*/
+
+SELECT * FROM 
+JSON_TABLE(
+    '[{"a":1, "b":[11, 111]}, {"a":2, "b":[22, 222]}]',
+    '$[*]' COLUMNS(
+        a INT PATH '$.a',
+        NESTED PATH '$.b[*]' COLUMNS(
+            b1 INT PATH '$'
+        ),
+        NESTED PATH '$.b[*]' COLUMNS(
+            b2 INT PATH '$'
+        )
+    )
+) AS jt;
+/*
+     a      b1      b2  
+------  ------  --------
+     1      11    (NULL)
+     1     111    (NULL)
+     1  (NULL)        11
+     1  (NULL)       111
+     2      22    (NULL)
+     2     222    (NULL)
+     2  (NULL)        22
+     2  (NULL)       222
+*/
+
+SELECT * FROM 
+JSON_TABLE(
+    '[
+        {
+            "a":"a_val", 
+            "b":[{"c":"c_val", "d":[1,2]}]
+        },
+        {
+            "a":"a_val", 
+            "b":[
+                {"c":"c_val", "d":[11]}, 
+                {"c":"c_val", "d":[22]}
+            ]
+        }
+    ]',
+    '$[*]' COLUMNS(
+        top_ord FOR ORDINALITY,
+        apath VARCHAR(10) PATH '$.a',
+        NESTED PATH '$.b[*]' COLUMNS(
+            bpath VARCHAR(10) PATH '$.c',
+            `ord` FOR ORDINALITY,
+            NESTED PATH '$.d[*]' COLUMNS(
+                lpath VARCHAR(10) PATH '$'
+            )
+        )
+    )
+) AS jt;
+/*
+top_ord  apath   bpath      ord  lpath   
+-------  ------  ------  ------  --------
+      1  a_val   c_val        1  1       
+      1  a_val   c_val        1  2       
+      2  a_val   c_val        1  11      
+      2  a_val   c_val        2  22      
+*/
+
+
+## JSON Table Functions  --end
+
+## JSON Schema Validation Functions  --start
+### JSON_SCHEMA_VALID()
+SELECT JSON_SCHEMA_VALID(
+    '{
+        "id": "http://json-schema.org/geo",
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "description": "A geographical coordinate",
+        "type": "object",
+        "properties": {
+            "latitude": {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+            },
+            "longitude": {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+            }
+        },
+        "required": ["latitude", "longitude"]
+    }',
+    '{"latitude":63.444697, "longitude":10.445118}'
+) AS is_scheme_valid;
+/*
+is_scheme_valid  
+-----------------
+                1
+*/
+
+SELECT JSON_SCHEMA_VALID(
+    '{
+        "id": "http://json-schema.org/geo",
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "description": "A geographical coordinate",
+        "type": "object",
+        "properties": {
+            "latitude": {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+            },
+            "longitude": {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+            }
+        },
+        "required": ["latitude", "longitude"]
+    }',
+    '{}'
+) AS is_scheme_valid;
+/*
+is_scheme_valid  
+-----------------
+                0
+*/
+
+SELECT JSON_SCHEMA_VALID(
+    '{
+        "id": "http://json-schema.org/geo",
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "description": "A geographical coordinate",
+        "type": "object",
+        "properties": {
+            "latitude": {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+            },
+            "longitude": {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+            }
+        }
+    }',
+    '{}'
+) AS is_scheme_valid;
+/*
+is_scheme_valid  
+-----------------
+                1
+*/
+
+-- 当值类型为string时，schema支持正常表达式
+SELECT JSON_SCHEMA_VALID('{"type":"string", "pattern":"ab.*"}', '"abcd"');
+/*
+JSON_SCHEMA_VALID('{"type":"string", "pattern":"ab.*"}', '"abcd"')  
+--------------------------------------------------------------------
+                                                                   1
+*/
+
+SELECT JSON_SCHEMA_VALID('{"type":"string", "pattern":"ab.*"}', '"aecd"');
+/*
+JSON_SCHEMA_VALID('{"type":"string", "pattern":"ab.*"}', '"aecd"')  
+--------------------------------------------------------------------
+                                                                   0
+*/
+
+-- JSON_SCHEMA_VALID()用于强制执行check约束
+CREATE TABLE geo (
+    coordinate JSON,
+    CHECK(
+        JSON_SCHEMA_VALID(
+            '{
+                "type": "object",
+                "properties": {
+                    "latitude":{"type":"number", "minimum":-90, "maximum":90},
+                    "longitude":{"type":"number", "minimum":-180, "maximum":180}
+                },
+                "required": ["latitude", "longitude"]
+            }',
+            coordinate
+        )
+    )
+);
+
+INSERT INTO geo VALUES('{"latitude":59, "longitude":18}');
+INSERT INTO geo VALUES('{"latitude":91, "longitude":0}');
+/*
+错误代码： 3819
+Check constraint 'geo_chk_1' is violated.
+*/
+INSERT INTO geo VALUES('{"longitude":120}');
+/*
+错误代码： 3819
+Check constraint 'geo_chk_1' is violated.
+*/
+
+### JSON_SCHEMA_VALIDATION_REPORT(schema, document)
+SELECT JSON_SCHEMA_VALIDATION_REPORT(
+    '{
+        "id": "http://json-schema.org/geo",
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "description": "A geographical coordinate",
+        "type": "object",
+        "properties": {
+            "latitude": {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+            },
+            "longitude": {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+            }
+        },
+        "required": ["latitude", "longitude"]
+    }',
+    '{"latitude":63.444697, "longitude":10.445118}'
+) AS 'report';
+/*
+report           
+-----------------
+{"valid": true}  
+*/
+
+SELECT JSON_PRETTY(JSON_SCHEMA_VALIDATION_REPORT(
+    '{
+        "id": "http://json-schema.org/geo",
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "description": "A geographical coordinate",
+        "type": "object",
+        "properties": {
+            "latitude": {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+            },
+            "longitude": {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+            }
+        },
+        "required": ["latitude", "longitude"]
+    }',
+    '{"latitude":63.444697, "longitude":310}'
+) ) AS "report";
+/*
+report                                                                                                                                                    --------------------------------------------------------------------------------------------------------------------------------------
+{
+  "valid": false,   
+  "reason": "The JSON document location '#/longitude' failed requirement 'maximum' at JSON Schema location  '#/properties/longitude'",
+  "schema-location": "#/properties/longitude",
+  "document-location": "#/longitude",
+  "schema-failed-keyword": "maximum"
+*/
+
+## JSON Schema Validation Functions  --end
+
+## JSON Utility Functions  --start
+### JSON_PRETTY(json_val)
+SELECT JSON_PRETTY('{"k1":11, "k2":22}');
+/*
+json_pretty('{"k1":11, "k2":22}')  
+-----------------------------------
+{                                  
+  "k1": 11,                        
+  "k2": 22                         
+}     
+*/
+
+### JSON_STORAGE_FREE(json_val)
+CREATE TABLE jtable (jcol JSON);
+INSERT INTO jtable VALUES
+('{"a":10, "b":"wxyz", "c":"[true, false]"}');
+
+SELECT JSON_STORAGE_FREE(jcol) FROM jtable;
+/*
+JSON_STORAGE_FREE(jcol)  
+-------------------------
+                        0
+*/
+
+UPDATE jtable SET jcol = JSON_SET(jcol, "$.a", 10, "$.b", "wxyz", "$.c", 1);
+SELECT JSON_STORAGE_FREE(jcol) FROM jtable;
+/*
+JSON_STORAGE_FREE(jcol)  
+-------------------------
+                       14
+*/
+
+### JSON_STORAGE_SIZE(json_val)
+SELECT JSON_STORAGE_SIZE('{"a":1000, "b":"wxyz", "c":"[1, 3, 5, 7]"}') AS 'size';
+/*
+  size  
+--------
+      47
+*/
+
+SELECT jcol, JSON_STORAGE_SIZE(jcol) AS Size, JSON_STORAGE_FREE(jcol) AS Free 
+FROM jtable;
+/*
+jcol                              Size    Free  
+------------------------------  ------  --------
+{"a": 10, "b": "wxyz", "c": 1}      48        14
+*/
+
+## JSON Utility Functions  --end
+
+
 -- 字符转为JSON对象
 SELECT CAST('[11, 22, 33]' AS JSON);
 SELECT CAST('{"k1": 11, "k2": 22}' AS JSON);

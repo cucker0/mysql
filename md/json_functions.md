@@ -1,6 +1,54 @@
 JSON Functions
 ==
 
+## Table Of Contents
+* [JSON Function Reference](#JSON-Function-Reference)
+* [JSON path](#JSON-path)
+* [Functions That Create JSON Values](#Functions-That-Create-JSON-Values)
+    * [JSON_ARRAY()](#JSON_ARRAY)
+    * [JSON_OBJECT()](#JSON_OBJECT)
+    * [JSON_QUOTE()](#JSON_QUOTE)
+* [Functions That Search JSON Values](#Functions-That-Search-JSON-Values)
+    * [column->path](#column-path)
+    * [column->>path](#column-path)
+    * [JSON_EXTRACT()](#JSON_EXTRACT)
+    * [JSON_CONTAINS()](#JSON_CONTAINS)
+    * [JSON_CONTAINS_PATH()](#JSON_CONTAINS_PATH)
+    * [JSON_KEYS(json_doc[, path])](#JSON_KEYSjson_doc-path)
+    * [类似JSON_VALUES()函数的SQL](#类似JSON_VALUES函数的SQL)
+    * [JSON_OVERLAPS()](#JSON_OVERLAPS)
+    * [JSON_SEARCH()](#JSON_SEARCH)
+    * [JSON_VALUE()](#JSON_VALUE)
+    * [value MEMBER OF(json_array)](#value-MEMBER-OFjson_array)
+* [Functions That Modify JSON Values](#Functions-That-Modify-JSON-Values)
+    * [JSON_ARRAY_APPEND()](#JSON_ARRAY_APPEND)
+    * [JSON_ARRAY_INSERT()](#JSON_ARRAY_INSERT)
+    * [JSON_INSERT()](#JSON_INSERT)
+    * [JSON_REPLACE()](#JSON_REPLACE)
+    * [JSON_SET()](#JSON_SET)
+    * [JSON_SET(), JSON_INSERT(), JSON_REPLACE()的对比](#JSON_SET-JSON_INSERT-JSON_REPLACE的对比)
+    * [JSON_REMOVE()](#JSON_REMOVE)
+    * [JSON_MERGE()](#JSON_MERGE)
+    * [JSON_MERGE_PATCH()](#JSON_MERGE_PATCH)
+    * [JSON_MERGE_PRESERVE()](#JSON_MERGE_PRESERVE)
+    * [JSON_MERGE_PATCH()对比JSON_MERGE_PRESERVE()](#JSON_MERGE_PATCH对比JSON_MERGE_PRESERVE)
+    * [JSON_UNQUOTE()](#JSON_UNQUOTE)
+* [Functions That Return JSON Value Attributes](#Functions-That-Return-JSON-Value-Attributes)
+    * [JSON_DEPTH(json_doc)](#JSON_DEPTHjson_doc)
+    * [JSON_LENGTH(json_doc[, path])](#JSON_LENGTHjson_doc-path)
+    * [JSON_TYPE(json_val)](#JSON_TYPEjson_val)
+    * [JSON_VALID(val)](#JSON_VALIDval)
+* [JSON Table Functions](#JSON-Table-Functions)
+    * [JSON_TABLE()](#JSON_TABLE)
+* [JSON Schema Validation Functions](#JSON-Schema-Validation-Functions)
+    * [JSON_SCHEMA_VALID()](#JSON_SCHEMA_VALID)
+    * [JSON_SCHEMA_VALIDATION_REPORT()](#JSON_SCHEMA_VALIDATION_REPORT)
+* [JSON Utility Functions](#JSON-Utility-Functions)
+    * [JSON_PRETTY(json_val)](#JSON_PRETTYjson_val)
+    * [JSON_STORAGE_FREE(json_val)](#JSON_STORAGE_FREEjson_val)
+    * [JSON_STORAGE_SIZE(json_val)](#JSON_STORAGE_SIZEjson_val)
+    * [CAST()、CONVERT()](#CASTCONVERT)
+
 
 ## JSON Function Reference
 [reference](https://dev.mysql.com/doc/refman/8.0/en/json-function-reference.html)
@@ -1061,21 +1109,14 @@ if it is a scalar, the operator attempts to treat it as an element of a JSON arr
 * 其它示例
     ```bash
     mysql> SET @a = CAST('{"a":1}' AS JSON);
-    Query OK, 0 rows affected (0.00 sec)
-    
     mysql> SET @b = JSON_OBJECT("b", 2);
-    Query OK, 0 rows affected (0.00 sec)
-    
     mysql> SET @c = JSON_ARRAY(17, @b, "abc", @a, 23);
-    Query OK, 0 rows affected (0.00 sec)
-    
     mysql> SELECT @a MEMBER OF(@c), @b MEMBER OF(@c);
     +------------------+------------------+
     | @a MEMBER OF(@c) | @b MEMBER OF(@c) |
     +------------------+------------------+
     |                1 |                1 |
     +------------------+------------------+
-    1 row in set (0.00 sec)
     ```
 
 ## Functions That Modify JSON Values
@@ -1701,3 +1742,704 @@ MySQL 8.0.3已经被弃用。
     |       2                         |
     +----------------------------+
     ```
+
+## Functions That Return JSON Value Attributes
+### JSON_DEPTH(json_doc)
+获取json_doc的最大的深度，返回值是一个整数(>= 1)。
+
+* 函数特点
+    * 空json数组（[]）、空json对象（{}）、标量的深度都为1。
+    * 只包含一层标量元素的非空json数组，深度为2。
+    * 只包含一层key-valuer的json对象，深度为2
+    * 其他情况下的json_doc的深度都 > 2 。
+
+* 示例
+    ```mysql
+    SELECT JSON_DEPTH('[]'), JSON_DEPTH('{}'), JSON_DEPTH('11');
+    /*
+    json_depth('[]')  json_depth('{}')  json_depth('11')  
+    ----------------  ----------------  ------------------
+                   1                 1                   1
+    */
+    
+    SELECT JSON_DEPTH('hello world');
+    /*
+    错误代码： 3141
+    Invalid JSON text in argument 1 to function json_depth: "Invalid value." at position 0.
+    */
+    
+    SELECT JSON_DEPTH('[10, 20]'), JSON_DEPTH('[[], {}]');
+    /*
+    json_depth('[10, 20]')  json_depth('[[], {}]')  
+    ----------------------  ------------------------
+                         2                         2
+    */
+    
+    SELECT JSON_DEPTH('[10, {"a":20}]');
+    /*
+    json_depth('[10, {"a":20}]')  
+    ------------------------------
+                                 3
+    */
+    ```
+
+### JSON_LENGTH(json_doc[, path])
+获取json_doc的长度，如果还是指定了path，则获取json_doc的path处的值的长度。
+
+返回值类型为整数。
+
+* 函数特点
+    * 标量的长度为1。
+    * json数组的长度为元素个数。
+    * json对象的长度为其成员的数量(第一层的key-value对的对数)。
+    * 长度不计算嵌套的json数组或json对象的长度。
+
+* 示例
+    ```mysql
+    SELECT JSON_LENGTH('[1, 2, {"a":3}]');
+    /*
+    json_length('[1, 2, {"a":3}]')  
+    --------------------------------
+                                   3
+    */
+    
+    SELECT JSON_LENGTH('{"a":1, "b":{"c":30}}');
+    /*
+    json_length('{"a":1, "b":{"c":30}}')  
+    --------------------------------------
+                                         2
+    */
+    
+    -- 获取json_doc指定path处的值的长度
+    SELECT JSON_LENGTH('{"a":1, "b":{"c":30}}', '$.b');
+    /*
+    JSON_LENGTH('{"a":1, "b":{"c":30}}', '$.b')  
+    ---------------------------------------------
+                                                1
+    */
+    ```
+
+### JSON_TYPE(json_val)
+获取json_val的类型（一个用`utf8mb4`指示的类型）。
+
+* 示例
+    ```mysql
+    SELECT JSON_TYPE('{"a":[10, true]}');
+    /*
+    json_type('{"a":[10, true]}')  
+    -------------------------------
+    OBJECT                         
+    */
+    
+    SELECT JSON_TYPE(JSON_EXTRACT('{"a":[10, true]}', '$.a'));
+    /*
+    json_type(json_extract('{"a":[10, true]}', '$.a'))  
+    ----------------------------------------------------
+    ARRAY                                               
+    */
+    
+    SELECT JSON_TYPE(JSON_EXTRACT('{"a":[10, true]}', '$.a[0]'));
+    /*
+    JSON_TYPE(JSON_EXTRACT('{"a":[10, true]}', '$.a[0]'))  
+    -------------------------------------------------------
+    INTEGER                                                
+    */
+    
+    SELECT JSON_TYPE(JSON_EXTRACT('{"a":[10, true]}', '$.a[1]'));
+    /*
+    JSON_TYPE(JSON_EXTRACT('{"a":[10, true]}', '$.a[1]'))  
+    -------------------------------------------------------
+    BOOLEAN                                                
+    */
+    
+    SELECT JSON_TYPE(NULL);
+    /*
+    json_type(NULL)  
+    ---------------
+    NULL
+    */
+    
+    SELECT JSON_TYPE(10);
+    
+    
+    ## Functions That Return JSON Value Attributes  --end
+    /*
+    错误代码： 3146
+    Invalid data type for JSON data in argument 1 to function json_type; a JSON string or JSON type is required.
+    */
+    ```
+* json_type()可返回的类型
+    * Purely JSON types:
+        ```text
+        OBJECT: JSON objects
+        
+        ARRAY: JSON arrays
+        
+        BOOLEAN: The JSON true and false literals
+        
+        NULL: The JSON null literal
+        ```
+        
+    * Numeric types:
+        ```text
+        INTEGER: MySQL TINYINT, SMALLINT, MEDIUMINT and INT and BIGINT scalars
+        
+        DOUBLE: MySQL DOUBLE FLOAT scalars
+        
+        DECIMAL: MySQL DECIMAL and NUMERIC scalars
+        ```
+    * Temporal types:
+        ```text
+        DATETIME: MySQL DATETIME and TIMESTAMP scalars
+  
+        DATE: MySQL DATE scalars
+  
+        TIME: MySQL TIME scalars
+        ```
+    * String types:
+        ```text
+        STRING: MySQL utf8 character type scalars: CHAR, VARCHAR, TEXT, ENUM, and SET
+        ```
+    * Binary types:
+        ```text
+        BLOB: MySQL binary type scalars including BINARY, VARBINARY, BLOB, and BIT
+        ```
+    * All other types:
+        ```text
+        OPAQUE (raw bits)
+        ```
+### JSON_VALID(val)
+判断val是否为合法的json。  
+1：是
+0：不是
+
+* 示例
+    ```mysql
+    SELECT JSON_VALID('{"a":1}');
+    /*
+    json_valid('{"a":1}')  
+    -----------------------
+                          1
+    */
+    
+    SELECT JSON_VALID('hello'), JSON_VALID('"hello"');
+    /*
+    json_valid('hello')  json_valid('"hello"')  
+    -------------------  -----------------------
+                      0                        1
+    */
+    ```
+
+## JSON Table Functions
+### JSON_TABLE()
+从JSON_doc中提取数据，并将其作为具有指定列的关系表返回。
+
+* 语法
+    ```text
+    JSON_TABLE(
+        expr,
+        path COLUMNS (column_list)
+    )   [AS] alias
+    
+    column_list:
+        column[, column][, ...]
+    
+    column:
+        name FOR ORDINALITY
+        |  name type PATH string path [on_empty] [on_error]
+        |  name type EXISTS PATH string path
+        |  NESTED [PATH] path COLUMNS (column_list)
+    
+        on_empty:
+            {NULL | DEFAULT json_string | ERROR} ON EMPTY
+        
+        on_error:
+            {NULL | DEFAULT json_string | ERROR} ON ERROR
+    ```
+    * NESTED嵌套
+
+* 示例
+    ```mysql
+    SELECT * FROM 
+    JSON_TABLE(
+        '[{"c1": null}]',
+        '$[*]' COLUMNS (c1 INT PATH '$.c1' ERROR ON ERROR)
+    ) AS jt;
+    /*
+        c1  
+    --------
+      (NULL)
+    */
+    
+    SELECT * FROM 
+    JSON_TABLE(
+        '[{"a":3}, {"a":2}, {"b":1}, {"a":0}, {"a":[1, 2]}]',
+        '$[*]' COLUMNS(
+            rowid FOR ORDINALITY,
+            ac VARCHAR(100) PATH '$.a' 
+                DEFAULT '111' ON EMPTY 
+                DEFAULT '999' ON ERROR,
+            aj JSON PATH '$.a'
+                DEFAULT '{"x":333}' ON EMPTY,
+            bx INT EXISTS PATH '$.b'
+        )
+    ) AS tt;
+    /*
+     rowid  ac      aj              bx  
+    ------  ------  ----------  --------
+         1  3       3                  0
+         2  2       2                  0
+         3  111     {"x": 333}         1
+         4  0       0                  0
+         5  999     [1, 2]             0
+    */
+    
+    SELECT * FROM 
+    JSON_TABLE(
+        '[{"x":2, "y":"8"}, {"x":"3", "y":"7"}, {"x":"4", "y":6}]',
+        '$[*]' COLUMNS(
+            xval VARCHAR(100) PATH "$.x",
+            yval VARCHAR(100) PATH "$.y"
+        )
+    ) AS jt1;
+    /*
+    xval    yval    
+    ------  --------
+    2       8       
+    3       7       
+    4       6       
+    */
+    
+    SELECT * FROM 
+    JSON_TABLE(
+        '[{"x":2, "y":"8"}, {"x":"3", "y":"7"}, {"x":"4", "y":6}]',
+        '$[1]' COLUMNS(
+            xval VARCHAR(100) PATH "$.x",
+            yval VARCHAR(100) PATH "$.y"
+        )
+    ) AS jt1;
+    /*
+    xval    yval    
+    ------  --------
+    3       7       
+    */
+    
+    -- NESTED嵌套
+    SELECT * FROM 
+    JSON_TABLE(
+        '[{"a":1, "b":[11, 111]}, {"a":2, "b":[22, 222]}, {"a":3}]',
+        '$[*]' COLUMNS(
+            a INT PATH '$.a',
+            NESTED PATH '$.b[*]' COLUMNS(
+                b INT PATH '$'
+            )
+        )
+    ) AS jt
+    WHERE b IS NOT NULL
+    ;
+    /*
+         a       b  
+    ------  --------
+         1        11
+         1       111
+         2        22
+         2       222
+    */
+    
+    SELECT * FROM 
+    JSON_TABLE(
+        '[{"a":1, "b":[11, 111]}, {"a":2, "b":[22, 222]}]',
+        '$[*]' COLUMNS(
+            a INT PATH '$.a',
+            NESTED PATH '$.b[*]' COLUMNS(
+                b1 INT PATH '$'
+            ),
+            NESTED PATH '$.b[*]' COLUMNS(
+                b2 INT PATH '$'
+            )
+        )
+    ) AS jt;
+    /*
+         a      b1      b2  
+    ------  ------  --------
+         1      11    (NULL)
+         1     111    (NULL)
+         1  (NULL)        11
+         1  (NULL)       111
+         2      22    (NULL)
+         2     222    (NULL)
+         2  (NULL)        22
+         2  (NULL)       222
+    */
+    
+    SELECT * FROM 
+    JSON_TABLE(
+        '[
+            {
+                "a":"a_val", 
+                "b":[{"c":"c_val", "d":[1,2]}]
+            },
+            {
+                "a":"a_val", 
+                "b":[
+                    {"c":"c_val", "d":[11]}, 
+                    {"c":"c_val", "d":[22]}
+                ]
+            }
+        ]',
+        '$[*]' COLUMNS(
+            top_ord FOR ORDINALITY,
+            apath VARCHAR(10) PATH '$.a',
+            NESTED PATH '$.b[*]' COLUMNS(
+                bpath VARCHAR(10) PATH '$.c',
+                `ord` FOR ORDINALITY,
+                NESTED PATH '$.d[*]' COLUMNS(
+                    lpath VARCHAR(10) PATH '$'
+                )
+            )
+        )
+    ) AS jt;
+    /*
+    top_ord  apath   bpath      ord  lpath   
+    -------  ------  ------  ------  --------
+          1  a_val   c_val        1  1       
+          1  a_val   c_val        1  2       
+          2  a_val   c_val        1  11      
+          2  a_val   c_val        2  22      
+    */
+    ```
+
+## JSON Schema Validation Functions
+json模式验证函数
+
+### JSON_SCHEMA_VALID()
+根据指定的json模式 验证 json_doc
+
+* 语法
+    ```text
+    JSON_SCHEMA_VALID(schema, document)
+    ```
+    * schema  
+        必须是一个合法的json对象。
+
+* 示例
+    ```mysql
+    SELECT JSON_SCHEMA_VALID(
+        '{
+            "id": "http://json-schema.org/geo",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "A geographical coordinate",
+            "type": "object",
+            "properties": {
+                "latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                },
+                "longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                }
+            },
+            "required": ["latitude", "longitude"]
+        }',
+        '{"latitude":63.444697, "longitude":10.445118}'
+    ) AS is_scheme_valid;
+    /*
+    is_scheme_valid  
+    -----------------
+                    1
+    */
+    
+    SELECT JSON_SCHEMA_VALID(
+        '{
+            "id": "http://json-schema.org/geo",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "A geographical coordinate",
+            "type": "object",
+            "properties": {
+                "latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                },
+                "longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                }
+            },
+            "required": ["latitude", "longitude"]
+        }',
+        '{}'
+    ) AS is_scheme_valid;
+    /*
+    is_scheme_valid  
+    -----------------
+                    0
+    */
+    
+    SELECT JSON_SCHEMA_VALID(
+        '{
+            "id": "http://json-schema.org/geo",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "A geographical coordinate",
+            "type": "object",
+            "properties": {
+                "latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                },
+                "longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                }
+            }
+        }',
+        '{}'
+    ) AS is_scheme_valid;
+    /*
+    is_scheme_valid  
+    -----------------
+                    1
+    */
+    
+    -- 当值类型为string时，schema支持正常表达式
+    SELECT JSON_SCHEMA_VALID('{"type":"string", "pattern":"ab.*"}', '"abcd"');
+    /*
+    JSON_SCHEMA_VALID('{"type":"string", "pattern":"ab.*"}', '"abcd"')  
+    --------------------------------------------------------------------
+                                                                       1
+    */
+    
+    SELECT JSON_SCHEMA_VALID('{"type":"string", "pattern":"ab.*"}', '"aecd"');
+    /*
+    JSON_SCHEMA_VALID('{"type":"string", "pattern":"ab.*"}', '"aecd"')  
+    --------------------------------------------------------------------
+                                                                       0
+    */
+    ```
+
+* JSON_SCHEMA_VALID()可用于强制执行`CHECK`约束。
+
+    创建一个包含check约束的表
+    ```mysql
+    CREATE TABLE geo (
+        coordinate JSON,
+        CHECK(
+            JSON_SCHEMA_VALID(
+                '{
+                    "type": "object",
+                    "properties": {
+                        "latitude":{"type":"number", "minimum":-90, "maximum":90},
+                        "longitude":{"type":"number", "minimum":-180, "maximum":180}
+                    },
+                    "required": ["latitude", "longitude"]
+                }',
+                coordinate
+            )
+        )
+    );
+    ```
+    * required  
+        要求的条件
+    
+    插入合法的数据
+    ```bash
+    mysql> INSERT INTO geo VALUES('{"latitude":59, "longitude":18}');
+    Query OK, 1 row affected (0.00 sec)
+    ```
+    
+    插入latitude超出范围的数据
+    ```bash
+    mysql> INSERT INTO geo VALUES('{"latitude":91, "longitude":0}');
+    ERROR 3819 (HY000): Check constraint 'geo_chk_1' is violated.
+    mysql> SHOW WARNINGS\G
+    *************************** 1. row ***************************
+      Level: Error
+       Code: 3934
+    Message: The JSON document location '#/latitude' failed requirement 'maximum' at JSON Schema location '#/properties/latitude'.
+    *************************** 2. row ***************************
+      Level: Error
+       Code: 3819
+    Message: Check constraint 'geo_chk_1' is violated.
+    2 rows in set (0.00 sec)
+    ```
+    
+    插入缺少longitude的数据
+    ```bash
+    mysql> INSERT INTO geo VALUES('{"longitude":120}');
+    ERROR 3819 (HY000): Check constraint 'geo_chk_1' is violated.
+    mysql> SHOW WARNINGS\G
+    *************************** 1. row ***************************
+      Level: Error
+       Code: 3934
+    Message: The JSON document location '#' failed requirement 'required' at JSON Schema location '#'.
+    *************************** 2. row ***************************
+      Level: Error
+       Code: 3819
+    Message: Check constraint 'geo_chk_1' is violated.
+    2 rows in set (0.00 sec)
+    ```
+
+### JSON_SCHEMA_VALIDATION_REPORT()
+根据指定的json模式 验证 json_doc，返回结果为json的形式报告
+
+
+* 语法
+    ```text
+    JSON_SCHEMA_VALIDATION_REPORT(schema, document)
+    ```
+* 示例
+    ```mysql
+    SELECT JSON_PRETTY(JSON_SCHEMA_VALIDATION_REPORT(
+        '{
+            "id": "http://json-schema.org/geo",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "A geographical coordinate",
+            "type": "object",
+            "properties": {
+                "latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                },
+                "longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                }
+            },
+            "required": ["latitude", "longitude"]
+        }',
+        '{"latitude":63.444697, "longitude":310}'
+    ) ) AS "report";
+    /*
+    report                                                                                                                                                    --------------------------------------------------------------------------------------------------------------------------------------
+    {
+      "valid": false,   
+      "reason": "The JSON document location '#/longitude' failed requirement 'maximum' at JSON Schema location  '#/properties/longitude'",
+      "schema-location": "#/properties/longitude",
+      "document-location": "#/longitude",
+      "schema-failed-keyword": "maximum"
+    */
+    ```
+    
+    ```bash
+    mysql> SELECT JSON_PRETTY(JSON_SCHEMA_VALIDATION_REPORT(
+        ->     '{
+        '>         "id": "http://json-schema.org/geo",
+        '>         "$schema": "http://json-schema.org/draft-04/schema#",
+        '>         "description": "A geographical coordinate",
+        '>         "type": "object",
+        '>         "properties": {
+        '>             "latitude": {
+        '>                 "type": "number",
+        '>                 "minimum": -90,
+        '>                 "maximum": 90
+        '>             },
+        '>             "longitude": {
+        '>                 "type": "number",
+        '>                 "minimum": -180,
+        '>                 "maximum": 180
+        '>             }
+        '>         },
+        '>         "required": ["latitude", "longitude"]
+        '>     }',
+        ->     '{"latitude":63.444697, "longitude":310}'
+        -> ) ) \G;
+    *************************** 1. row ***************************
+    JSON_PRETTY(JSON_SCHEMA_VALIDATION_REPORT(
+        '{
+            "id": "http://json-schema.org/geo",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "description": "A geographical coordinate",
+            "type": "object",
+            "properties":: {
+      "valid": false,
+      "reason": "The JSON document location '#/longitude' failed requirement 'maximum' at JSON Schema location '#/properties/longitude'",
+      "schema-location": "#/properties/longitude",
+      "document-location": "#/longitude",
+      "schema-failed-keyword": "maximum"
+    }
+    1 row in set (0.00 sec)
+    
+    ERROR: 
+    No query specified
+    ```
+
+## JSON Utility Functions
+json工具类函数
+
+### JSON_PRETTY(json_val)
+打印漂亮的json_val。更适合人阅读的json格式
+
+* 示例
+    ```mysql
+    SELECT JSON_PRETTY('{"k1":11, "k2":22}');
+    /*
+    json_pretty('{"k1":11, "k2":22}')  
+    -----------------------------------
+    {                                  
+      "k1": 11,                        
+      "k2": 22                         
+    }     
+    */
+    ```
+
+### JSON_STORAGE_FREE(json_val)
+显示json列值在更新后，释放了多少空间，返回的值为整数，单位为：bit(位)，单位不显示。
+
+更新json列值的函数：JSON_SET(), JSON_REPLACE(), JSON_REMOVE()
+
+* 示例
+    ```mysql
+    CREATE TABLE jtable (jcol JSON);
+    INSERT INTO jtable VALUES
+    ('{"a":10, "b":"wxyz", "c":"[true, false]"}');
+    
+    SELECT JSON_STORAGE_FREE(jcol) FROM jtable;
+    /*
+    JSON_STORAGE_FREE(jcol)  
+    -------------------------
+                            0
+    */
+    
+    UPDATE jtable SET jcol = JSON_SET(jcol, "$.a", 10, "$.b", "wxyz", "$.c", 1);
+    SELECT JSON_STORAGE_FREE(jcol) FROM jtable;
+    /*
+    JSON_STORAGE_FREE(jcol)  
+    -------------------------
+                           14
+    */
+    ```
+
+
+### JSON_STORAGE_SIZE(json_val)
+获取json_doc以二进制存储所占用的字节数(bytes)。
+
+* 示例
+    ```mysql
+    SELECT JSON_STORAGE_SIZE('{"a":1000, "b":"wxyz", "c":"[1, 3, 5, 7]"}') AS 'size';
+    /*
+      size  
+    --------
+          47
+    */
+
+    SELECT jcol, JSON_STORAGE_SIZE(jcol) AS Size, JSON_STORAGE_FREE(jcol) AS Free 
+    FROM jtable;
+    /*
+    jcol                              Size    Free  
+    ------------------------------  ------  --------
+    {"a": 10, "b": "wxyz", "c": 1}      48        14
+    */
+    ```
+
+### CAST()、CONVERT()
+用于将值转换为指定的类型
+
+[参考官网 Cast Functions and Operators](https://dev.mysql.com/doc/refman/8.0/en/cast-functions.html)

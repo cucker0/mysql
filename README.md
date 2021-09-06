@@ -227,6 +227,22 @@ MySQL核心技术
     <details>
     <summary>JSON数据类型</summary>
     
+    * [初识mysql json](md/json_mysql.md)
+        * [什么是mysql json](md/json_mysql.md#什么是mysql-json)
+            * [json类型数据的使用场景](md/json_mysql.md#json类型数据的使用场景)
+            * [示例](md/json_mysql.md#示例)
+            * [包含json类型字段的表的设计原则](md/json_mysql.md#包含json类型字段的表的设计原则)
+            * [json数据类型与json格式的字符串相比的优点](md/json_mysql.md#json数据类型与json格式的字符串相比的优点)
+        * [docs](md/json_mysql.md#docs)
+        * [以json值建立索引](md/json_mysql.md#以json值建立索引)
+        * [建表](md/json_mysql.md#建表)
+        * [插入JSON字段](md/json_mysql.md#插入JSON字段)
+        * [以json字段内的某个值作为连接查询的条件](#以json字段内的某个值作为连接查询的条件)
+        * [JSON字段值的CRUD(增查改删)](#JSON字段值的CRUD)
+            * [插入JSON值](md/json_mysql.md#插入JSON值)
+            * [查询JSON值](md/json_mysql.md#查询JSON值)
+            * [更新JSON值](md/json_mysql.md#更新JSON值)
+            * [删除JSON值](md/json_mysql.md#删除JSON值)
     * [JSON Function 列表参考](md/json_functions.md#JSON-Function-Reference)
     * [JSON path的表示](md/json_functions.md#JSON-path)
     * [Functions That Create JSON Values](md/json_functions.md#Functions-That-Create-JSON-Values)

@@ -1,38 +1,7 @@
 CREATE DATABASE jsontest CHARSET 'utf8mb4';
-
 USE jsontest;
--- 创建json table
-CREATE TABLE json_tab (
-    jdoc JSON
-);
 
-SHOW CREATE TABLE json_tab;
-
-INSERT INTO json_tab VALUES('{"key1": "value1", "key2": "value2"}');
-
-INSERT INTO json_tab VALUES('[1, 2,');
-INSERT INTO json_tab VALUES('[1, 2,]');  -- 会有如下的错误提示
-/*
-错误代码： 3140
-Invalid JSON TEXT: "Invalid value." AT POSITION 6 IN VALUE FOR COLUMN 'json_tab.jdoc'.
-*/
-INSERT INTO json_tab VALUES('[1, 2]');
-
-
-SELECT * FROM json_tab;
-
-SELECT * FROM json_tab LIMIT 1;
-
--- 获取json指定key的值。包括引号或任何转义符
-SELECT jdoc->"$.key1" FROM json_tab;
-
--- 不包括 引号或任何转义符
-SELECT jdoc->>"$.key1" FROM json_tab
-
--- json key 值作为条件查询
-SELECT * FROM json_tab WHERE jdoc->>"$.key1" = 'value1';
-
-
+## 示例  --start
 CREATE TABLE department_tbl (
     id INT PRIMARY KEY AUTO_INCREMENT,
     `name` VARCHAR(64) NOT NULL
@@ -45,7 +14,41 @@ INSERT INTO department_tbl(`name`) VALUES
 ('客服部')
 ;
 
+SELECT * FROM department_tbl;
+/*
+    id  name       
+------  -----------
+     1  行政部  
+     2  财务部  
+     3  销售部  
+     4  客服部  
+*/
 
+-- 职位表
+CREATE TABLE positions(
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    `name` VARCHAR(32) NOT NULL
+);
+
+INSERT INTO positions(`name`) VALUES
+('行政总监'),
+('财务经理'),
+('安全顾问'),
+('风投首席官'),
+('快乐鼓励师');
+
+SELECT * FROM positions;
+/*
+    id  name             
+------  -----------------
+     1  行政总监     
+     2  财务经理     
+     3  安全顾问     
+     4  风投首席官  
+     5  快乐鼓励师  
+*/
+
+-- drop table employee;
 -- user table
 CREATE TABLE employee (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -55,41 +58,115 @@ CREATE TABLE employee (
 
 -- insert record
 INSERT INTO employee(`name`, rest) VALUES
-('Mally', '{"age":23, "gender":0, "salary": 56000, "positions": "cfo,ceo", "stock": 6000000, "department_id":1}'),
-('Jakob', '{"age":22, "gender":1, "salary": 80000, "positions": "Mathematics consultant,cfa", "stock": 96000000,"department_id":1}'),
-('Einstein', '{"age":21, "gender":1, "salary": 80000, "positions": "Security consultant,cfa"}')
+('Mally', '{"age":23, "gender":0, "salary": 56000, "positions": [1], "stock": 6000000, "department_id":1}'),
+('Jakob', '{"age":22, "gender":1, "salary": 80000, "positions": [2, 3, 4], "stock": 96000000, "department_id":1}'),
+('Einstein', '{"age":21, "gender":1, "salary": 80000, "positions": [3], "department_id":2}')
 ;
-
-
 
 SELECT * FROM employee;
+/*
+    id  name      rest                                                                                                      
+------  --------  ----------------------------------------------------------------------------------------------------------
+     1  Mally     {"age": 23, "stock": 6000000, "gender": 0, "salary": 56000, "positions": [1], "department_id": 1}         
+     2  Jakob     {"age": 22, "stock": 96000000, "gender": 1, "salary": 80000, "positions": [2, 3, 4], "department_id": 1}  
+     3  Einstein  {"age": 21, "gender": 1, "salary": 80000, "positions": [3], "department_id": 2}                           
+*/
 
+### 插入JSON值
+-- 给员工Einstein分配股票 6000000 股。
+UPDATE employee SET rest = JSON_INSERT(rest, '$.stock', 6000000) WHERE `name` = 'Einstein';
+-- 或JSON_SET() 函数，插入或更新
+UPDATE employee SET rest = JSON_SET(rest, '$.stock', 6000000) WHERE `name` = 'Einstein';
 
-SELECT 17 MEMBER OF('[23, "abc", 17, "ab", 10]');
+### 查询JSON值
+-- 查询部门id为1的员工信息
+SELECT * FROM employee
+WHERE rest->'$.department_id' = 1;
+/*
+    id  name    rest                                                                                                      
+------  ------  ----------------------------------------------------------------------------------------------------------
+     7  Mally   {"age": 23, "stock": 6000000, "gender": 0, "salary": 56000, "positions": [1], "department_id": 1}         
+     8  Jakob   {"age": 22, "stock": 96000000, "gender": 1, "salary": 80000, "positions": [2, 3, 4], "department_id": 1}  
+*/
 
-SELECT 'ab' MEMBER OF('[23, "abc", 17, "ab", 10]');
+### 更新JSON值
+-- 把员工Mally的年龄修改为24。
+UPDATE employee SET rest = JSON_REPLACE(rest, '$.age', 24) WHERE `name` = 'Mally';
 
-INSERT INTO employee(`name`, rest) VALUES
-('Kally', '[3,10,5,17,[22,44,66]]'),
-('Bakry', '[3,10,5,17,44]')
-;
+-- 把员工Mally的职位替换为 "财务经理"。
+-- JSON_SET(json_doc, path, val[, path, val] ...) 插入或更新，若 path存在则替换值，若path不存在则插入值
+UPDATE employee SET rest = JSON_SET(rest, '$.positions[0]', 2) WHERE `name` = 'Mally';
 
+-- 员工Einstein兼任"快乐鼓励师"一职。
+UPDATE employee SET rest = JSON_ARRAY_APPEND(rest, '$.positions', 5) WHERE `name` = 'Einstein';
 
-SELECT * FROM employee WHERE rest->"$[0]" = 3;
+-- 员工Einstein再兼任"财务经理"一职，并且要求该职位信息排在他担任的职位信息中的第一个。
+UPDATE employee SET rest = JSON_ARRAY_INSERT(rest, '$.positions[0]', 2) WHERE `name` = 'Einstein';
 
-SELECT rest->"$[4][1]" FROM employee;
+### 删除JSON值
+-- 员工Jakob卸任 "安全顾问" 一职。
+UPDATE employee SET rest = JSON_REMOVE(rest, '$.positions[2]') WHERE `name` = 'Jakob';
 
--- 以json的某个值作为连接条件
-SELECT e.id, e.name, e.rest->>"$.age", e.rest->>"$.salary", d.name department_name FROM department_tbl AS d
+-- 为保护企业重要人物的个人隐私，现在要求将员工Jakob的年龄信息删除。
+UPDATE employee SET rest = JSON_REMOVE(rest, '$.age') WHERE `name` = 'Jakob';
+
+### 连接查询
+-- 查询员工信息及员工所有的部门信息，以json的某个值作为连接条件
+SELECT e.id, e.name, e.rest->>"$.age" AS 'age', e.rest->>"$.salary" AS 'salary', d.id, d.name department_name 
+FROM department_tbl AS d
 INNER JOIN employee AS e 
 ON d.id = e.rest->>"$.department_id"
 ;
+/*
+    id  name      age     salary      id  department_name  
+------  --------  ------  ------  ------  -----------------
+     1  Mally     23      56000        1  行政部        
+     2  Jakob     22      80000        1  行政部        
+     3  Einstein  21      80000        2  财务部        
+*/
 
-SELECT e.id, e.name, e.rest->>"$.age", e.rest->>"$.salary", d.name department_name FROM department_tbl AS d
+SELECT e.id, e.name, e.rest->"$.age" AS 'age', e.rest->"$.salary" AS 'salary', d.id, d.name department_name 
+FROM department_tbl AS d
 RIGHT OUTER JOIN employee AS e 
 ON d.id = e.rest->>"$.department_id"
 ;
+/*
+    id  name      age     salary      id  department_name  
+------  --------  ------  ------  ------  -----------------
+     1  Mally     23      56000        1  行政部        
+     2  Jakob     22      80000        1  行政部        
+     3  Einstein  21      80000        2  财务部        
+*/
 
+-- 查看所有员工的基本信息和职位信息
+SELECT e.id, e.name, p.id, p.name
+FROM employee AS e
+LEFT OUTER JOIN positions AS p
+ON p.id MEMBER OF (e.rest->>'$.positions')
+;
+
+SELECT e.id, e.name, p.id, p.name
+FROM employee AS e
+LEFT OUTER JOIN positions AS p
+ON JSON_CONTAINS(e.rest->>'$.positions', CAST(p.id AS JSON))
+;
+
+SELECT e.id, e.name, p.id, p.name
+FROM employee AS e
+LEFT OUTER JOIN positions AS p
+ON JSON_CONTAINS(e.rest->>'$.positions', JSON_ARRAY(p.id))
+;
+/*
+    id  name          id  name             
+------  --------  ------  -----------------
+     1  Mally          1  行政总监     
+     2  Jakob          4  风投首席官  
+     2  Jakob          3  安全顾问     
+     2  Jakob          2  财务经理     
+     3  Einstein       3  安全顾问     
+*/
+
+## 示例  --end
 
 ## Functions That Create JSON Values  --start
 -- json数组
@@ -1793,10 +1870,5 @@ jcol                              Size    Free
 -- 字符转为JSON对象
 SELECT CAST('[11, 22, 33]' AS JSON);
 SELECT CAST('{"k1": 11, "k2": 22}' AS JSON);
-
--- 多个json组合成一个json
-SELECT JSON_MERGE_PRESERVE('["a", 1]', '{"key": "value"}');
-
-SELECT JSON_VALID('null'), JSON_VALID('Null'), JSON_VALID('NULL');
 
 

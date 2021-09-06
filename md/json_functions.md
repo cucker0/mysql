@@ -465,6 +465,11 @@ JSON_UNQUOTE( JSON_EXTRACT(column, path) )
     ```text
     JSON_CONTAINS(target, candidate[, path])
     ```
+    * target  
+        一个json_doc
+    * candidate  
+        json_doc
+        
 * 示例
     ```mysql
     SELECT JSON_CONTAINS('{"a":1, "b":2, "c":{"d":4}}', '1', '$.a');
@@ -1357,7 +1362,7 @@ json_doc可以是JSON对象，也可以是JSON数组，当更适JSON对象类型
     ```text
     JSON_REPLACE(json_doc, path, val[, path, val] ...)
     ```
-    * 插入多对 path-value时，从左到有求值，前一对path-value求值返回的结果作为后一对path-value求值的json_doc
+    * 插入多对 path-value时，从左到右求值，前一对path-value求值返回的结果作为后一对path-value求值的json_doc
     * 当path不存在时，忽略JSON_REPLACE操作，结果不产生影响。即不替换
 
 * 示例
@@ -1406,7 +1411,7 @@ json_doc可以是JSON对象，也可以是JSON数组，当更适JSON对象类型
 * JSON_SET()  
     replaces existing values and adds nonexisting values.
     
-    值存在则替换，否则添加该值
+    值存在则替换(path存在)，否则添加该值
 
 * JSON_INSERT()  
     inserts values without replacing existing values.

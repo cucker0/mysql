@@ -132,7 +132,14 @@ path写法总结：
     ```
     
 * 示例
-
+    ```mysql
+    SELECT JSON_OBJECT('id', 87, 'name', 'carrot');
+    /*
+    JSON_OBJECT('id', 87, 'name', 'carrot')  
+    -----------------------------------------
+    {"id": 87, "name": "carrot"}             
+    */
+    ```
 
 ### JSON_QUOTE()
 使用双引号包裹整个JSON值，即JSON对象做JSON字符串化

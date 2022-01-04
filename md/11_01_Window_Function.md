@@ -30,18 +30,54 @@ ROW_NUMBER()	Number of current row within its partition
 </thead>
 
 <tbody>
-    <tr rowspan="3">
-        <td>序号函数</td>
+    <tr>
+        <td rowspan="3">序号函数</td>
         <td>ROW_NUMBER()</td>
         <td>顺序排列后的行号</td>
     </tr>
     <tr>
         <td>RANK()</td>
-        <td>顺序排列，值相同的的并列序号，会跳过重复的序号，如1,1,3</td>
+        <td>顺序排名，值相同的的并列序号，会跳过重复的序号，如1,1,3</td>
     </tr>
     <tr>
         <td>DENSE_RANK()</td>
-        <td>顺序排列，值相同的的并列序号，不会跳过重复的序号，如1,1,2</td>
+        <td>顺序排名，值相同的的并列序号，不会跳过重复的序号，如1,1,2</td>
+    </tr>
+    <tr>
+        <td rowspan="2">分布函数</td>
+        <td>PERCENT_RANK()</td>
+        <td>等级值百分比</td>
+    </tr>
+    <tr>
+        <td>CUME_DIST()</td>
+        <td>累计分布值</td>
+    </tr>
+    <tr>
+        <td rowspan="2">前后函数</td>
+        <td>LAG(expr [, N[, default]])</td>
+        <td>返回当前行的前N行的expr值</td>
+    </tr>
+    <tr>
+        <td>LEAD(expr [, N[, default]])</td>
+        <td>返回当前行的后N行的expr值</td>
+    </tr>
+    <tr>
+        <td rowspan="2">首尾函数</td>
+        <td>FIRST_VALUE(expr)</td>
+        <td>返回第一行的expr值</td>
+    </tr>
+    <tr>
+        <td>LAST_VALUE(expr)</td>
+        <td>返回最后一行的expr值</td>
+    </tr>
+    <tr>
+        <td rowspan="2">其他函数</td>
+        <td>NTH_VALUE(expr, N)</td>
+        <td>返回第N行的expr值</td>
+    </tr>
+    <tr>
+        <td>NTILE(N)</td>
+        <td>将分区中的有序数据分为N个桶，给桶编上序号</td>
     </tr>
 </tbody>
 </table>

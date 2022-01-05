@@ -457,22 +457,22 @@ MySQL核心技术
     <details>
     <summary>Window Function窗口函数</summary>
     
-    * [窗口函数是什么](#窗口函数是什么)
-        * [聚合函数做窗口操作](#聚合函数做窗口操作)
-        * [窗口操作演示2](#窗口操作演示2)
-    * [窗口函数列表](#窗口函数列表)
-        * [窗口操作的over_clause语法](#窗口操作的over_clause语法)
-        * [ROW_NUMBER()](#ROW_NUMBER)
-        * [RANK()](#RANK)
-        * [DENSE_RANK()](#DENSE_RANK)
-        * [PERCENT_RANK()](#PERCENT_RANK)
-        * [CUME_DIST()](#CUME_DIST)
-        * [LAG()](#LAG)
-        * [LEAD()](#LEAD)
-        * [FIRST_VALUE(expr)](#FIRST_VALUEexpr)
-        * [LAST_VALUE(expr)](#LAST_VALUEexpr)
-        * [NTH_VALUE(expr, N)](#NTH_VALUEexpr-N)
-        * [NTILE(N)](#NTILEN)
+    * [窗口函数是什么](md/11_01_Window_Function.md#窗口函数是什么)
+        * [聚合函数做窗口操作](md/11_01_Window_Function.md#聚合函数做窗口操作)
+        * [窗口操作演示2](md/11_01_Window_Function.md#窗口操作演示2)
+    * [窗口函数列表](md/11_01_Window_Function.md#窗口函数列表)
+        * [窗口操作的over_clause语法](md/11_01_Window_Function.md#窗口操作的over_clause语法)
+        * [ROW_NUMBER()](md/11_01_Window_Function.md#ROW_NUMBER)
+        * [RANK()](md/11_01_Window_Function.md#RANK)
+        * [DENSE_RANK()](md/11_01_Window_Function.md#DENSE_RANK)
+        * [PERCENT_RANK()](md/11_01_Window_Function.md#PERCENT_RANK)
+        * [CUME_DIST()](md/11_01_Window_Function.md#CUME_DIST)
+        * [LAG()](md/11_01_Window_Function.md#LAG)
+        * [LEAD()](md/11_01_Window_Function.md#LEAD)
+        * [FIRST_VALUE(expr)](md/11_01_Window_Function.md#FIRST_VALUEexpr)
+        * [LAST_VALUE(expr)](md/11_01_Window_Function.md#LAST_VALUEexpr)
+        * [NTH_VALUE(expr, N)](md/11_01_Window_Function.md#NTH_VALUEexpr-N)
+        * [NTILE(N)](md/11_01_Window_Function.md#NTILEN)
     </details>
     
 ---

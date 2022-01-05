@@ -118,7 +118,133 @@ INSERT INTO sales (`year`, country, product, profit) VALUES
       2001  USA      TV             150          7535              4575
     */
     ```
+
+### 窗口操作演示2
+准备数据
+```mysql
+-- 容器操作演示2
+CREATE TABLE sales2 (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    city VARCHAR(16),
+    country VARCHAR(16),
+    sales_volume DECIMAL
+);
+
+INSERT INTO sales2 (city, country, sales_volume) VALUES
+('北京', '海淀', 10.00),
+('北京', '朝阳', 20.00),
+('上海', '黄埔', 30.00),
+('上海', '长宁', 10.00);
+```
+
+* 需求：计算这个网站在每个城市的销售总额，在全国的销售总额、每个区域的销售总额中分别所占的比率。
+
+* 方法1，（一般的方法）
+    ```mysql
+    -- 1. 创建临时表a，用于保存全国的销售总额
+    CREATE TEMPORARY TABLE a 
+    SELECT SUM(sales_volume) AS total_volume
+    FROM sales2;
     
+    SELECT * FROM a;
+    /*
+    total_volume  
+    --------------
+                70
+    */
+    
+    -- 2. 创建临时表b，用于保存各区域的销售总额
+    CREATE TEMPORARY TABLE b 
+    SELECT city, SUM(sales_volume) AS city_total_vol
+    FROM sales2
+    GROUP BY city;
+    
+    SELECT * FROM b;
+    /*
+    city    city_total_vol  
+    ------  ----------------
+    北京                  30
+    上海                  40
+    */
+    
+    -- 3. 计算区域销售额比率、全国销售额比率
+    SELECT 
+        s.city AS 城市, 
+        s.country AS 区域,
+        sales_volume AS 区销售额,
+        b.city_total_vol AS 市销售总额,
+        a.total_volume 全国销售总额,
+        CONCAT(ROUND((s.sales_volume / b.city_total_vol) * 100, 2), '%') AS 市比率,
+        CONCAT(ROUND((s.sales_volume / a.total_volume) * 100, 2), '%') AS 全国比率    
+    FROM sales2 AS s
+    INNER JOIN b ON s.city=b.city
+    CROSS JOIN a
+    ORDER BY s.city, s.country;
+    /*
+    城市    区域    区销售额      市销售总额       全国销售总额        市比率     全国比率  
+    ------  ------  ------------  ---------------  ------------------  ---------  --------------
+    上海    长宁              10               40                  70  25.00%     14.29%        
+    上海    黄埔              30               40                  70  75.00%     42.86%        
+    北京    朝阳              20               30                  70  66.67%     28.57%        
+    北京    海淀              10               30                  70  33.33%     14.29%        
+    */
+    ```
+
+* 方法2，使用窗口操作
+    ```mysql
+    SELECT
+        city 城市,
+        country 区域,
+        sales_volume 区销售额,
+        zone_total_volume 市销售总额,
+        total_volume 全国销售总额,
+        CONCAT(ROUND((sales_volume / zone_total_volume) * 100, 2), '%') AS 市比率,
+        CONCAT(ROUND((sales_volume / total_volume) * 100, 2), '%') AS 全国比率
+    FROM (
+        SELECT 
+            city,
+            country,
+            sales_volume,
+            SUM(sales_volume) OVER (PARTITION BY city) AS zone_total_volume,
+            SUM(sales_volume) OVER () AS total_volume
+        FROM sales2
+        ORDER BY city, country
+    ) AS t
+    ;
+    /*
+    城市    区域    区销售额      市销售总额       全国销售总额        市比率     全国比率  
+    ------  ------  ------------  ---------------  ------------------  ---------  --------------
+    上海    长宁              10               40                  70  25.00%     14.29%        
+    上海    黄埔              30               40                  70  75.00%     42.86%        
+    北京    朝阳              20               30                  70  66.67%     28.57%        
+    北京    海淀              10               30                  70  33.33%     14.29%          
+    */
+    ```
+    
+* 方法2，使用窗口操作
+    ```mysql
+    SELECT 
+        city 城市,
+        country 区域,
+        sales_volume 区销售额,
+        SUM(sales_volume) OVER w AS 市销售总额,
+        SUM(sales_volume) OVER () AS 全国销售总额,
+        (sales_volume / (SUM(sales_volume) OVER w)) AS 市比率,
+        (sales_volume / (SUM(sales_volume) OVER ())) AS 全国比率
+    FROM sales2
+    WINDOW w AS (PARTITION BY city)
+    ORDER BY city, country                          
+    ;
+    /*
+    城市    区域    区销售额      市销售总额       全国销售总额        市比率     全国比率  
+    ------  ------  ------------  ---------------  ------------------  ---------  --------------
+    上海    长宁              10               40                  70     0.2500          0.1429
+    上海    黄埔              30               40                  70     0.7500          0.4286
+    北京    朝阳              20               30                  70     0.6667          0.2857
+    北京    海淀              10               30                  70     0.3333          0.1429
+    */
+    ```
+
 ## 窗口函数列表
 
 <table>
@@ -240,11 +366,46 @@ FROM <table_name>
     frame_clause子句缺省的情况下为：`ROWS CURRENT ROW`，即window frame从第一行 到 当前行。
     
 * **设置window_name变量**
+
+    参考 https://dev.mysql.com/doc/refman/8.0/en/window-functions-named-windows.html
     ```sql
-    WINDOW w AS (window_spec)
+    WINDOW window_name AS (window_spec)
+        [, window_name AS (window_spec)] ...
     ```
-    windows变量可以被OVER引用。  
+    * 没有where子句，则window子句位于from ... table_name 后。
+    * 有where子句，则window子句位紧跟where子句。
+    * window子名位于HAVING子句和orderby子句之间
+    * windows变量可以被OVER引用。  
     [示例见PERCENT_RANK()](#PERCENT_RANK)
+
+**准备测试数据**
+```mysql
+-- 准备数据
+CREATE TABLE goods (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    category_id INT,
+    category VARCHAR(16),
+    `name` VARCHAR(32),
+    price DECIMAL(10, 2),
+    stock INT,
+    shelf_time DATETIME
+);
+
+INSERT INTO goods (category_id, category, `name`, price, stock, shelf_time) VALUES
+(1, '女装/女士精品', 'T恤', 39.90, 1000, '2021-12-20 00:00:00'),
+(1, '女装/女士精品', '连衣裙', 79.90, 2500, '2021-12-20 00:00:00'),
+(1, '女装/女士精品', '卫衣', 89.90, 1500, '2021-12-20 00:00:00'),
+(1, '女装/女士精品', '牛仔裤', 89.90, 3500, '2021-12-20 00:00:00'),
+(1, '女装/女士精品', '百褶裙', 29.90, 500, '2021-12-20 00:00:00'),
+(1, '女装/女士精品', '呢绒外套', 399.90, 1200, '2021-12-20 00:00:00'),
+(2, '户外运动', '自行车', 399.90, 1000, '2021-12-20 00:00:00'),
+(2, '户外运动', '山地自行车', 1399.90, 2500, '2021-12-20 00:00:00'),
+(2, '户外运动', '登山杖', 59.90, 1300, '2021-12-20 00:00:00'),
+(2, '户外运动', '骑行装备', 399.90, 3500, '2021-12-20 00:00:00'),
+(2, '户外运动', '运动外套', 799.90, 500, '2021-12-20 00:00:00'),
+(2, '户外运动', '滑板', 499.90, 1200, '2021-12-20 00:00:00')
+;
+```
 
 ### ROW_NUMBER()
 返回当前行在其分区内的行编号。行编号的范围从1到分区行数。

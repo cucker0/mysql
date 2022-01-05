@@ -27,6 +27,20 @@ INSERT INTO sales (`year`, country, product, profit) VALUES
 ;
 
 
+-- 容器操作演示2
+CREATE TABLE sales2 (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    city VARCHAR(16),
+    country VARCHAR(16),
+    sales_volume DECIMAL
+);
+
+INSERT INTO sales2 (city, country, sales_volume) VALUES
+('北京', '海淀', 10.00),
+('北京', '朝阳', 20.00),
+('上海', '黄埔', 30.00),
+('上海', '长宁', 10.00);
+
 # 测试窗口函数
 -- 准备数据
 CREATE TABLE goods (

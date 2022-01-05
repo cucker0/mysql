@@ -1,6 +1,25 @@
 Window Function窗口函数
 ==
 
+## Table Of Contents
+* [窗口函数是什么](#窗口函数是什么)
+    * [聚合函数做窗口操作](#聚合函数做窗口操作)
+    * [窗口操作演示2](#窗口操作演示2)
+* [窗口函数列表](#窗口函数列表)
+    * [窗口操作的over_clause语法](#窗口操作的over_clause语法)
+    * [ROW_NUMBER()](#ROW_NUMBER)
+    * [RANK()](#RANK)
+    * [DENSE_RANK()](#DENSE_RANK)
+    * [PERCENT_RANK()](#PERCENT_RANK)
+    * [CUME_DIST()](#CUME_DIST)
+    * [LAG()](#LAG)
+    * [LEAD()](#LEAD)
+    * [FIRST_VALUE(expr)](#FIRST_VALUEexpr)
+    * [LAST_VALUE(expr)](#LAST_VALUEexpr)
+    * [NTH_VALUE(expr, N)](#NTH_VALUEexpr-N)
+    * [NTILE(N)](#NTILEN)
+
+
 窗口函数是mysql 8.0的新特性。
 
 参考 https://dev.mysql.com/doc/refman/8.0/en/window-function-descriptions.html
@@ -291,11 +310,11 @@ INSERT INTO sales2 (city, country, sales_volume) VALUES
     <tr>
         <td rowspan="2">首尾函数</td>
         <td>FIRST_VALUE(expr)</td>
-        <td>返回第一行的expr值</td>
+        <td>返回window frame第一行的expr值</td>
     </tr>
     <tr>
         <td>LAST_VALUE(expr)</td>
-        <td>返回最后一行的expr值</td>
+        <td>返回window frame最后一行的expr值</td>
     </tr>
     <tr>
         <td rowspan="2">其他函数</td>
@@ -304,7 +323,7 @@ INSERT INTO sales2 (city, country, sales_volume) VALUES
     </tr>
     <tr>
         <td>NTILE(N)</td>
-        <td>将分区中的有序数据分为N个桶，给桶编上序号</td>
+        <td>将分区中的有序数据分为N个桶(backet)，给桶编上序号</td>
     </tr>
 </tbody>
 </table>

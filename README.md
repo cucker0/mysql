@@ -210,6 +210,7 @@ MySQL核心技术
         * [表的删除](md/4_02_DDL数据定义语言.表的管理.md#表的删除)
         * [表的复制](md/4_02_DDL数据定义语言.表的管理.md#表的复制)
         * [查看表的创建sql和表结构](md/4_02_DDL数据定义语言.表的管理.md#查看表的创建sql和表结构)
+    * [temporary临时表](md/4_02_DDL数据定义语言.表的管理.md#temporary临时表)
     </details>
     
     <details>
@@ -452,6 +453,28 @@ MySQL核心技术
         * [循环示例](md/9_01_流程控制结构.md#循环示例)
     </details>
 
+* MySQL 8.0新特性
+    <details>
+    <summary>Window Function窗口函数</summary>
+    
+    * [窗口函数是什么](#窗口函数是什么)
+        * [聚合函数做窗口操作](#聚合函数做窗口操作)
+        * [窗口操作演示2](#窗口操作演示2)
+    * [窗口函数列表](#窗口函数列表)
+        * [窗口操作的over_clause语法](#窗口操作的over_clause语法)
+        * [ROW_NUMBER()](#ROW_NUMBER)
+        * [RANK()](#RANK)
+        * [DENSE_RANK()](#DENSE_RANK)
+        * [PERCENT_RANK()](#PERCENT_RANK)
+        * [CUME_DIST()](#CUME_DIST)
+        * [LAG()](#LAG)
+        * [LEAD()](#LEAD)
+        * [FIRST_VALUE(expr)](#FIRST_VALUEexpr)
+        * [LAST_VALUE(expr)](#LAST_VALUEexpr)
+        * [NTH_VALUE(expr, N)](#NTH_VALUEexpr-N)
+        * [NTILE(N)](#NTILEN)
+    </details>
+    
 ---
 
 **mysql高级**  

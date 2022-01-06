@@ -186,8 +186,26 @@ SELECT e.first_name 员工名, m.first_name 上级名
 FROM employees e, employees m
 WHERE e.manager_id = m.employee_id;
 
+-- NATURAL自然连接
+SELECT employee_id, last_name, department_name
+FROM employees e
+INNER JOIN departments d
+ON e.department_id = d.department_id AND e.manager_id = d.manager_id
+;
+/*
+employee_id  last_name   department_name  
+-----------  ----------  -----------------
+        202  Fay         Mar              
+        115  Khoo        Pur              
+        116  Baida       Pur              
+...
+*/
+
+-- 等价于
+SELECT employee_id, last_name, department_name
+FROM employees e
+NATURAL JOIN departments d
+;
 
 
-
-
-
+-- USING连接

@@ -246,6 +246,7 @@ MySQL核心技术
         * [日期时间型](md/4_03_DDL数据定义语言.常见数据类型.md#日期时间型)
             * [日期时间型分类](md/4_03_DDL数据定义语言.常见数据类型.md#日期时间型分类)
             * [datetime、timestamp比较](md/4_03_DDL数据定义语言.常见数据类型.md#datetimetimestamp比较)
+        * [Spatial空间数据类型](md/4_03_DDL数据定义语言.常见数据类型.md#Spatial空间数据类型)
         * [java数据类型与mysql数据类型对应表](md/4_03_DDL数据定义语言.常见数据类型.md#java数据类型与mysql数据类型对应表)
     </details>
     

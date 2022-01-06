@@ -485,6 +485,13 @@ MySQL核心技术
         * [限制公用表表达式的递归](md/12_01_WITH(Common_Table_Expressions).md#限制公用表表达式的递归)
         * [递归公用表表达式的示例](md/12_01_WITH(Common_Table_Expressions).md#递归公用表表达式的示例)
     </details>
+    
+    <details>
+        <summary>其它</summary>
+    
+    * [table声明](md/13_01_mysql8新特性.md#table声明)
+    * [values声明](md/13_01_mysql8新特性.md#values声明)
+    </details>
 ---
 
 **mysql高级**  

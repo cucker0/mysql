@@ -475,6 +475,16 @@ MySQL核心技术
         * [NTILE(N)](md/11_01_Window_Function.md#NTILEN)
     </details>
     
+    <details>
+        <summary>WITH (Common Table Expressions)--公用表表达式</summary>
+    
+    * [公用表表达式是什么](md/12_01_WITH(Common_Table_Expressions).md#公用表表达式是什么)
+    * [公用表表达式语法](md/12_01_WITH(Common_Table_Expressions).md#公用表表达式语法)
+    * [允许使用with分句的情形](md/12_01_WITH(Common_Table_Expressions).md#允许使用with分句的情形)
+    * [递归公用表达式](md/12_01_WITH(Common_Table_Expressions).md#递归公用表达式)
+        * [限制公用表表达式的递归](md/12_01_WITH(Common_Table_Expressions).md#限制公用表表达式的递归)
+        * [递归公用表表达式的示例](md/12_01_WITH(Common_Table_Expressions).md#递归公用表表达式的示例)
+    </details>
 ---
 
 **mysql高级**  

@@ -1,6 +1,17 @@
 WITH (Common Table Expressions)--公用表 表达式
 ==
 
+## Table Of Contents
+* [公用表表达式是什么](md/12_01_WITH(Common_Table_Expressions).md#公用表表达式是什么)
+* [公用表表达式语法](md/12_01_WITH(Common_Table_Expressions).md#公用表表达式语法)
+* [允许使用with分句的情形](md/12_01_WITH(Common_Table_Expressions).md#允许使用with分句的情形)
+* [递归公用表达式](md/12_01_WITH(Common_Table_Expressions).md#递归公用表达式)
+    * [限制公用表表达式的递归](md/12_01_WITH(Common_Table_Expressions).md#限制公用表表达式的递归)
+    * [递归公用表表达式的示例](md/12_01_WITH(Common_Table_Expressions).md#递归公用表表达式的示例)
+
+
+参考https://dev.mysql.com/doc/refman/8.0/en/with.html
+
 ## 公用表表达式是什么
 Common Table Expressions，简单CTE，公用表表达式。
 
@@ -36,7 +47,7 @@ Common Table Expressions，简单CTE，公用表表达式。
     ;
     ```
 
-## 允许使用with分名的情形
+## 允许使用with分句的情形
 *  SELECT, UPDATE,和 DELETE语句的开头
     ```sql
     WITH ... SELECT ...
@@ -84,4 +95,83 @@ Common Table Expressions，简单CTE，公用表表达式。
     ORDER BY
     
     DISTINCT
+    ```
+
+### 限制公用表表达式的递归
+对于公用表表达式的递归部分，包含一个终止递归的条件是很重要。
+没有递归条件将会无限递归下去。
+
+可以设置下面这些限制递归的条件
+
+* 会话变量`max_execution_time`
+    可以通过设置限制当前会话执行时间来强制终止SELECT语句的递归。  
+    单位默认为毫秒。默认值为0，表示不限制执行时间。
+    >SET @@max_execution_time = 1000;
+* 会话变量`cte_max_recursion_depth `  
+    设置连接会话的公用表表达式的最大递归层级的深度。
+    默认值为1000。
+    >SET SESSION cte_max_recursion_depth = 10;
+* SELECT语句中使用LIMIT限制返回到最外层的的最大行数（从MySQL 8.0.19开始）
+    ```mysql
+    -- LIMIT 限制公用表表达的递归
+    WITH RECURSIVE cte (n) AS
+    (
+      SELECT 1
+      UNION ALL
+      SELECT n + 1 FROM cte LIMIT 12
+    )
+    SELECT * FROM cte;
+    ```
+
+### 递归公用表表达式的示例
+示例：查看员工的层级关系
+
+* 准备数据
+    ```mysql
+    CREATE TABLE employees (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        `name` VARCHAR(128) NOT NULL,
+        manager_id INT NULL,
+    
+        INDEX (manager_id),
+        FOREIGN KEY (manager_id) REFERENCES employees (id)
+    );
+    
+    INSERT INTO employees VALUES
+    (333, "Yasmina", NULL),  # Yasmina is the CEO (manager_id is NULL)
+    (198, "John", 333),      # John has ID 198 and reports to 333 (Yasmina)
+    (692, "Tarek", 333),
+    (29, "Pedro", 198),
+    (4610, "Sarah", 29),
+    (72, "Pierre", 29),
+    (123, "Adil", 692);
+    
+    ```
+
+* 查看员工的层级关系
+    ```mysql
+    WITH RECURSIVE emp_paths (id, `name`, `path`) AS (
+        SELECT id, `name`, CAST(id AS CHAR(200))
+        FROM employees
+        WHERE manager_id IS NULL
+        
+        UNION ALL
+        
+        SELECT e.id, e.name, CONCAT(ep.path, ',', e.id)
+        FROM emp_paths AS ep
+        INNER JOIN employees AS e
+        ON ep.id = e.manager_id
+    )
+    SELECT * FROM emp_paths ORDER BY `path`;
+    /*
+        id  name     path             
+    ------  -------  -----------------
+       333  Yasmina  333              
+       198  John     333,198          
+        29  Pedro    333,198,29       
+      4610  Sarah    333,198,29,4610  
+        72  Pierre   333,198,29,72    
+       692  Tarek    333,692          
+       123  Adil     333,692,123      
+    */
     ```

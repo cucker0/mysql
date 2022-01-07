@@ -469,6 +469,18 @@ MySQL核心技术
         * [循环示例](md/9_01_流程控制结构.md#循环示例)
     </details>
 
+* [异常处理](md/14_01_异常处理.md)
+
+    <details>
+    <summary>异常处理</summary>
+    
+    * [异常处理需求的背景](md/14_01_异常处理.md#异常处理需求的背景)
+    * [出现异常案例](md/14_01_异常处理.md#出现异常案例)
+    * [声明错误条件condition变量](md/14_01_异常处理.md#声明错误条件condition变量)
+    * [condition handler(异常处理器,捕获异常)](md/14_01_异常处理.md#condition-handler异常处理器捕获异常)
+        * [异常处理示例](md/14_01_异常处理.md#异常处理示例)
+    </details>
+
 * MySQL 8.0新特性
     <details>
     <summary>Window Function窗口函数</summary>

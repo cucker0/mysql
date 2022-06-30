@@ -133,10 +133,10 @@ mysql备份与还原
     3. 查看 /opt/t1.txt 文件
         ```bash
         ~# more /opt/t1.txt
-        "1","wang"
-        "2","steven"
-        "3","tiger"
-        "4","lilu"
+        1,"wang"
+        2,"steven"
+        3,"tiger"
+        4,"lilu"
         ```
     
     4. 创建要导入的表 t2

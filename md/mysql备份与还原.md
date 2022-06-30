@@ -146,7 +146,7 @@ mysql备份与还原
     
     5. 将 /opt/t1.txt 数据导入 t2
         ```mysql
-        mysql> LOAD DATA INFILE '/opt/t1.txt' INTO TABLE t2 FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n';
+        mysql> LOAD DATA INFILE '/opt/t1.txt' INTO TABLE t2 FIELDS TERMINATED BY ',' ENCLOSED BY '"' ESCAPED BY '*' LINES TERMINATED BY '\n';
         ```
     6. 查看导入的数据
         ```

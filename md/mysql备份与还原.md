@@ -84,7 +84,114 @@ mysql备份与还原
     ```bash
     mysqldump -uusername -ppassword databasename |mysql -h远程Host -uUser -p -C 目标服务器上的databasename
     ```
+
+* `select ... from <table> into outfile`导出表数据
+
+    只能数据库服务器上执行，  
+    作用：将表中数据导出，不包括表结构。  
     
+    语法
+    ```
+    SELECT ... FROM <table> INTO OUTFILE 'file_name'
+    [CHARACTER SET charset_name]
+    [export_options]
+    
+    export_options:
+    [{FIELDS | COLUMNS}
+    [TERMINATED BY 'string']  // 指定字段的分隔符
+    [[OPTIONALLY] ENCLOSED BY 'char']  // 导出的字段内容使用什么符号包裹
+    [ESCAPED BY 'char']  // 转义字符
+    ]
+    [LINES
+    [STARTING BY 'string']  // 行的起始符
+    [TERMINATED BY 'string']  // 行的结束符
+    ]
+    ```
+    file_name  // 指定保存查询结果的文件路径，要求给文件所在的目录权限为 777
+    
+    **示例**
+    
+    1. 查看要导出数据的表 t1
+        ```
+        mysql> select * from t1;
+        +------+--------+
+        | id   | name   |
+        +------+--------+
+        |    1 | wang   |
+        |    2 | steven |
+        |    3 | tiger  |
+        |    4 | lilu   |
+        +------+--------+
+        4 rows in set (0.00 sec)
+        ```
+    
+    2. 导出 select 的查询结果
+        ```bash
+        mysql -h 10.10.10.2 -u root -p -P 3306 -Ne "USE <dbname>; SELECT * FROM t1 INTO OUTFILE '/opt/t1.txt' FIELDS TERMINATED BY ',' ENCLOSED BY '"' ESCAPED BY '*' LINES TERMINATED BY '\n';"
+        ```
+    
+    3. 查看 /opt/t1.txt 文件
+        ```bash
+        ~# more /opt/t1.txt
+        "1","wang"
+        "2","steven"
+        "3","tiger"
+        "4","lilu"
+        ```
+    
+    4. 创建要导入的表 t2
+        ```mysql
+        create table t2 as select * from t1 where 1=2;
+        ```
+    
+    5. 将 /opt/t1.txt 数据导入 t2
+        ```mysql
+        mysql> LOAD DATA INFILE '/opt/t1.txt' INTO TABLE t2 FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n';
+        ```
+    6. 查看导入的数据
+        ```
+        mysql> select * from t2;
+        +------+--------+
+        | id   | name   |
+        +------+--------+
+        |    1 | wang   |
+        |    2 | steven |
+        |    3 | tiger  |
+        |    4 | lilu   |
+        +------+--------+
+        ```
+    
+* 通过 select 方式生成 insert into 语句
+    1. 创建要运行的 sql 脚本
+    
+        cat /opt/runsql.sh
+        ```mysql
+        use mysys; \
+        SELECT CONCAT("INSERT INTO book (`id`, `name`, `price`, `authorId`, `publishDate`) VALUES(", 
+        "'", `id`, "', ",
+        "'", `name`, "', ",
+        "'", `price`, "', ",
+        "'", `authorId`, "', ",
+        "'", `publishDate`, "'",
+        ");"
+        ) 
+        AS 'select_2_insert-into' FROM book ORDER BY id ASC;
+        ```
+    
+    2. 执行 mysql 命令(可以在客户端)
+        ```bash
+        mysql -h <host> -u root -P 3306 -p -N < /opt/runsql.sh > /opt/ret.sql
+        ```
+        -N  // 不显示列名这一行。
+        < /opt/runsql.sh  // 执行 /opt/runsql.sh 脚本中的 sql 命令
+        > /opt/ret.sql  // 把查询结果 导出到 /opt/ret.sql 文件
+        
+        例如上面的测试结果为
+        ```mysql
+        INSERT INTO book (`id`, `name`, `price`, `authorId`, `publishDate`) VALUES('1', '???', '37.10', '1', '2019-04-01 00:00:00');
+        INSERT INTO book (`id`, `name`, `price`, `authorId`, `publishDate`) VALUES('2', '??????', '26.90', '2', '2017-08-01 00:00:00');
+        INSERT INTO book (`id`, `name`, `price`, `authorId`, `publishDate`) VALUES('3', '????', '32.40', '3', '2012-01-01 00:00:00');
+        ```
 
 ## 还原常用操作
 * 还原指定的数据库

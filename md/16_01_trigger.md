@@ -117,8 +117,10 @@ trigger_body: 需要执行的语句。当有多个 SQL 语句要执行的，则�
 ### NEW.col_name 和 OLD.col_name 的使用
 
 在触发器主体中，可以通过使用别名 OLD 和 NEW 来引用主题表(与触发器关联的表)中的列。  
-OLD.col_name 引用现有行中 更新 或 删除 之前的列。  
-NEW.col_name 引用要插入的 新行 或 更新 后的现有行的列。  
+* OLD.col_name  
+    引用现有行中 更新 或 删除 之前的列。  
+* NEW.col_name  
+    引用要插入的 新行 或 更新 后的现有行的列。  
 
 
 ## 查看触发器

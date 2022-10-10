@@ -44,7 +44,7 @@ trigger_event: { INSERT | UPDATE | DELETE }
 
 trigger_order: { FOLLOWS | PRECEDES } other_trigger_name
 
-trigger_body: 需要执行的语句。当有多个 SQL 语句要执行的，则使用 begin ... end 包裹
+trigger_body: 需要执行的语句。当有多个 SQL 语句要执行的，则使用 BEGIN ... END 包裹
 ```
 触发器只能与一个持久化表关联
 
@@ -113,6 +113,13 @@ trigger_body: 需要执行的语句。当有多个 SQL 语句要执行的，则�
 
     DELETE FROM USER WHERE uid=3;
     ```
+
+### NEW.col_name 和 OLD.col_name 的使用
+
+在触发器主体中，可以通过使用别名 OLD 和 NEW 来引用主题表(与触发器关联的表)中的列。  
+OLD.col_name 引用现有行中 更新 或 删除 之前的列。  
+NEW.col_name 引用要插入的 新行 或 更新 后的现有行的列。  
+
 
 ## 查看触发器
 ```mysql

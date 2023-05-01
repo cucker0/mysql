@@ -683,6 +683,7 @@ MySQL核心技术
     * [MySQL DBA技能](md/mysql_DBA技能.md)
     * [NavicatPremium客户端工具](md/NavicatPremium.md)
     * [SQLYog客户端工具](md/SQLYog.md)
+    * [CTE--公用表表达式](md/other.md#CTE--公用表表达式)
     * [MySQL、PostgreSQL 、Oracle在线资料](https://www.techonthenet.com/mysql/index.php)
     * [MySQL 8.0 Reference Manual](https://dev.mysql.com/doc/refman/8.0/en/)
     * [sql分析方法](md/sql分析方法.md)

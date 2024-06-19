@@ -37,7 +37,7 @@ default_character_set = utf8
 ```
 
 * 当设置的最大连接数不生效解决方法
-    * 设置mysqld system服务打开文件够本限制
+    * 设置mysqld system服务打开文件句柄限制
         ```text
         echo "LimitNOFILE = 65535" >>  /usr/lib/systemd/system/mysqld.service
         

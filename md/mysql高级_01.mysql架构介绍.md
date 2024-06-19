@@ -52,6 +52,7 @@ default_character_set = utf8
         * hard nproc 65535
         ```
         nofile  // 可打开的文件描述符数量（文件句柄）
+      
         nproc  // 可运行的进程、线程数量
 
 ### 主要配置文件

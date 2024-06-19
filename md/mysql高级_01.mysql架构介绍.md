@@ -61,13 +61,48 @@ default_character_set = utf8
     >用于主从复制
 * log-error 错误日志
     >默认是关闭的，记录严重的警告和错误信息、每次启动和关闭详细信息等
-* general_log通用日志
+* general_log 通用日志
     ```text
     默认关闭，
     记录所有执行过的sql，用于排查分析sql性能，但记录log会增加系统负担，
     可以暂时开启，分析完之后再关闭general_log
     ```
-* slow-log慢日志
+    开启方法，/etc/my.cnf 配置文件中追加下面的配置：
+    
+    a. 持久开启
+    ```bash
+    general_log = 1
+    general_log_file = /path/to/general.log
+    ```
+    b. 临时开启 general_log
+    ```mysql
+    SET GLOBAL log_output = 'TABLE';
+    SET GLOBAL general_log = 'ON';
+    -- 设置日志的位置
+    SET GLOBAL general_log_file = '/var/lib/mysql/mysql-general.log';
+  
+    -- 
+    -- 如果配置后文件中没有生效的话就配置为
+    SET GLOBAL log_output = 'TABLE,FILE';
+    -- 查看配置
+    SHOW VARIABLES LIKE 'general_log%'; 
+    
+    -- 查看日志
+    SELECT DATE_FORMAT(event_time, '%Y-%m-%d %H:%i:%s') AS time,
+        user_host,
+        thread_id,
+        server_id,
+        command_type,
+        CAST(argument AS CHAR) AS query
+    FROM mysql.general_log;  
+    ```
+    c. 临时关闭 general_log
+    ```mysql
+    SET global general_log=0;
+    SET global slow_query_log=0;
+    ```
+
+* slow-log 慢日志
     ```text
     默认关闭
     记录超过一定时间的SQL语句

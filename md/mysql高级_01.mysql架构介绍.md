@@ -44,13 +44,15 @@ default_character_set = utf8
         systemctl  daemon-reload
         ```
     * 修改limits.conf配置  
-        /etc/security/limits.conf文件添加如下内容，
+        /etc/security/limits.conf 文件添加如下内容，
         ```text      
         * soft nofile 65535
         * hard nofile 65535
         * soft nproc 65535
         * hard nproc 65535
         ```
+        nofile  // 可打开的文件描述符数量（文件句柄）
+        nproc  // 可运行的进程、线程数量
 
 ### 主要配置文件
 #### 主要日志文件

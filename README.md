@@ -148,6 +148,7 @@ MySQL核心技术
         * [select后面](md/2_08_DQL数据查询语言.子查询.md#select后面)
         * [from后面](md/2_08_DQL数据查询语言.子查询.md#from后面)
         * [exists后面](md/2_08_DQL数据查询语言.子查询.md#exists后面)
+        * [exists 与 in](md/exists与in.md)
     </details>
     
     <details>

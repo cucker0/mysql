@@ -10,7 +10,7 @@ mysql高级.索引优化分析
 * 服务器、mysql参数设置不优(缓存、线程数等)
 
 ### sql的执行顺序
-![](../images/sql执行顺序.png)  
+![](../images/sql执行顺序.png)
 
 依次从左往右
 
@@ -48,13 +48,13 @@ mysql索引一般使用的是Btree索引
 
 ### 索引分类
 * 单值索引
-    >一个索引只包含一个列，一个表可以有多个单值索引
+  >一个索引只包含一个列，一个表可以有多个单值索引
 * 唯一索引
-    >索引列的值必须唯一，但允许有一个null值。唯一键会创建唯一索引
+  >索引列的值必须唯一，但允许有一个null值。唯一键会创建唯一索引
 * 复合索引
-    >一个索引包含多个列
+  >一个索引包含多个列
 
-**复合索引示意图**  
+**复合索引示意图**
 ```text
 ALTER TABLE area_map ADD INDEX idx_area_map__province_city_stat (province, city, stat); 
 idx_area_map__province_city_stat (province, city, stat)
@@ -64,7 +64,7 @@ stat 为索引次要字段3
 ```
 ![](../images/area_map索引.png)  
 ![](../images/复合索引示意图.png)  
-![](../images/复合索引示意图2.png)  
+![](../images/复合索引示意图2.png)
 
 
 ### 索引类型
@@ -147,7 +147,7 @@ stat 为索引次要字段3
     ```text
     SHOW INDEX FROM 表名;
     ```
-    
+
 * 删除索引
     ```text
     DROP INDEX 索引名 ON 表名;
@@ -178,7 +178,7 @@ stat 为索引次要字段3
 * 内置的Optimizer优化器
     ```text
     mysql内置有Optimizer sql优化器，主要功能：通过计算分析系统中收集到的统计信息，
-    为客户端请求的Query查询提供它认为最有的执行计划，但有时可能不是DBA认为最有的
+    为客户端请求的Query查询提供它认为最优的执行计划，但有时可能不是DBA认为最优的
     ```
 * mysql常见瓶颈
     * CPU资源不足，持续使用过高，一般发生在数据载入内存或从磁盘读取数据时
@@ -211,16 +211,16 @@ explain sql语句;
 
 字段 |JSON Name |含义 |备注
 :--- |:--- |:--- |:---
-id |select_id |select标识符，在查询中该值是执行顺序的数字 | 
-select_type |无 |查询类型 | 
-table |table_name |表名 | 
-partitions |partitions |查询匹配到的分区 | 
-type |access_type |join类型 | 
-possible_keys |possible_keys |可选的索引 | 
+id |select_id |select标识符，在查询中该值是执行顺序的数字 |
+select_type |无 |查询类型 |
+table |table_name |表名 |
+partitions |partitions |查询匹配到的分区 |
+type |access_type |join类型 |
+possible_keys |possible_keys |可选的索引 |
 key |key |实际选择的索引 |
-key_len |key_length |所选索引的长度(字节数) | 
-ref |ref |显示哪些列或常量被索引使用了 | 
-rows |rows |mysql认为执行查询必须检查的行数(估值) | 
+key_len |key_length |所选索引的长度(字节数) |
+ref |ref |显示哪些列或常量被索引使用了 |
+rows |rows |mysql认为执行查询必须检查的行数(估值) |
 filtered |filtered |按表条件将被筛选的行占读到的行(rows列的值)的百分比估值 |最大值100，表示没有发生行过滤
 Extra |无 |mysql执行查询的其他信息 |
 
@@ -228,9 +228,10 @@ Extra |无 |mysql执行查询的其他信息 |
 ### explain查询结果各字段含义详解
 #### id
 select标识符，在查询中该值是顺序的数字。如果该行是其它行union的结果，该值可以为null
-    1. id值越大越先执行
-    2. id相同的，执行顺序由上往下执行
-    3. id为NULL，最后执行 表示union并集结果
+
+1. id值越大越先执行
+2. id相同的，执行顺序由上往下执行
+3. id为NULL，最后执行，表示union并集结果
 #### select_type
 
 select类型 |含义 |备注
@@ -352,7 +353,7 @@ UNCACHEABLE UNION |union中的第二个或者后面的不能被缓存的子查�
     ```text
     全表扫描，来找到匹配的行
     ```
-##### type性能比较 
+##### type性能比较
 * 性能从好到差
 ```text
 system > const > eq_ref > ref > range > index > ALL
@@ -387,7 +388,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
 即key_len是根据表定义计算而得，不是通过表内检索出的
 ```
 
-#### Extra 
+#### Extra
 1. Using temporary
     ```text
     使用了临时表来保存中间操作的结果，mysql在对查询结果排序时使用临时表。
@@ -401,7 +402,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     未使用表内的索引进行排序。
     索引是已经对表数据排好序，正是因为使用不到索引，所以只好另外再对表数据进行一次临时排序
     
-    发生Using filesort情况，性能是相当的！
+    发生Using filesort情况，性能是相当差的！
     ```
 
 1. Using index
@@ -411,8 +412,8 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
  
     此情况的性能不错
     ```
-    <span id = "covering_index"></span>
-    
+   <span id = "covering_index"></span>
+
     * covering index覆盖索引
         ```text
         select的数据只用从索引中就能够得到，不必去读取数据行。
@@ -452,7 +453,7 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     改进版：
     SELECT MIN(c2) FROM t1 WHERE c1 = 10;
     ```   
-     
+
 1. Distinct
     ```text
     优化Distinct，在找到第一个匹配的行之后，它将停止搜索与当前行相同的值
@@ -521,8 +522,8 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     (SELECT `name`, id FROM t2)
     ;
     ```
-    
-    ![](../images/explain_case1.png)  
+
+  ![](../images/explain_case1.png)
     1. id:4 第1执行(SELECT `name`, id FROM t2)，类型为UNION
     2. id:2 第2执行(SELECT id FROM t3), 类型为SUBQUERY
     3. id:1 第3执行(SELECT id, `name` FROM t1 WHERE score = 98)，类型为PRIMARY
@@ -562,10 +563,10 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     ORDER BY views DESC
     LIMIT 0, 1;
     ```
-    
-    ![](../images/explain_单表.png)  
-    
-    **观察与分析**  
+
+  ![](../images/explain_单表.png)
+
+  **观察与分析**
     ```text
     type为ALL，最坏情况。
     Extra中出现了Using filesort，也最坏的情况
@@ -586,12 +587,12 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     ORDER BY views DESC
     LIMIT 0, 1;
     ```
-    
-    ![](../images/explain_单表2.png)  
-    
-    **观察与分析**  
+
+  ![](../images/explain_单表2.png)
+
+  **观察与分析**
     ```text
-    type变成了range,这时可以忍受的。
+    type变成了range，这是可以忍受的。
     但是Extra为Using filesort，这个情况任然很坏
     
     ## 问题：为什么建了索引没什么用呢
@@ -619,8 +620,8 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     这种情况下效果却非常好
     */
     ```
-    
-    ![](../images/explain_单表3.png)  
+
+  ![](../images/explain_单表3.png)
 
 
 * 优化2：删除前面建的索引，新建复合索引index (category_id, views)
@@ -638,10 +639,10 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     ORDER BY views DESC
     LIMIT 0, 1;
     ```
-    
-    ![](../images/explain_单表4.png)  
-    
-    **观察与分析**  
+
+  ![](../images/explain_单表4.png)
+
+  **观察与分析**
     ```text
     type为ref
     Extra为Using where; Backward index scan，已经没有Using filesort情况了
@@ -702,10 +703,10 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     LEFT OUTER JOIN class
     ON class.card = book.card;
     ```
-    
-    ![](../images/explain_两表1.png)  
-    
-    **观察与分析**
+
+  ![](../images/explain_两表1.png)
+
+  **观察与分析**
     ```text
     type均为ALL，不好
     ```
@@ -721,15 +722,15 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     LEFT OUTER JOIN class
     ON class.card = book.card;
     ```
-    
-    ![](../images/explain_两表2_1.png)  
-    
-    **观察与分析**  
+
+  ![](../images/explain_两表2_1.png)
+
+  **观察与分析**
     ```text
     book表的类型为index，Extra为Using index，rows为12行
     class表的为ALL，Extra为Using where; Using join buffer (Block Nested Loop)
     ```
-    
+
     ```mysql
     -- case1_2：book表右外连接class表
     EXPLAIN
@@ -738,10 +739,10 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     RIGHT OUTER JOIN class
     ON class.card = book.card;
     ```
-    
-    ![](../images/explain_两表2_2.png)  
-    
-    **观察与分析**
+
+  ![](../images/explain_两表2_2.png)
+
+  **观察与分析**
     ```text
     book表的类型为ref，比上面的查询更好一些，Extra为Using index，rows为1行
     class表的为ALL，Extra为NULL
@@ -761,15 +762,15 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     INNER JOIN class
     ON class.card = book.card;
     ```
-    
-    ![](../images/explain_两表inner_join.png)  
-    
-    **观察与分析**  
+
+  ![](../images/explain_两表inner_join.png)
+
+  **观察与分析**
     ```text
     book表的type为ref，Extra为Using index，rows为1行，key为idx_book_card，ref为testdb.class.card
     class表的为ALL，rows为12行，其他为NULL
     ```
-    
+
 * 优化2：只在class表添加索引
     ```mysql
     DROP INDEX idx_book_card ON book;
@@ -785,15 +786,15 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     LEFT OUTER JOIN class
     ON class.card = book.card;
     ```
-    
-    ![](../images/explain_两表3_1.png)  
-    
-    **观察与分析**  
+
+  ![](../images/explain_两表3_1.png)
+
+  **观察与分析**
     ```text
     class表的类型为ref，Extra为Using index，rows为1行
     book表的为ALL，Extra为NULL
     ```
-    
+
     ```mysql
     -- case2_2：book表右外连接class表
     EXPLAIN
@@ -802,15 +803,15 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     RIGHT OUTER JOIN class
     ON class.card = book.card;
     ```
-    
-    ![](../images/explain_两表3_2.png)  
 
-    **观察与分析**  
+  ![](../images/explain_两表3_2.png)
+
+  **观察与分析**
     ```text
     class表的类型为index，Extra为Using index，rows为12行
     book表的为ALL，Extra为Using where; Using join buffer (Block Nested Loop)
     ```
-    
+
     ```mysql
     -- case2_3：内连接
     --
@@ -827,10 +828,10 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     INNER JOIN class
     ON class.card = book.card;
     ```
-    
-    ![](../images/explain_两表3_inner_join.png)  
-    
-    **观察与分析**  
+
+  ![](../images/explain_两表3_inner_join.png)
+
+  **观察与分析**
     ```text
     class表的type为ref，Extra为Using index，rows为1行，key为idx_class_card，ref为testdb.book.card
     book表的为ALL，rows为12行，其他为NULL
@@ -882,14 +883,14 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     LEFT OUTER JOIN phone p
     ON c.card = p.card;
     ```
-    
-    ![](../images/explain_3表1.png)  
-    
-    **观察与分析**  
+
+  ![](../images/explain_3表1.png)
+
+  **观察与分析**
     ```text
     class、book、phone三张表的type均为ALL，非常差
     ```
-    
+
     ```mysql
     EXPLAIN
     SELECT *
@@ -899,9 +900,9 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     INNER JOIN phone p
     ON c.card = p.card;
     ```
-    
-    ![](../images/explain_3表1_2.png)  
-    
+
+  ![](../images/explain_3表1_2.png)
+
 * 优化1：根据两表连接查询的分析结论，在从表上建索引
     ```mysql
     ALTER TABLE book ADD INDEX idx_book_card (card);
@@ -915,10 +916,10 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
     LEFT OUTER JOIN phone p
     ON c.card = p.card;
     ```
-    
-    ![](../images/explain_3表2.png)  
-    
-    **观察与分析**  
+
+  ![](../images/explain_3表2.png)
+
+  **观察与分析**
     ```text
     表book、phone的type都为ref,rows都为1, Extra都为Using index
     优化良好，效果不错。
@@ -945,18 +946,18 @@ key_len显示的值为索引最大可能长度，并非实际使用长度，
 ```mysql
 -- 员工表
 CREATE TABLE staffs (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    `name` VARCHAR(24) NOT NULL DEFAULT '' COMMENT '姓名',
-    age INT NOT NULL DEFAULT 1 COMMENT '年龄',
-    pos VARCHAR(20) NOT NULL DEFAULT '' COMMENT '职位',
-    add_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '入职时间'
+                        id INT PRIMARY KEY AUTO_INCREMENT,
+                        `name` VARCHAR(24) NOT NULL DEFAULT '' COMMENT '姓名',
+                        age INT NOT NULL DEFAULT 1 COMMENT '年龄',
+                        pos VARCHAR(20) NOT NULL DEFAULT '' COMMENT '职位',
+                        add_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '入职时间'
 ) CHARSET utf8 COMMENT '员工表';
 
 
 INSERT INTO staffs (`name`, age, pos, add_time) VALUES
-('z3', 22, 'manager', NOW()),
-('July', 23,'dev', NOW()),
-('2000', 23,'dev', NOW());
+                                                    ('z3', 22, 'manager', NOW()),
+                                                    ('July', 23,'dev', NOW()),
+                                                    ('2000', 23,'dev', NOW());
 
 SELECT * FROM staffs;
 
@@ -974,9 +975,9 @@ SHOW INDEX FROM staffs;
     EXPLAIN
     SELECT * FROM staffs WHERE `name` = 'July';
     ```
-    ![](../images/索引失效测试1_1.png)  
-    使用到索引name字段
-    
+  ![](../images/索引失效测试1_1.png)  
+  使用到索引name字段
+
 * 情况1_2
     ```mysql
     -- 情况1_2
@@ -987,8 +988,8 @@ SHOW INDEX FROM staffs;
     AND age = 23
     ;
     ```
-    ![](../images/索引失效测试1_2.png)  
-    使用到索引name,age字段
+  ![](../images/索引失效测试1_2.png)  
+  使用到索引name,age字段
 
 <span id = "情况1_3"></span>
 * 情况1_3
@@ -1001,8 +1002,8 @@ SHOW INDEX FROM staffs;
     AND pos = 'dev'
     ;
     ```
-    ![](../images/索引失效测试1_3.png)  
-    使用到索引name,age,pos字段
+  ![](../images/索引失效测试1_3.png)  
+  使用到索引name,age,pos字段
 
 ### 最佳左前缀法则
 ```text
@@ -1020,8 +1021,8 @@ SHOW INDEX FROM staffs;
     AND pos = 'dev'
     ;
     ```
-    ![](../images/索引失效测试2_1,2.png)  
-    **观察与分析**
+  ![](../images/索引失效测试2_1,2.png)  
+  **观察与分析**
     ```
     type为ALL，key为NULL，全表扫描，未使用到索引，因为没有用索引的主要字段name
     ```
@@ -1035,12 +1036,12 @@ SHOW INDEX FROM staffs;
     WHERE pos = 'dev'
     ;
     ``` 
-    ![](../images/索引失效测试2_1,2.png)  
-    **观察与分析**
+  ![](../images/索引失效测试2_1,2.png)  
+  **观察与分析**
     ```
     type为ALL，key为NULL，全表扫描，未使用到索引，因为没有用索引的主要字段name
     ```
-    
+
 * 情况2_3
     ```mysql
     -- 情况2_3
@@ -1051,8 +1052,8 @@ SHOW INDEX FROM staffs;
     AND pos = 'dev'
     ;
     ``` 
-    ![](../images/索引失效测试2_3.png)  
-    **观察与分析**
+  ![](../images/索引失效测试2_3.png)  
+  **观察与分析**
     ```
     使用了索引的name字段，age、pos字段没有使用到
     ```
@@ -1064,7 +1065,7 @@ SHOW INDEX FROM staffs;
 ```
 
 * 情况3_1
-[同情况1_1](#全值匹配我最爱)
+  [同情况1_1](#全值匹配我最爱)
     ```mysql
     -- 情况3_1
     EXPLAIN
@@ -1083,8 +1084,8 @@ SHOW INDEX FROM staffs;
     WHERE LEFT(`name`, 4) = 'July'
     ;
     ```
-    ![](../images/索引失效测试3_2.png)  
-    **观察与分析**
+  ![](../images/索引失效测试3_2.png)  
+  **观察与分析**
     ```text
     LEFT(str, len)
     取字符串str左边len个字符
@@ -1103,11 +1104,11 @@ SHOW INDEX FROM staffs;
     AND age = 23
     ;
     ```
-    ![](../images/索引失效测试3_3_1,3.png)  
-    使用上了索引
-    
+  ![](../images/索引失效测试3_3_1,3.png)  
+  使用上了索引
+
     * 字符型值没有加引号，类型转换后，索引失效
-        <span id = "类型转换索引失效"></span>
+      <span id = "类型转换索引失效"></span>
         ```text
         EXPLAIN
         SELECT *
@@ -1116,14 +1117,14 @@ SHOW INDEX FROM staffs;
         AND age = 23
         ;
         ```
-        ![](../images/索引失效测试3_3_2.png)  
-        
-        **观察与分析**  
+      ![](../images/索引失效测试3_3_2.png)
+
+      **观察与分析**
         ```text
         `name` = 2000中，name字段为字符型，2000数值转换成字符串
         索引失效
         ```
-    
+
     ```mysql
     EXPLAIN
     SELECT *
@@ -1132,9 +1133,9 @@ SHOW INDEX FROM staffs;
     AND age = '23'
     ;
     ```
-    ![](../images/索引失效测试3_3_1,3.png)  
-    
-    **观察与分析**  
+  ![](../images/索引失效测试3_3_1,3.png)
+
+  **观察与分析**
     ```text
     age = '23'，'23'字符串转数值，仍使用上了索引name、age字段
     ```
@@ -1143,11 +1144,11 @@ SHOW INDEX FROM staffs;
 ```mysql
 -- 情况4_1
 EXPLAIN
-SELECT * 
+SELECT *
 FROM staffs
 WHERE `name` = 'z3'
-AND age = 11
-AND pos = 'manager'
+  AND age = 11
+  AND pos = 'manager'
 ;
 
 -- vs
@@ -1155,12 +1156,12 @@ EXPLAIN
 SELECT *
 FROM staffs
 WHERE `name` = 'z3'
-AND age > 11
-AND pos = 'manager'
+  AND age > 11
+  AND pos = 'manager'
 ;
 ```
 
-**观察与分析**  
+**观察与分析**
 ```text
 索引用到了name、age字段
 没有用到pos字段
@@ -1180,7 +1181,7 @@ AND pos = 'manager'
     AND pos = 'dev'
     ;
     ```
-    [同情况1_3](#情况1_3)  
+  [同情况1_3](#情况1_3)
 
 * 情况5_2
     ```mysql
@@ -1193,12 +1194,12 @@ AND pos = 'manager'
     AND pos = 'dev'
     ;
     ```
-    ![](../images/索引失效测试5_2.png)  
-    **观察与分析**  
+  ![](../images/索引失效测试5_2.png)  
+  **观察与分析**
     ```text
     相对于情况1_3更好，使用到了索引，type为ref，关键是Extra为Using index
     ```
-    
+
 * 情况5_3
     ```mysql
     -- 5_3
@@ -1219,14 +1220,14 @@ AND pos = 'manager'
     AND pos = 'dev'
     ;
     ```
-    ![](../images/索引失效测试5_3.png)  
-    -- vs  
-    ![](../images/索引失效测试5_3_2.png)  
-    **观察与分析**  
+  ![](../images/索引失效测试5_3.png)  
+  -- vs  
+  ![](../images/索引失效测试5_3_2.png)  
+  **观察与分析**
     ```text
     前者更优，因为Extra为Using index
     ```
-    
+
 * 情况5_4
     ```mysql
     -- 5_4
@@ -1259,8 +1260,8 @@ AND pos = 'manager'
     AND age = 23
     ;
     ```
-    以上均使用了覆盖索引，计划分析结果均为：
-    ![](../images/索引失效测试5_4_1,2,3,4.png)  
+  以上均使用了覆盖索引，计划分析结果均为：
+  ![](../images/索引失效测试5_4_1,2,3,4.png)
 
 
 ### 使用不等于(!=或者<>)时索引失效导致全表扫描
@@ -1273,7 +1274,7 @@ AND pos = 'manager'
     WHERE `name` = 'July'
     ;
     ```
-    [同情况1_1](全值匹配我最爱)  
+  [同情况1_1](全值匹配我最爱)
 
 * 情况6_2
     ```mysql
@@ -1290,13 +1291,13 @@ AND pos = 'manager'
     WHERE `name` <> 'July'
     ;
     ```
-    mysql 8  
-    ![](../images/索引失效测试6_2(mysql8).png)
-    
-    mysql 5.7  
-    ![](../images/索引失效测试6_2(mysql5.7).png)
-    
-    **观察与分析**  
+  mysql 8  
+  ![](../images/索引失效测试6_2(mysql8).png)
+
+  mysql 5.7  
+  ![](../images/索引失效测试6_2(mysql5.7).png)
+
+  **观察与分析**
     ```text
     两种写法是一个意思
     
@@ -1318,7 +1319,7 @@ AND pos = 'manager'
     WHERE `name` IS NULL
     ;
     ```
-    ![](../images/索引失效测试7_1.png)
+  ![](../images/索引失效测试7_1.png)
 
 * 情况7_2
     ```mysql
@@ -1329,7 +1330,7 @@ AND pos = 'manager'
     WHERE `name` IS NOT NULL
     ;
     ```
-    ![](../images/索引失效测试7_2.png)
+  ![](../images/索引失效测试7_2.png)
 
 
 ### like以通配符开头，索引失效导致全表扫描
@@ -1342,7 +1343,7 @@ AND pos = 'manager'
     WHERE `name` = 'July'
     ;
     ```
-    [同情况1_1](全值匹配我最爱)   
+  [同情况1_1](全值匹配我最爱)
 
 * 情况8_2
     ```mysql
@@ -1376,9 +1377,9 @@ AND pos = 'manager'
     WHERE `name` LIKE '_July'
     ;
     ```
-    ![](../images/索引失效测试8_2,3.png)  
-    
-    **观察与分析**  
+  ![](../images/索引失效测试8_2,3.png)
+
+  **观察与分析**
     ```text
     情况8_2、情况8_3结果相同
     type为ALL，全表扫描，key为NULL没有使用索引，Extra为Using where
@@ -1399,9 +1400,9 @@ AND pos = 'manager'
     WHERE `name` LIKE 'July_'
     ;
     ```
-    ![](../images/索引失效测试8_4.png)  
-    
-    **观察与分析**  
+  ![](../images/索引失效测试8_4.png)
+
+  **观察与分析**
     ```text
     type为range，使用到了索引，Extra为Using index condition
     ```
@@ -1411,18 +1412,18 @@ AND pos = 'manager'
 ```mysql
 -- 8_5
 CREATE TABLE tbl_user (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    `name` VARCHAR(20),
-    age INT DEFAULT 1,
-    email VARCHAR(20)
+                          id INT PRIMARY KEY AUTO_INCREMENT,
+                          `name` VARCHAR(20),
+                          age INT DEFAULT 1,
+                          email VARCHAR(20)
 );
 
 
 INSERT INTO tbl_user(`name`, age, email) VALUES
-('1aa1', 21, 'a@163.com'),
-('2aa2', 22, 'b@163.com'),
-('3aa3', 23, 'c@163.com'),
-('4aa4', 21, 'd@163.com');
+                                             ('1aa1', 21, 'a@163.com'),
+                                             ('2aa2', 22, 'b@163.com'),
+                                             ('3aa3', 23, 'c@163.com'),
+                                             ('4aa4', 21, 'd@163.com');
 ```
 
 
@@ -1488,8 +1489,8 @@ WHERE `name` LIKE '%aa%'
 ```
 ![](../images/索引失效测试8_5_1_all.png)  
 **观察与分析**  
-以上查询的分析结果相同，均为全表扫描，无索引  
-    
+以上查询的分析结果相同，均为全表扫描，无索引
+
 #### 情况8_5_2: 建立索引，index (name, age)
 ```mysql
 -- 8_5_2: 建立索引，index (name, age)
@@ -1562,7 +1563,7 @@ SHOW INDEX FROM tbl_user;
     WHERE `name` LIKE '%aa%'
     ;
     ```
-    ![](../images/索引失效测试8_5_2_1,6.png)  
+  ![](../images/索引失效测试8_5_2_1,6.png)
     ```text
     8_5_2_1 至 8_5_2_6以及后面补充的示例
     
@@ -1588,9 +1589,9 @@ SHOW INDEX FROM tbl_user;
     WHERE `name` LIKE '%aa%'
     ;
     ```
-    ![](../images/索引失效测试8_5_2_7,8.png)  
-    
-    **观察分析**  
+  ![](../images/索引失效测试8_5_2_7,8.png)
+
+  **观察分析**
     ```text
     8_5_2_7, 8_5_2_8
     type为ALL，key为NULL，Extra为Using where
@@ -1628,15 +1629,15 @@ SHOW INDEX FROM tbl_user;
     WHERE `name` IN ('July', 'z3')
     ;
     ```
-    mysql 8  
-    ![](../images/索引失效测试10_1(mysql8).png)  
-    
-    -- mysql 5.7
-    ![](../images/索引失效测试10_1(mysql5.7).png)  
-    
-    **观察与分析**  
-    -- 与情况1_1对比  
-    [情况1_1](#全值匹配我最爱)：type为ref
+  mysql 8  
+  ![](../images/索引失效测试10_1(mysql8).png)
+
+  -- mysql 5.7
+  ![](../images/索引失效测试10_1(mysql5.7).png)
+
+  **观察与分析**  
+  -- 与情况1_1对比  
+  [情况1_1](#全值匹配我最爱)：type为ref
     ```text
     以上两语句在mysql 8、mysql 5.7中的分析结果一样  
   
@@ -1657,12 +1658,12 @@ SHOW INDEX FROM tbl_user;
     AND age > 18
     ;
     ```
-    mysql 8
-    ![](../images/索引失效测试10_2(mysql8).png)  
-    
-    mysql 5.7
-    ![](../images/索引失效测试10_2(mysql5.7).png)  
-    **观察与分析**  
+  mysql 8
+  ![](../images/索引失效测试10_2(mysql8).png)
+
+  mysql 5.7
+  ![](../images/索引失效测试10_2(mysql5.7).png)  
+  **观察与分析**
     ```text
     mysql 8:
     type为range，Extra为Using index condition，使用到了索引(name,age字段)
@@ -1677,7 +1678,7 @@ EXPLAIN
 SELECT `name`, age
 FROM staffs
 WHERE `name` = 'July'
-OR `name` = 'z3'
+   OR `name` = 'z3'
 ;
 
 -- 
@@ -1688,7 +1689,7 @@ WHERE `name` IN ('July', 'z3')
 ;
 ```
 ![](../images/索引失效测试10_3.png)  
-**观察与分析**  
+**观察与分析**
 ```text
 mysql 8、mysql 5.7结果相同
 type为range，key为idx_staffs_name_age_pos，Extra为Using where; Using index
@@ -1730,20 +1731,20 @@ like % 写最右，覆盖索引不写星；
 ```mysql
 -- 表结构
 CREATE TABLE test03 (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    c1 CHAR(10),
-    c2 CHAR(10),
-    c3 CHAR(10),
-    c4 CHAR(10),
-    c5 CHAR(10)
+                        id INT PRIMARY KEY AUTO_INCREMENT,
+                        c1 CHAR(10),
+                        c2 CHAR(10),
+                        c3 CHAR(10),
+                        c4 CHAR(10),
+                        c5 CHAR(10)
 );
 
 INSERT INTO test03 (c1, c2, c3, c4, c5) VALUES
-('a1', 'a2', 'a3', 'a4', 'a5'),
-('b1', 'b2', 'b3', 'b4', 'b5'),
-('c1', 'c2', 'c3', 'c4', 'c5'),
-('d1', 'd2', 'd3', 'd4', 'd5'),
-('e1', 'e2', 'e3', 'e4', 'e5');
+                                            ('a1', 'a2', 'a3', 'a4', 'a5'),
+                                            ('b1', 'b2', 'b3', 'b4', 'b5'),
+                                            ('c1', 'c2', 'c3', 'c4', 'c5'),
+                                            ('d1', 'd2', 'd3', 'd4', 'd5'),
+                                            ('e1', 'e2', 'e3', 'e4', 'e5');
 
 SELECT * FROM test03;
 
@@ -1768,7 +1769,7 @@ SHOW INDEX FROM test03;
     EXPLAIN SELECT * FROM test03 WHERE c1 = 'a1' AND c2 = 'a2' AND c3 = 'a3' AND c4 = 'a4';
     -- 用到了索引c1,c2,c3,c4
     ```
-    ![](../images/索引使用示例1.png)  
+  ![](../images/索引使用示例1.png)
 
 
 * 情况2
@@ -1783,13 +1784,13 @@ SHOW INDEX FROM test03;
     SELECT * FROM test03
     WHERE c4 = 'a4' AND c3 = 'a3' AND c2 = 'a2' AND c1 = 'a1';
     ```
-    ![](../images/索引使用示例2.png)  
-    
-    **观察与分析**  
+  ![](../images/索引使用示例2.png)
+
+  **观察与分析**
     ```text
     以上两个SQL语句，会被mysql的Optimizer优化器优化，把顺序调整为与索引字段顺序一致的查询语句
     ```
-    
+
 * 情况3
     ```mysql
     -- 3
@@ -1797,9 +1798,9 @@ SHOW INDEX FROM test03;
     SELECT * FROM test03
     WHERE c1 = 'a1' AND c2 = 'a2' AND c3 > 'a3' AND c4 = 'a4';
     ```
-    ![](../images/索引使用示例3.png)  
-    
-    **观察与分析**  
+  ![](../images/索引使用示例3.png)
+
+  **观察与分析**
     ```text
     使用到了索引c1,c2,c3
     ```
@@ -1812,9 +1813,9 @@ SHOW INDEX FROM test03;
     使用到了索引c1,c2,c3,c4，Optimizer优化器进行了SQL优化
     */
     ```
-    ![](../images/索引使用示例4.png)  
-    
-    **观察与分析**  
+  ![](../images/索引使用示例4.png)
+
+  **观察与分析**
     ```text
     使用到了索引c1,c2,c3,c4，Optimizer优化器进行了SQL优化
     c3 = 'a3'是一常量，这样c1 = 'a1' AND c2 = 'a2' AND c4 > 'a4' AND c3 = 'a3' 等价于
@@ -1829,9 +1830,9 @@ SHOW INDEX FROM test03;
     WHERE c1 = 'a1' AND c2 = 'a2' AND c4 = 'a4'
     ORDER BY c3;
     ```
-    ![](../images/索引使用示例5.png)  
-    
-    **观察与分析**  
+  ![](../images/索引使用示例5.png)
+
+  **观察与分析**
     ```text
     使用到了索引c1,c2,另外c3用于排序而非查找, Extra为Using index condition
     ```
@@ -1846,9 +1847,9 @@ SHOW INDEX FROM test03;
     使用到了索引c1,c2,另外c3用于排序而非查找
     */
     ```
-    ![](../images/索引使用示例6.png)  
-    
-    **观察与分析**  
+  ![](../images/索引使用示例6.png)
+
+  **观察与分析**
     ```text
     使用到了索引c1,c2,另外c3用于排序而非查找
     ```
@@ -1861,9 +1862,9 @@ SHOW INDEX FROM test03;
     WHERE c1 = 'a1' AND c2 = 'a2'
     ORDER BY c4;
     ```
-    ![](../images/索引使用示例7.png)  
-    
-    **观察与分析**  
+  ![](../images/索引使用示例7.png)
+
+  **观察与分析**
     ```text
     type为ref,使用到了索引c1,c2，
     Extra为Using filesort
@@ -1875,9 +1876,9 @@ SHOW INDEX FROM test03;
     WHERE c1 = 'a1' AND c5 = 'a5'
     ORDER BY c2, c3;
     ```
-    ![](../images/索引使用示例8_1.png)  
-    
-    **观察与分析**  
+  ![](../images/索引使用示例8_1.png)
+
+  **观察与分析**
     ```text
     用到了索引c1，另外c2, c3使用索引排序，
     type为ref，ref为const，Extra为Using where
@@ -1892,9 +1893,9 @@ SHOW INDEX FROM test03;
     WHERE c1 = 'a1' AND c5 = 'a5'
     ORDER BY c3, c2;
     ```
-    ![](../images/索引使用示例8_1.png)  
-    
-    **观察与分析**  
+  ![](../images/索引使用示例8_1.png)
+
+  **观察与分析**
     ```text
     使用到了索引c1，另外c3, c2排序没有用到索引，因为索引列的顺序为c1,c2,c3,c4，而ORDER BY c2, c3没有按照索引列顺序，所以排序时索引失效了
     type为ref，ref为const，Extra为Using where; Using filesort，做了一次临时排序(filesort)
@@ -1907,7 +1908,7 @@ SHOW INDEX FROM test03;
     WHERE c1 = 'a1' AND c2 = 'a2'
     ORDER BY c2, c3;
     ``` 
-    ![](../images/索引使用示例9_1.png) 
+  ![](../images/索引使用示例9_1.png)
 
 * 情况9_2
     ```mysql
@@ -1920,9 +1921,9 @@ SHOW INDEX FROM test03;
     都用到了c1,c2索引，c2, c3用于排序，没有出现Using filesort
     */
     ```
-    ![](../images/索引使用示例9_2.png)  
-    
-    **观察与分析**  
+  ![](../images/索引使用示例9_2.png)
+
+  **观察与分析**
     ```text
     情况9_1、情况9_2，都用到了c1,c2索引，c2, c3用于排序，没有出现Using filesort
     ```
@@ -1935,9 +1936,9 @@ SHOW INDEX FROM test03;
     WHERE c1 = 'a1' AND c2 = 'a2' AND c5 = 'c5'
     ORDER BY c3, c2;
     ```
-    ![](../images/索引使用示例10_1.png)  
-    
-    **观察与分析**  
+  ![](../images/索引使用示例10_1.png)
+
+  **观察与分析**
     ```text
     用到了索引c1,c2，
     type为ref，ref为const,const，Extra为Using where
@@ -1957,15 +1958,15 @@ SHOW INDEX FROM test03;
     WHERE c1 = 'a1' AND c2 > 'a2' AND c5 = 'c5'
     ORDER BY c3, c2;
     ```
-    ![](../images/索引使用示例10_2.png)  
-    
-    **观察与分析**  
+  ![](../images/索引使用示例10_2.png)
+
+  **观察与分析**
     ```text
     用了索引c1,c2
     type为range，Extra为Using index condition; Using where; Using filesort
     这种情况下生产了Using filesort
     ```
-    [与8_2的对比](#索引使用示例情况8_2)  
+  [与8_2的对比](#索引使用示例情况8_2)
 
 * 情况11_1
     ```mysql
@@ -1975,9 +1976,9 @@ SHOW INDEX FROM test03;
     WHERE c1 = 'a1' AND c4 = 'a4'
     GROUP BY c2, c3;
     ```
-    ![](../images/索引使用示例11_1.png)  
-    
-    **观察与分析**  
+  ![](../images/索引使用示例11_1.png)
+
+  **观察与分析**
     ```text
     用到了索引c1，
     type为ref，Extra为Using where; Using index
@@ -1991,13 +1992,13 @@ SHOW INDEX FROM test03;
     WHERE c1 = 'a1' AND c4 = 'a4'
     GROUP BY c3, c2;
     ```
-    mysql 8
-    ![](../images/索引使用示例11_2(mysql8).png)  
-    
-    mysql 5.7
-    ![](../images/索引使用示例11_2(mysql5.7).png)  
-    
-    **观察与分析**  
+  mysql 8
+  ![](../images/索引使用示例11_2(mysql8).png)
+
+  mysql 5.7
+  ![](../images/索引使用示例11_2(mysql5.7).png)
+
+  **观察与分析**
     ```text
     mysql 8
     用到了索引c1，

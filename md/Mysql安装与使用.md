@@ -17,6 +17,143 @@ MySQL最早来源于瑞典的MySQL AB公司前身的ISAM与mSQL项目（主要�
 * Enterprise企业版(收费)
 >https://www.mysql.com/trials/
 
+## yum 安装 MySQL--Linux
+参考 [Installing MySQL on Linux Using the MySQL Yum Repository](https://dev.mysql.com/doc/refman/8.4/en/linux-installation-yum-repo.html)
+
+1. Adding the MySQL Yum Repository 
+
+a. Download it from the MySQL Yum Repository page (https://dev.mysql.com/downloads/repo/yum/) in the MySQL Developer Zone.
+b. Install the downloaded release package. The package file format is:
+```bash
+mysql84-community-release-{platform}-{version-number}.noarch.rpm
+```
+c. Install the RPM you downloaded for your system, for example:
+```bash
+$>  sudo yum localinstall mysql84-community-release-{platform}-{version-number}.noarch.rpm
+```
+
+```bash
+$> yum repolist enabled | grep mysql.*-community
+mysql-8.4-lts-community               MySQL 8.4 LTS Community Server
+mysql-tools-8.4-lts-community            MySQL Tools 8.4 LTS Community
+```
+2. Selecting a Release Series
+
+```bash
+$> yum repolist all | grep mysql
+mysql-connectors-community                 MySQL Connectors Community   enabled
+mysql-tools-8.4-lts-community               MySQL Tools 8.4 LTS Community        enabled
+mysql-tools-community                      MySQL Tools Community        disabled
+mysql-tools-innovation-community           MySQL Tools Innovation Commu disabled
+mysql-innovation-community                 MySQL Innovation Release Com disabled
+mysql-8.4-lts-community                          MySQL 8.4 Community LTS Server   enabled
+mysql-8.4-lts-community-debuginfo                MySQL 8.4 Community LTS Server - disabled
+mysql-8.4-lts-community-source                   MySQL 8.4 Community LTS Server - disabled
+mysql80-community                        MySQL 8.0 Community Server - disabled
+mysql80-community-debuginfo              MySQL 8.0 Community Server - disabled
+mysql80-community-source                 MySQL 8.0 Community Server - disabled
+```
+
+Example:
+```bash
+$> sudo yum-config-manager --enable mysql-8.4-lts-community
+$> sudo yum-config-manager --disable   mysql80-community
+```
+/etc/yum.repos.d/mysql-community.repo 示例
+```bash
+[mysql-8.4-lts-community]
+name=MySQL 8.4 LTS Community Server
+baseurl=http://repo.mysql.com/yum/mysql-8.4-community/el/8/$basearch/
+enabled=1
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-mysql-2023
+```
+3. Disabling the Default MySQL Module
+```bash
+$> sudo yum module disable mysql
+```
+4. Installing MySQL
+```bash
+$> sudo yum install mysql-community-server
+```
+4. Enable and start MySQL Server
+```bash
+$> systemctl enable mysqld
+$> systemctl start mysqld
+```
+
+## Install MySQL on Windows
+1. 下载 Windows 版本的 Windows (x86, 64-bit), ZIP Archive
+>https://dev.mysql.com/downloads/mysql/
+2. 解压安装包，如 mysql-8.4.1-winx64.zip 解压到 `D:\Server\mysql-8.4.1-winx64`
+3. 在 D:\Server\mysql-8.4.1-winx64 目录下创建 my.ini
+```bash
+[mysqld]
+port=3306
+basedir = "D:\Server\mysql-8.4.1-winx64"
+datadir = "D:\Server\mysql-8.4.1-winx64\data"
+server_id = 10
+default-storage-engine = INNODB
+max_connections = 500
+character-set-server = utf8mb4
+default-time-zone = timezone
+default-time-zone = '+8:00'
+
+[client]
+port=3306
+
+[mysqld_safe]
+
+[mysql]
+port = 3306
+default-character-set = utf8mb4
+```
+4. 安装 MySQL
+
+以管理员身份 运行 CMD 命令提示符
+```bash
+C:\Windows\system32>d:
+
+D:\>cd D:\Server\mysql-8.4.1-winx64\bin
+
+D:\Server\mysql-8.4.1-winx64\bin> mysqld --install mysql
+```
+
+也可以把 `D:\Server\mysql-8.4.1-winx64\bin` 追加到 系统环境变量 PATH 中，这样可以直接使用 mysql 的相关命令
+
+5. 初始化 MySQL
+
+会自动生成 ./data 目录，不需要手动创建 ./data 目录，否则可能导致初始化失败。
+```bash
+// 'root'@'localhost' 用户无密码
+mysqld --initialize-insecure 
+
+// 或
+// 'root'@'localhost' 用户有初始密码，注意此处保存密码，如果没打印出来密码就是空
+mysqld --initialize --console
+```
+6. 启动 MySQL
+```bash
+net start mysql
+```
+7. 修改 'root'@'localhost' 密码
+```bash
+C:\> mysql -uroot -p
+Enter password: ********  // 输入密码
+
+-- caching_sha2_password，默认使用该密码插件
+mysql> ALTER USER 'root'@'localhost' IDENTIFIED BY 'password_str!';
+
+-- mysql_native_password，旧版的密码插件
+mysql> ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password_str!';
+
+mysql>  FLUSH PRIVILEGES;
+```
+8.卸载 MySQL
+```bash
+mysqld --remove mysql
+```
+
 # 启停mysql服务
 * 方式1：windows的服务管理器(services.msc)
 * 方式2：windows cmd命令

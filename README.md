@@ -4,8 +4,8 @@ MySQL核心技术
 
 # Table Of Contents
 * [数据库和SQL概述](md/数据库和SQL概述.md)
-* [Mysql安装与使用](md/Mysql安装与使用.md)
-* [mysql备份与还原](md/mysql备份与还原.md)
+* [MySQL安装与使用](md/Mysql安装与使用.md)
+* [MySQL备份与还原](md/mysql备份与还原.md)
     * [备份常用操作](md/mysql备份与还原.md#备份常用操作)
     * [还原常用操作](md/mysql备份与还原.md#还原常用操作)
     * [增量备份](md/mysql备份与还原.md#增量备份)

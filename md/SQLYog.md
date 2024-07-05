@@ -1,7 +1,7 @@
 SQLYog
 ==
 
-# 简介
+## 简介
 ```text
 SQLyog是业界著名的Webyog公司(美国Idera Inc)出品的一款简洁高效、功能强大的图形化MySQL数据库管理工具。
 使用SQLyog可以快速直观地让您从世界的任何角落通过网络来维护远端的MySQL数据库。
@@ -16,7 +16,10 @@ SQLyog相比其它类似的MySQL数据库管理工具其有如下特点:
 7、收费
 ```
 
-# 快捷键
+* SQLyog Community Edition Download
+>https://github.com/webyog/sqlyog-community/wiki/Downloads
+
+## 快捷键
 ```text
 * 连接
 Ctrl + M   创建一个新的连接
@@ -122,8 +125,8 @@ Alt + F4   退出程序
 
 ```
 
-# 常规设置
-## 设置Tab键为四个空格
+## 常规设置
+### 设置Tab键为四个空格
 ```text
 1. 打开 SQLyog 软件，选择 工具-->首选项
 
@@ -132,7 +135,7 @@ Alt + F4   退出程序
 3. 将 SQL格式工具栏 中缩进设置为 4 空格，至此，我们在使用 SQLyog 输入SQL语句时，就可以放心大胆使用 Tab 缩进了
 ```
 
-## 定制尺寸宽度是指为0
+### 定制尺寸宽度是指为0
 ```text
 默认，从SQLyog复制出来的内容每行最左端会多两个空格。
 
@@ -143,5 +146,5 @@ Alt + F4   退出程序
 
 ```
 
-## 其他
+### 其他
 * 查看表时，字段后显示的 xB，表示该字段名称所有的字符个数，包括括号符号等

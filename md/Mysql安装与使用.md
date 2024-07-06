@@ -129,7 +129,7 @@ D:\Server\mysql-8.4.1-winx64\bin> mysqld --install mysql
 mysqld --initialize-insecure 
 
 // 或
-// 'root'@'localhost' 用户有初始密码，注意此处保存密码，如果没打印出来密码就是空
+// 'root'@'localhost' 用户有初始密码，注意此处保存密码，如果没打印出来密码 就 是空
 mysqld --initialize --console
 ```
 6. 启动 MySQL
@@ -143,6 +143,8 @@ Enter password: ********  // 输入密码
 
 -- caching_sha2_password，默认使用该密码插件
 mysql> ALTER USER 'root'@'localhost' IDENTIFIED BY 'password_str!';
+-- 或
+mysql> ALTER USER user() IDENTIFIED BY 'password_str!';
 
 -- mysql_native_password，旧版的密码插件
 mysql> ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password_str!';

@@ -145,7 +145,33 @@ stat 为索引次要字段3
     ```
 * 查看索引
     ```text
-    SHOW INDEX FROM 表名;
+    SHOW INDEX FROM <表名>;
+    
+    // 查看指定数据库的所有索引
+    SELECT * FROM mysql.`innodb_index_stats` t
+    WHERE t.`database_name` = '数据名';
+    
+    // 查看指定表的所有索引
+    SELECT * FROM mysql.`innodb_index_stats` t
+    WHERE t.`database_name` = '数据名'
+        AND t.table_name LIKE '%表名%';
+    ```
+    示例
+    ```mysql
+    $ SELECT * FROM mysql.`innodb_index_stats` t
+    WHERE t.`database_name` = 'mylab'
+      AND t.table_name LIKE '%book%'
+    ;
+    
+    database_name  table_name  index_name     last_update          stat_name     stat_value  sample_size  stat_description                   
+    -------------  ----------  -------------  -------------------  ------------  ----------  -----------  -----------------------------------
+    mylab          book        PRIMARY        2024-07-06 17:45:30  n_diff_pfx01          12            1  bookid                             
+    mylab          book        PRIMARY        2024-07-06 17:45:30  n_leaf_pages           1       (NULL)  Number of leaf pages in the index  
+    mylab          book        PRIMARY        2024-07-06 17:45:30  size                   1       (NULL)  Number of pages in the index       
+    mylab          book        idx_book_card  2024-07-06 17:45:30  n_diff_pfx01           8            1  card                               
+    mylab          book        idx_book_card  2024-07-06 17:45:30  n_diff_pfx02          12            1  card,bookid                        
+    mylab          book        idx_book_card  2024-07-06 17:45:30  n_leaf_pages           1       (NULL)  Number of leaf pages in the index  
+    mylab          book        idx_book_card  2024-07-06 17:45:30  size                   1       (NULL)  Number of pages in the index  
     ```
 
 * 删除索引

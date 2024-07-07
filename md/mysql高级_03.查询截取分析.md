@@ -101,7 +101,7 @@ filesort: 通过扫描表数据完成排序
     -- 1_0
     EXPLAIN
     SELECT age, birth FROM taba 
-    WHERE age > 20
+    WHERE age = 20
     ORDER BY age;
     ```
     ![](../images/order_by_1_0.png)  
@@ -109,8 +109,8 @@ filesort: 通过扫描表数据完成排序
     ```text
     order by排序方式：index
     用到索引age,birth
-    type为index
-    Extra为Using where; Using index
+    type为ref
+    Extra为null
     ```
         
 * 情况1_1
@@ -492,7 +492,7 @@ IO是比较耗时的
 
 * 两种算法的数据都有可能超出sort_buffer容量(sort_buffer_size值)，
 超出后，会创建tmp文件进行合并排序，导致多次IO。
-当时单路算法的风险更大些，所以要提高sort_buffer_size
+这时单路算法的风险更大些，所以要提高sort_buffer_size
 
 * sort_buffer_size是针对每个进程的
 
@@ -538,7 +538,7 @@ mysql能为排序和查询使用相同的索引
 ### group by关键字优化
 * group by实质是先排序后进行分组，遵照使用索引的最佳左前缀法则
 * 当无法使用索引列，增大max_length_for_sort_data参数的值、增大sort_buffer_size参数的值
-* where优先于having，能用where筛选胡就不要用having筛选
+* where优先于having，能用where筛选就不要用having筛选
 * 其他同order by关键字优化方法
 
 
@@ -568,7 +568,7 @@ mysql服务重启后失效
     # 查看慢查询sql的阈值
     SHOW VARIABLES LIKE 'long_query_time%';
     
-    # 设置设置慢查询sql阈值，单位为秒
+    # 设置慢查询sql阈值，单位为秒
     SET GLOBAL long_query_time = 3;
     ```
 
@@ -655,7 +655,7 @@ mysqldumpslow [ OPTS... ] 日志文件路径
     ```bash
     mysqldumpslow -s c -t 10 /var/lib/mysql/centos8-slow.log
     ```
-* 查询 查询用时最多，且SQL语句含有左连接的前10个SQL，
+* 查询用时最多，且SQL语句含有左连接的前10个SQL，
     ```bash
     mysqldumpslow -s t -t 10 -g "left join" /var/lib/mysql/centos8-slow.log
     ```
@@ -677,25 +677,28 @@ mysqldumpslow [ OPTS... ] 日志文件路径
     ```mysql
     CREATE TABLE dept (  -- 部门表
         id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-        deptno MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
-        dname VARCHAR(20) NOT NULL DEFAULT '',
-        loc VARCHAR(13) NOT NULL DEFAULT ''  -- 楼层
-    );
+        deptno MEDIUMINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '部门编号',
+        dname VARCHAR(20) NOT NULL DEFAULT '' '部门名称',
+        loc VARCHAR(13) NOT NULL DEFAULT '' COMMENT '楼层'  -- 楼层
+    ) COMMENT='部门表';
     
     CREATE TABLE emp (  -- 员工表
         id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-        empno MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,  -- 编号
-        ename VARCHAR(20) NOT NULL DEFAULT '',  -- 部门名
-        job VARCHAR(9) NOT NULL DEFAULT '',  -- 职位
-        mgr MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,  -- 上级领导编号
-        hirdate DATE NOT NULL,  -- 入职时间
-        sal DECIMAL(7, 2) NOT NULL,  -- 薪水
-        comm DECIMAL(7, 2) NOT NULL,  -- 分红
-        deptno MEDIUMINT UNSIGNED NOT NULL DEFAULT 0  -- 所在部门编号
-    );
+        empno MEDIUMINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '员工编号',  -- 编号
+        ename VARCHAR(20) NOT NULL DEFAULT '' COMMENT '员工编号',  -- 姓名
+        job VARCHAR(9) NOT NULL DEFAULT '' COMMENT '职位',  -- 职位
+        mgr MEDIUMINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '上级领导编号',  -- 上级领导编号
+        hirdate DATE NOT NULL COMMENT '入职时间',  -- 入职时间
+        sal DECIMAL(7, 2) NOT NULL COMMENT '薪水',  -- 薪水
+        comm DECIMAL(7, 2) NOT NULL COMMENT '分红',  -- 分红
+        deptno MEDIUMINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '所在部门编号'  -- 所在部门编号
+    ) COMMENT='员工表';
     ```
 
 * 创建产生指定长度的随机字符串函数
+
+在 SQLyog、Navicat MySQL 上不支持`DELIMITER`，要执行`DELIMITER`直接在 MySQL 客户端的 CLI 中去执行 下面的命令。  
+那当然也可以在 SQLyog、Navicat MySQL 的 函数、存储过程等项中直接创建 函数、存储过程。
     ```mysql
     DELIMITER $
     CREATE FUNCTION rand_string(n INT) RETURNS VARCHAR(255)
@@ -740,6 +743,37 @@ mysqldumpslow [ OPTS... ] 日志文件路径
     
     DELIMITER ;
     ```
+    如果 MySQL 开启了 bin-log 日志，则可能报下面的错误
+    ```bash
+    错误代码： 1418
+    This function has none of DETERMINISTIC, NO SQL, or READS SQL DATA in its declaration and binary logging is enabled (you *might* want to use the less safe log_bin_trust_function_creators variable)
+    ```
+    解决方法1
+    ```mysql
+    -- 开启 log_bin_trust_function_creators
+    set global log_bin_trust_function_creators = 1;
+    ```
+    解决方法2，指定 FUNCTION 的影响：  
+    可选项：DETERMINISTIC  // 不确定的  
+    NO SQL  // 没有SQL语句，所以是不修改数据  
+    READS SQL DATA  // 只读取SQL数据，所以是不修改数据  
+    不被 FUNCTION 支持的 还有：  
+    MODIFIES SQL DATA  // 要修改数据  
+    CONTAINS SQL  // 包含了SQL语句
+    ```mysql
+    DELIMITER $
+    
+    CREATE FUNCTION rand_num() RETURNS INT
+    DETERMINISTIC
+    BEGIN
+        DECLARE i INT DEFAULT 0;
+        SET i = CEIL(100 + RAND() * 10);  -- 让部门编号从100起
+        RETURN i;
+    END $
+    
+    DELIMITER ;
+    ```
+
 * 创建往emp表中插入数据的存储过程
     ```mysql
     DELIMITER $
@@ -897,6 +931,10 @@ SHOW PROFILES;
     ```
     ![](../images/show_profile_2.png)  
 
+    ```mysql
+    SHOW PROFILE ALL FOR QUERY 173;
+    ```
+
 ### 日常开发需要注意的事项
 Status中出现下列情况
 * converting HEAP to MyISAM：查询结果太大，内存不够用了往磁盘上搬了。
@@ -929,8 +967,8 @@ Status中出现下列情况
 
     -- 开启对特定用户进行监听、收集历史sql语句
     INSERT INTO performance_schema.setup_actors
-    (HOST, USER, ROLE, ENABLED, HISTORY)
-    VALUES('%','root','%','YES','YES');
+    (HOST, USER, ROLE, ENABLED, HISTORY) VALUES
+    ('%','root','%','YES','YES');
 
     -- 
     SELECT * FROM performance_schema.setup_actors;
@@ -984,7 +1022,7 @@ SELECT * FROM emp ORDER BY id % 10, LENGTH(ename) LIMIT 150000;
 ### Performance Schema查看性能与分析
 * 查看历史SQL语句列表
     ```mysql
-    -- TIMER_WAIT时间需要装换，其值除以1000000000000即为秒
+    -- TIMER_WAIT时间需要装换，其值除以1000000000000即为秒 (除以 10^12)
     -- 可以用SQL_TEXT字段筛选
     SELECT EVENT_ID, TRUNCATE(TIMER_WAIT/1000000000000,6) AS "Duration (s)", SQL_TEXT
     FROM performance_schema.events_statements_history_long;
@@ -1007,6 +1045,11 @@ SELECT * FROM emp ORDER BY id % 10, LENGTH(ename) LIMIT 150000;
 ```text
 通过sys表查看性能
 sys表下有很多内置的view视图、存储过程和函数
+
+在 MySQL5.7 中新增了sys Schema。
+MySQL sys Schema是一个由一系列对象(视图、存储过程、存储方法、表和触发器) 组成的database schema，
+它本身不采集和存储什么信息，而是将 performance_schema 和 information_schema 数据库中的数据以更容易理解的方式总结出来归纳为“视图”。
+DBA 和 开发人员 可以通过 sys Schema 方便、快速地读取 Performance Schema 收集的数据。
 ```
 [sys Schema官网使用说明](https://dev.mysql.com/doc/refman/8.0/en/sys-schema-usage.html)  
 
@@ -1054,7 +1097,7 @@ sys表下有很多内置的view视图、存储过程和函数
 
 ## 全局日志
 ```text
-全局查询日志用于保存所有的sql语句执行记录，记录到mysql.general_log库里
+全局查询日志用于保存所有的sql语句执行记录，记录到 mysql.general_log 库里
 该功能非常影响性能
 
 该功能主要用于测试环境，

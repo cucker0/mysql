@@ -506,14 +506,14 @@ MySQL核心技术
     </details>
     
     <details>
-        <summary>WITH (Common Table Expressions)--公用表表达式</summary>
+        <summary>CTE 公用表表达式</summary>
     
-    * [公用表表达式是什么](md/12_01_WITH(Common_Table_Expressions).md#公用表表达式是什么)
-    * [公用表表达式语法](md/12_01_WITH(Common_Table_Expressions).md#公用表表达式语法)
-    * [允许使用with分句的情形](md/12_01_WITH(Common_Table_Expressions).md#允许使用with分句的情形)
-    * [递归公用表达式](md/12_01_WITH(Common_Table_Expressions).md#递归公用表达式)
-        * [限制公用表表达式的递归](md/12_01_WITH(Common_Table_Expressions).md#限制公用表表达式的递归)
-        * [递归公用表表达式的示例](md/12_01_WITH(Common_Table_Expressions).md#递归公用表表达式的示例)
+    * [公用表表达式是什么](md/12_01_CTE.md#公用表表达式是什么)
+    * [公用表表达式语法](md/12_01_CTE.md#公用表表达式语法)
+    * [允许使用with分句的情形](md/12_01_CTE.md#允许使用with分句的情形)
+    * [递归公用表达式](md/12_01_CTE.md#递归公用表达式)
+        * [限制公用表表达式的递归](md/12_01_CTE.md#限制公用表表达式的递归)
+        * [递归公用表表达式的示例](md/12_01_CTE.md#递归公用表表达式的示例)
     </details>
     
     <details>
@@ -600,7 +600,7 @@ MySQL核心技术
 </details>
 
 <details>
-<summary>查询截取分析</summary>
+<summary>查询性能分析</summary>
 
 * [查询优化](md/mysql高级_03.查询截取分析.md#查询优化)
     * [小表驱动大表示例](md/mysql高级_03.查询截取分析.md#小表驱动大表示例)
@@ -684,7 +684,6 @@ MySQL核心技术
     * [MySQL DBA技能](md/mysql_DBA技能.md)
     * [NavicatPremium客户端工具](md/NavicatPremium.md)
     * [SQLYog客户端工具](md/SQLYog.md)
-    * [CTE--公用表表达式](md/other.md#CTE--公用表表达式)
     * [MySQL、PostgreSQL 、Oracle在线资料](https://www.techonthenet.com/mysql/index.php)
     * [MySQL 8.0 Reference Manual](https://dev.mysql.com/doc/refman/8.0/en/)
     * [sql分析方法](md/sql分析方法.md)

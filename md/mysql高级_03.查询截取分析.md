@@ -1043,8 +1043,8 @@ SELECT * FROM emp ORDER BY id % 10, LENGTH(ename) LIMIT 150000;
 
 ## sys Schema性能查看与分析
 ```text
-通过sys表查看性能
-sys表下有很多内置的view视图、存储过程和函数
+通过 sys 数据库 查看性能
+sys 数据库 下有很多内置的view视图、存储过程、函数、触发器
 
 在 MySQL5.7 中新增了sys Schema。
 MySQL sys Schema是一个由一系列对象(视图、存储过程、存储方法、表和触发器) 组成的database schema，
@@ -1094,6 +1094,192 @@ DBA 和 开发人员 可以通过 sys Schema 方便、快速地读取 Performanc
     ORDER BY avg_io DESC LIMIT 10;
     ```
 
+### sys 库内置的 view
+```mysql
+$> USE sys;
+$> SHOW TABLE STATUS WHERE COMMENT='view';
+
+Name                                           Engine  Version  Row_format    Rows  Avg_row_length  Data_length  Max_data_length  Index_length  Data_free  Auto_increment  Create_time          Update_time  Check_time  Collation  Checksum  Create_options  Comment  
+---------------------------------------------  ------  -------  ----------  ------  --------------  -----------  ---------------  ------------  ---------  --------------  -------------------  -----------  ----------  ---------  --------  --------------  ---------
+host_summary                                   (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+host_summary_by_file_io                        (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+host_summary_by_file_io_type                   (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+host_summary_by_stages                         (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+host_summary_by_statement_latency              (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+host_summary_by_statement_type                 (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+innodb_buffer_stats_by_schema                  (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+innodb_buffer_stats_by_table                   (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+innodb_lock_waits                              (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+io_by_thread_by_latency                        (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+io_global_by_file_by_bytes                     (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+io_global_by_file_by_latency                   (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+io_global_by_wait_by_bytes                     (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+io_global_by_wait_by_latency                   (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+latest_file_io                                 (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+memory_by_host_by_current_bytes                (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+memory_by_thread_by_current_bytes              (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+memory_by_user_by_current_bytes                (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+memory_global_by_current_bytes                 (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+memory_global_total                            (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+metrics                                        (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+processlist                                    (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+ps_check_lost_instrumentation                  (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+schema_auto_increment_columns                  (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+schema_index_statistics                        (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+schema_object_overview                         (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+schema_redundant_indexes                       (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+schema_table_lock_waits                        (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+schema_table_statistics                        (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+schema_table_statistics_with_buffer            (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+schema_tables_with_full_table_scans            (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+schema_unused_indexes                          (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+session                                        (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+session_ssl_status                             (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+statement_analysis                             (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+statements_with_errors_or_warnings             (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+statements_with_full_table_scans               (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+statements_with_runtimes_in_95th_percentile    (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+statements_with_sorting                        (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+statements_with_temp_tables                    (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+user_summary                                   (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+user_summary_by_file_io                        (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+user_summary_by_file_io_type                   (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+user_summary_by_stages                         (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+user_summary_by_statement_latency              (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+user_summary_by_statement_type                 (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+version                                        (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+wait_classes_global_by_avg_latency             (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+wait_classes_global_by_latency                 (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+waits_by_host_by_latency                       (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+waits_by_user_by_latency                       (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+waits_global_by_latency                        (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$host_summary                                 (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$host_summary_by_file_io                      (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$host_summary_by_file_io_type                 (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$host_summary_by_stages                       (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$host_summary_by_statement_latency            (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$host_summary_by_statement_type               (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$innodb_buffer_stats_by_schema                (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$innodb_buffer_stats_by_table                 (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$innodb_lock_waits                            (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$io_by_thread_by_latency                      (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$io_global_by_file_by_bytes                   (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$io_global_by_file_by_latency                 (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$io_global_by_wait_by_bytes                   (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$io_global_by_wait_by_latency                 (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$latest_file_io                               (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$memory_by_host_by_current_bytes              (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$memory_by_thread_by_current_bytes            (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$memory_by_user_by_current_bytes              (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$memory_global_by_current_bytes               (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$memory_global_total                          (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$processlist                                  (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$ps_digest_95th_percentile_by_avg_us          (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$ps_digest_avg_latency_distribution           (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$ps_schema_table_statistics_io                (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$schema_flattened_keys                        (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$schema_index_statistics                      (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$schema_table_lock_waits                      (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$schema_table_statistics                      (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$schema_table_statistics_with_buffer          (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$schema_tables_with_full_table_scans          (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$session                                      (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$statement_analysis                           (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$statements_with_errors_or_warnings           (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$statements_with_full_table_scans             (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$statements_with_runtimes_in_95th_percentile  (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$statements_with_sorting                      (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$statements_with_temp_tables                  (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$user_summary                                 (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$user_summary_by_file_io                      (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$user_summary_by_file_io_type                 (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$user_summary_by_stages                       (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$user_summary_by_statement_latency            (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$user_summary_by_statement_type               (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$wait_classes_global_by_avg_latency           (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$wait_classes_global_by_latency               (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$waits_by_host_by_latency                     (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$waits_by_user_by_latency                     (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+x$waits_global_by_latency                      (NULL)   (NULL)  (NULL)      (NULL)          (NULL)       (NULL)           (NULL)        (NULL)     (NULL)          (NULL)  2024-07-05 12:04:30  (NULL)       (NULL)      (NULL)       (NULL)  (NULL)          VIEW     
+```
+
+### sys 库内置的 存储过程
+```mysql
+$> SELECT * FROM information_schema.routines
+   WHERE routine_schema = 'sys' AND routine_type = 'PROCEDURE';
+
+$> SELECT SPECIFIC_NAME FROM information_schema.routines
+   WHERE routine_schema = 'sys' AND routine_type = 'PROCEDURE';
+                     
+-------------------------------------
+create_synonym_db                    
+diagnostics                          
+execute_prepared_stmt                
+ps_setup_disable_background_threads  
+ps_setup_disable_consumer            
+ps_setup_disable_instrument          
+ps_setup_disable_thread              
+ps_setup_enable_background_threads   
+ps_setup_enable_consumer             
+ps_setup_enable_instrument           
+ps_setup_enable_thread               
+ps_setup_reload_saved                
+ps_setup_reset_to_default            
+ps_setup_save                        
+ps_setup_show_disabled               
+ps_setup_show_disabled_consumers     
+ps_setup_show_disabled_instruments   
+ps_setup_show_enabled                
+ps_setup_show_enabled_consumers      
+ps_setup_show_enabled_instruments    
+ps_statement_avg_latency_histogram   
+ps_trace_statement_digest            
+ps_trace_thread                      
+ps_truncate_all_tables               
+statement_performance_analyzer       
+table_exists                                               
+```
+
+### sys 库内置的 函数
+```mysql
+$> SELECT SPECIFIC_NAME FROM information_schema.routines
+   WHERE routine_schema = 'sys' AND routine_type = 'FUNCTION';
+
+SPECIFIC_NAME                     
+----------------------------------
+extract_schema_from_file_name     
+extract_table_from_file_name      
+format_bytes                      
+format_path                       
+format_statement                  
+format_time                       
+list_add                          
+list_drop                         
+ps_is_account_enabled             
+ps_is_consumer_enabled            
+ps_is_instrument_default_enabled  
+ps_is_instrument_default_timed    
+ps_is_thread_instrumented         
+ps_thread_account                 
+ps_thread_id                      
+ps_thread_stack                   
+ps_thread_trx_info                
+quote_identifier                  
+sys_get_config                    
+version_major                     
+version_minor                     
+version_patch                     
+```
+
+### sys 库内置的 触发器
+```mysql
+$> USE sys;
+$> SHOW TRIGGERS;
+Trigger                     Event   Table        ...
+--------------------------  ------  ----------   ...
+sys_config_insert_set_user  INSERT  sys_config   ...
+sys_config_update_set_user  UPDATE  sys_config   ...
+```
 
 ## 全局日志
 ```text

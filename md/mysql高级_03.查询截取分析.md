@@ -10,13 +10,13 @@ mysql高级.查询截取分析
 ```mysql
 -- 示例：A表、B表
 CREATE TABLE A (
-    id INT,
-    cname VARCHAR(32)
+                   id INT,
+                   cname VARCHAR(32)
 );
 
 CREATE TABLE B (
-    id INT,
-    score INT
+                   id INT,
+                   score INT
 );
 
 ALTER TABLE A ADD INDEX idx_a_id (id);
@@ -95,7 +95,7 @@ filesort: 通过扫描表数据完成排序
     
     SHOW INDEX FROM taba;
     ```
-    
+
 * 情况1_0
     ```mysql
     -- 1_0
@@ -104,15 +104,15 @@ filesort: 通过扫描表数据完成排序
     WHERE age = 20
     ORDER BY age;
     ```
-    ![](../images/order_by_1_0.png)  
-    **观察与分析**  
+  ![](../images/order_by_1_0.png)  
+  **观察与分析**
     ```text
     order by排序方式：index
     用到索引age,birth
     type为ref
     Extra为null
     ```
-        
+
 * 情况1_1
     ```mysql
     -- 1_1
@@ -121,15 +121,15 @@ filesort: 通过扫描表数据完成排序
     WHERE age > 20
     ORDER BY age;
     ```
-    ![](../images/order_by_1_1.png)  
-    **观察与分析**  
+  ![](../images/order_by_1_1.png)  
+  **观察与分析**
     ```text
     order by排序方式：index
     用到索引age,birth
     type为index
     Extra为Using where; Using index
     ```
-    -- vs
+  -- vs
     ```mysql
     EXPLAIN
     SELECT * FROM taba 
@@ -142,8 +142,8 @@ filesort: 通过扫描表数据完成排序
     Extra为Using index condition
     */
     ```
-    ![](../images/order_by_1_1.2.png)  
-    
+  ![](../images/order_by_1_1.2.png)
+
 * 情况1_2
     ```mysql
     -- 1_2
@@ -152,15 +152,15 @@ filesort: 通过扫描表数据完成排序
     WHERE age > 20
     ORDER BY age, birth;
     ```
-    ![](../images/order_by_1_2.png)  
-    **观察与分析**  
+  ![](../images/order_by_1_2.png)  
+  **观察与分析**
     ```text
     order by排序方式：index
     用到索引age,birth
     type为index
     Extra为Using where; Using index
     ```
-    -- vs
+  -- vs
     ```mysql
     EXPLAIN
     SELECT * FROM taba
@@ -173,8 +173,8 @@ filesort: 通过扫描表数据完成排序
     Extra为Using index condition
     */
     ```
-    ![](../images/order_by_1_2.2.png)  
-    
+  ![](../images/order_by_1_2.2.png)
+
 <span id = "order_by_1_3"></span>
 * 情况1_3
     ```mysql
@@ -184,15 +184,15 @@ filesort: 通过扫描表数据完成排序
     WHERE age > 20
     ORDER BY birth;
     ```
-    ![](../images/order_by_1_3.png)  
-    **观察与分析**  
+  ![](../images/order_by_1_3.png)  
+  **观察与分析**
     ```text
     order by排序方式：filesort
     用到索引age,birth
     type为index
     Extra为Using where; Using index; Using filesort
     ```
-    -- vs
+  -- vs
     ```mysql
     EXPLAIN
     SELECT * FROM taba
@@ -205,8 +205,8 @@ filesort: 通过扫描表数据完成排序
     Extra为Using index condition; Using filesort
     */
     ```
-    ![](../images/order_by_1_3.2.png)  
-    
+  ![](../images/order_by_1_3.2.png)
+
 * 情况1_4
     ```mysql
     -- 1_4
@@ -215,15 +215,15 @@ filesort: 通过扫描表数据完成排序
     WHERE age > 20
     ORDER BY birth, age;
     ```
-    ![](../images/order_by_1_4.png)  
-    **观察与分析**  
+  ![](../images/order_by_1_4.png)  
+  **观察与分析**
     ```text
     order by排序方式：filesort
     用到索引age,birth
     type为index
     Extra为Using where; Using index; Using filesort
     ```
-    -- vs
+  -- vs
     ```mysql
     EXPLAIN
     SELECT * FROM taba
@@ -236,9 +236,9 @@ filesort: 通过扫描表数据完成排序
     Extra为Using index condition; Using filesort
     */
     ```
-    ![](../images/order_by_1_4.2.png)  
-    
-    -- vs
+  ![](../images/order_by_1_4.2.png)
+
+  -- vs
     ```mysql
     EXPLAIN
     SELECT age, birth FROM taba
@@ -251,8 +251,8 @@ filesort: 通过扫描表数据完成排序
     Extra为Using index
     */
     ```
-    ![](../images/order_by_1_4.3.png)  
-    
+  ![](../images/order_by_1_4.3.png)
+
 * 情况2_1
     ```mysql
     -- 2_1
@@ -260,15 +260,15 @@ filesort: 通过扫描表数据完成排序
     SELECT age, birth FROM taba 
     ORDER BY birth;
     ```
-    ![](../images/order_by_2_1.png)  
-    **观察与分析**  
+  ![](../images/order_by_2_1.png)  
+  **观察与分析**
     ```text
     order by排序方式：filesort
     用到索引age,birth
     type为index
     Extra为Using index; Using filesort
     ```
-    -- vs
+  -- vs
     ```mysql
     EXPLAIN
     SELECT * FROM taba 
@@ -280,8 +280,8 @@ filesort: 通过扫描表数据完成排序
     Extra为Using filesort
     */
     ```
-    ![](../images/order_by_2_1.2.png)  
-    
+  ![](../images/order_by_2_1.2.png)
+
 * 情况2_2
     ```mysql
     -- 2_2
@@ -290,15 +290,15 @@ filesort: 通过扫描表数据完成排序
     WHERE birth > '2019-11-06 00:00:00'
     ORDER BY birth;
     ```
-    ![](../images/order_by_2_2.png)  
-    **观察与分析**  
+  ![](../images/order_by_2_2.png)  
+  **观察与分析**
     ```text
     order by排序方式：filesort
     用到索引age,birth
     type为index
     Extra为Using where; Using index; Using filesort
     ```
-    -- vs
+  -- vs
     ```mysql
     EXPLAIN
     SELECT * FROM taba
@@ -311,7 +311,7 @@ filesort: 通过扫描表数据完成排序
     Extra为Using where; Using filesort
     */
     ```
-    ![](../images/order_by_2_2.2.png)  
+  ![](../images/order_by_2_2.2.png)
 
 * 情况2_3
     ```mysql
@@ -321,9 +321,9 @@ filesort: 通过扫描表数据完成排序
     WHERE birth > '2019-11-06 00:00:00'
     ORDER BY age;
     ```
-    ![](../images/order_by_2_3.png)  
-    
-    **观察与分析**  
+  ![](../images/order_by_2_3.png)
+
+  **观察与分析**
     ```text
     -- 与1_3的比较
     
@@ -335,9 +335,9 @@ filesort: 通过扫描表数据完成排序
     这里为什么只用到了index排序，而没有产生filesort排序呢？
     这主要是因为使用到了覆盖索引，因为idx_taba_age_birth (age, birth) 而select * 即为 select age, birth
     ```
-    [与1_3的比较，把where条件与order by字段调换](#order_by_1_3)  
-    
-    -- vs
+  [与1_3的比较，把where条件与order by字段调换](#order_by_1_3)
+
+  -- vs
     ```mysql
     EXPLAIN
     SELECT * FROM taba
@@ -350,8 +350,8 @@ filesort: 通过扫描表数据完成排序
     Extra为Using where; Using filesort
     */
     ```
-    ![](../images/order_by_2_3.2.png)  
-    
+  ![](../images/order_by_2_3.2.png)
+
 * 情况2_4
     ```mysql
     -- 2_4
@@ -359,16 +359,16 @@ filesort: 通过扫描表数据完成排序
     SELECT age, birth FROM taba
     ORDER BY age ASC, birth DESC;
     ```
-    ![](../images/order_by_2_4.png)  
-    
-    **观察与分析**  
+  ![](../images/order_by_2_4.png)
+
+  **观察与分析**
     ```text
     order by排序方式：filesort
     用到索引age,birth
     type为index
     Extra为Using index; Using filesort
     ```
-    -- vs
+  -- vs
     ```mysql
     EXPLAIN
     SELECT * FROM taba
@@ -380,17 +380,17 @@ filesort: 通过扫描表数据完成排序
     Extra为Using filesort
     */
     ```
-    ![](../images/order_by_2_4.2.png)  
-    
+  ![](../images/order_by_2_4.2.png)
+
 * 情况2_5
     ```mysql
     EXPLAIN
     SELECT age, birth FROM taba
     ORDER BY age DESC, birth DESC;
     ```
-    ![](../images/order_by_2_5.png)  
-    
-    **观察与分析**  
+  ![](../images/order_by_2_5.png)
+
+  **观察与分析**
     ```text
     order by排序方式：index
     用到索引age,birth
@@ -401,7 +401,7 @@ filesort: 通过扫描表数据完成排序
     这是因为ORDER BY排序的字段的排序方向一致，
     默认索引字段的排序是asc升序，所以这里出现了反向索引扫描(Backward index scan)
     ```
-    -- vs
+  -- vs
     ```mysql
     EXPLAIN
     SELECT * FROM taba
@@ -413,7 +413,7 @@ filesort: 通过扫描表数据完成排序
     Extra为Using filesort
     */
     ```
-    ![](../images/order_by_2_4.2.png)  
+  ![](../images/order_by_2_4.2.png)
 
 * 情况2_6
     ```mysql
@@ -424,9 +424,9 @@ filesort: 通过扫描表数据完成排序
     
     */
     ```
-    ![](../images/order_by_2_6.png)  
-        
-    **观察与分析**  
+  ![](../images/order_by_2_6.png)
+
+  **观察与分析**
     ```text
     order by排序方式：filesort
     用到了索引age
@@ -609,7 +609,7 @@ use testdb;
 SET timestamp=1573115172; # 执行此sql的时间戳
 SELECT SLEEP(8); SQL语句
 ```
-![](../images/slow_query_log1.png)  
+![](../images/slow_query_log1.png)
 
 * 查看当前系统中有多少条慢查询日志
 ```mysql
@@ -699,20 +699,20 @@ mysqldumpslow [ OPTS... ] 日志文件路径
 
 在 SQLyog、Navicat MySQL 上不支持`DELIMITER`，要执行`DELIMITER`直接在 MySQL 客户端的 CLI 中去执行 下面的命令。  
 那当然也可以在 SQLyog、Navicat MySQL 的 函数、存储过程等项中直接创建 函数、存储过程。
-    ```mysql
-    DELIMITER $
-    CREATE FUNCTION rand_string(n INT) RETURNS VARCHAR(255)
-    /*产生指定长度的随机字符串函数
-    in
-    ---
-        n: 要生成的字符串长度
-    return:  指定长度的随机字符串
-    */
-    BEGIN
-        DECLARE chars_str VARCHAR(100) DEFAULT 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        DECLARE return_str VARCHAR(255) DEFAULT '';
-        DECLARE i INT DEFAULT 0;
-        
+```mysql
+DELIMITER $
+CREATE FUNCTION rand_string(n INT) RETURNS VARCHAR(255)
+/*产生指定长度的随机字符串函数
+in
+---
+n: 要生成的字符串长度
+return:  指定长度的随机字符串
+*/
+BEGIN
+DECLARE chars_str VARCHAR(100) DEFAULT 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+DECLARE return_str VARCHAR(255) DEFAULT '';
+DECLARE i INT DEFAULT 0;
+
         WHILE i < n DO
             SET return_str = CONCAT(return_str, SUBSTR(chars_str, CEIL(RAND() * 52), 1));
             SET i = i + 1;
@@ -743,23 +743,23 @@ mysqldumpslow [ OPTS... ] 日志文件路径
     
     DELIMITER ;
     ```
-    如果 MySQL 开启了 bin-log 日志，则可能报下面的错误
+  如果 MySQL 开启了 bin-log 日志，则可能报下面的错误
     ```bash
     错误代码： 1418
     This function has none of DETERMINISTIC, NO SQL, or READS SQL DATA in its declaration and binary logging is enabled (you *might* want to use the less safe log_bin_trust_function_creators variable)
     ```
-    解决方法1
+  解决方法1
     ```mysql
     -- 开启 log_bin_trust_function_creators
     set global log_bin_trust_function_creators = 1;
     ```
-    解决方法2，指定 FUNCTION 的影响：  
-    可选项：DETERMINISTIC  // 不确定的  
-    NO SQL  // 没有SQL语句，所以是不修改数据  
-    READS SQL DATA  // 只读取SQL数据，所以是不修改数据  
-    不被 FUNCTION 支持的 还有：  
-    MODIFIES SQL DATA  // 要修改数据  
-    CONTAINS SQL  // 包含了SQL语句
+  解决方法2，指定 FUNCTION 的影响：  
+  可选项：DETERMINISTIC  // 不确定的  
+  NO SQL  // 没有SQL语句，所以是不修改数据  
+  READS SQL DATA  // 只读取SQL数据，所以是不修改数据  
+  不被 FUNCTION 支持的 还有：  
+  MODIFIES SQL DATA  // 要修改数据  
+  CONTAINS SQL  // 包含了SQL语句
     ```mysql
     DELIMITER $
     
@@ -862,7 +862,7 @@ show profiles、show profile可以分析当前会话中SQL语句执行的各阶�
 
 从mysql 5.6.7开始show profiles、show profile被deprecated弃用，建议使用Performance Schema
 ```
-[show profile官网说明](https://dev.mysql.com/doc/refman/8.0/en/show-profile.html)  
+[show profile官网说明](https://dev.mysql.com/doc/refman/8.0/en/show-profile.html)
 
 
 ### 开启性能收集功能
@@ -890,7 +890,7 @@ SHOW VARIABLES LIKE 'profil%';
 ```mysql
 SHOW PROFILES;
 ```
-![](../images/show_profiles.png)  
+![](../images/show_profiles.png)
 
 ### show profile
 查看单条SQL语句各个阶段的用时、CPU、IO等详情。诊断SQL语句
@@ -924,12 +924,12 @@ SHOW PROFILES;
     ```mysql
     SHOW PROFILE FOR QUERY 173;
     ```
-    ![](../images/show_profile_1.png)  
-    
+  ![](../images/show_profile_1.png)
+
     ```mysql
     SHOW PROFILE CPU, BLOCK IO FOR QUERY 173;
     ```
-    ![](../images/show_profile_2.png)  
+  ![](../images/show_profile_2.png)
 
     ```mysql
     SHOW PROFILE ALL FOR QUERY 173;
@@ -955,7 +955,7 @@ Status中出现下列情况
     ```mysql
     SELECT * FROM performance_schema.setup_actors;
     ```
-    ![](../images/performance_schema_1.png)  
+  ![](../images/performance_schema_1.png)
 
 * 设置对特定用户进行监听、收集历史sql语句
     ```mysql
@@ -973,7 +973,7 @@ Status中出现下列情况
     -- 
     SELECT * FROM performance_schema.setup_actors;
     ```
-    ![](../images/performance_schema_2.png)  
+  ![](../images/performance_schema_2.png)
 
 * 开启statement、stage生产者(instruments)
     ```mysql
@@ -994,6 +994,372 @@ Status中出现下列情况
     SET ENABLED = 'YES', TIMED = 'YES'
     WHERE NAME LIKE '%stage/%';
     ```
+  原始值
+    * statement
+    ```mysql
+    $> SELECT * FROM performance_schema.setup_instruments
+    WHERE NAME LIKE '%statement/%'
+    ORDER BY enabled DESC;
+    
+    name                                                      ENABLED
+    --------------------------------------------------------  ---------
+    statement/sp/set                                          NO       
+    statement/sp/set_trigger_field                            NO       
+    statement/sp/jump                                         NO       
+    statement/sp/jump_if_not                                  NO       
+    statement/sp/freturn                                      NO       
+    statement/sp/hpush_jump                                   NO       
+    statement/sp/hpop                                         NO       
+    statement/sp/hreturn                                      NO       
+    statement/sp/cpush                                        NO       
+    statement/sp/cpop                                         NO       
+    statement/sp/copen                                        NO       
+    statement/sp/cclose                                       NO       
+    statement/sp/cfetch                                       NO       
+    statement/sp/error                                        NO       
+    statement/sp/set_case_expr                                NO       
+    statement/sql/select                                      YES      
+    statement/sql/create_table                                YES      
+    statement/sql/create_index                                YES      
+    statement/sql/alter_table                                 YES      
+    statement/sql/update                                      YES      
+    statement/sql/insert                                      YES      
+    statement/sql/insert_select                               YES      
+    statement/sql/delete                                      YES      
+    statement/sql/truncate                                    YES      
+    statement/sql/drop_table                                  YES      
+    statement/sql/drop_index                                  YES      
+    statement/sql/show_databases                              YES      
+    statement/sql/show_tables                                 YES      
+    statement/sql/show_fields                                 YES      
+    statement/sql/show_keys                                   YES      
+    statement/sql/show_variables                              YES      
+    statement/sql/show_status                                 YES      
+    statement/sql/show_engine_logs                            YES      
+    statement/sql/show_engine_status                          YES      
+    statement/sql/show_engine_mutex                           YES      
+    statement/sql/show_processlist                            YES      
+    statement/sql/show_binary_log_status                      YES      
+    statement/sql/show_replica_status                         YES      
+    statement/sql/show_grants                                 YES      
+    statement/sql/show_create_table                           YES      
+    statement/sql/show_charsets                               YES      
+    statement/sql/show_collations                             YES      
+    statement/sql/show_create_db                              YES      
+    statement/sql/show_table_status                           YES      
+    statement/sql/show_triggers                               YES      
+    statement/sql/load                                        YES      
+    statement/sql/set_option                                  YES      
+    statement/sql/lock_tables                                 YES      
+    statement/sql/unlock_tables                               YES      
+    statement/sql/grant                                       YES      
+    statement/sql/change_db                                   YES      
+    statement/sql/create_db                                   YES      
+    statement/sql/drop_db                                     YES      
+    statement/sql/alter_db                                    YES      
+    statement/sql/repair                                      YES      
+    statement/sql/replace                                     YES      
+    statement/sql/replace_select                              YES      
+    statement/sql/create_udf                                  YES      
+    statement/sql/drop_function                               YES      
+    statement/sql/revoke                                      YES      
+    statement/sql/optimize                                    YES      
+    statement/sql/check                                       YES      
+    statement/sql/assign_to_keycache                          YES      
+    statement/sql/preload_keys                                YES      
+    statement/sql/flush                                       YES      
+    statement/sql/kill                                        YES      
+    statement/sql/analyze                                     YES      
+    statement/sql/rollback                                    YES      
+    statement/sql/rollback_to_savepoint                       YES      
+    statement/sql/commit                                      YES      
+    statement/sql/savepoint                                   YES      
+    statement/sql/release_savepoint                           YES      
+    statement/sql/replica_start                               YES      
+    statement/sql/replica_stop                                YES      
+    statement/sql/group_replication_start                     YES      
+    statement/sql/group_replication_stop                      YES      
+    statement/sql/begin                                       YES      
+    statement/sql/change_replication_source                   YES      
+    statement/sql/change_repl_filter                          YES      
+    statement/sql/rename_table                                YES      
+    statement/sql/reset                                       YES      
+    statement/sql/purge                                       YES      
+    statement/sql/purge_before_date                           YES      
+    statement/sql/show_binlogs                                YES      
+    statement/sql/show_open_tables                            YES      
+    statement/sql/ha_open                                     YES      
+    statement/sql/ha_close                                    YES      
+    statement/sql/ha_read                                     YES      
+    statement/sql/show_replicas                               YES      
+    statement/sql/delete_multi                                YES      
+    statement/sql/update_multi                                YES      
+    statement/sql/show_binlog_events                          YES      
+    statement/sql/do                                          YES      
+    statement/sql/show_warnings                               YES      
+    statement/sql/empty_query                                 YES      
+    statement/sql/show_errors                                 YES      
+    statement/sql/show_storage_engines                        YES      
+    statement/sql/show_privileges                             YES      
+    statement/sql/help                                        YES      
+    statement/sql/create_user                                 YES      
+    statement/sql/drop_user                                   YES      
+    statement/sql/rename_user                                 YES      
+    statement/sql/revoke_all                                  YES      
+    statement/sql/checksum                                    YES      
+    statement/sql/create_procedure                            YES      
+    statement/sql/create_function                             YES      
+    statement/sql/call_procedure                              YES      
+    statement/sql/drop_procedure                              YES      
+    statement/sql/alter_procedure                             YES      
+    statement/sql/alter_function                              YES      
+    statement/sql/show_create_proc                            YES      
+    statement/sql/show_create_func                            YES      
+    statement/sql/show_procedure_status                       YES      
+    statement/sql/show_function_status                        YES      
+    statement/sql/prepare_sql                                 YES      
+    statement/sql/execute_sql                                 YES      
+    statement/sql/dealloc_sql                                 YES      
+    statement/sql/create_view                                 YES      
+    statement/sql/drop_view                                   YES      
+    statement/sql/create_trigger                              YES      
+    statement/sql/drop_trigger                                YES      
+    statement/sql/xa_start                                    YES      
+    statement/sql/xa_end                                      YES      
+    statement/sql/xa_prepare                                  YES      
+    statement/sql/xa_commit                                   YES      
+    statement/sql/xa_rollback                                 YES      
+    statement/sql/xa_recover                                  YES      
+    statement/sql/show_procedure_code                         YES      
+    statement/sql/show_function_code                          YES      
+    statement/sql/alter_tablespace                            YES      
+    statement/sql/install_plugin                              YES      
+    statement/sql/uninstall_plugin                            YES      
+    statement/sql/binlog                                      YES      
+    statement/sql/show_plugins                                YES      
+    statement/sql/create_server                               YES      
+    statement/sql/drop_server                                 YES      
+    statement/sql/alter_server                                YES      
+    statement/sql/create_event                                YES      
+    statement/sql/alter_event                                 YES      
+    statement/sql/drop_event                                  YES      
+    statement/sql/show_create_event                           YES      
+    statement/sql/show_events                                 YES      
+    statement/sql/show_create_trigger                         YES      
+    statement/sql/show_profile                                YES      
+    statement/sql/show_profiles                               YES      
+    statement/sql/signal                                      YES      
+    statement/sql/resignal                                    YES      
+    statement/sql/show_relaylog_events                        YES      
+    statement/sql/get_diagnostics                             YES      
+    statement/sql/alter_user                                  YES      
+    statement/sql/explain_other                               YES      
+    statement/sql/show_create_user                            YES      
+    statement/sql/shutdown                                    YES      
+    statement/sql/set_password                                YES      
+    statement/sql/alter_instance                              YES      
+    statement/sql/install_component                           YES      
+    statement/sql/uninstall_component                         YES      
+    statement/sql/create_role                                 YES      
+    statement/sql/drop_role                                   YES      
+    statement/sql/set_role                                    YES      
+    statement/sql/grant_roles                                 YES      
+    statement/sql/revoke_roles                                YES      
+    statement/sql/alter_user_default_role                     YES      
+    statement/sql/import                                      YES      
+    statement/sql/create_resource_group                       YES      
+    statement/sql/alter_resource_group                        YES      
+    statement/sql/drop_resource_group                         YES      
+    statement/sql/set_resource_group                          YES      
+    statement/sql/lock_instance                               YES      
+    statement/sql/unlock_instance                             YES      
+    statement/sql/restart                                     YES      
+    statement/sql/create_spatial_reference_system             YES      
+    statement/sql/drop_spatial_reference_system               YES      
+    statement/sql/show_parse_tree                             YES      
+    statement/sql/error                                       YES      
+    statement/abstract/clone                                  YES      
+    statement/sp/stmt                                         YES      
+    statement/scheduler/event                                 YES      
+    statement/com/Sleep                                       YES      
+    statement/com/Quit                                        YES      
+    statement/com/Init DB                                     YES      
+    statement/com/Field List                                  YES      
+    statement/com/Create DB                                   YES      
+    statement/com/Drop DB                                     YES      
+    statement/com/Refresh                                     YES      
+    statement/com/Shutdown                                    YES      
+    statement/com/Statistics                                  YES      
+    statement/com/Processlist                                 YES      
+    statement/com/Connect                                     YES      
+    statement/com/Kill                                        YES      
+    statement/com/Debug                                       YES      
+    statement/com/Ping                                        YES      
+    statement/com/Time                                        YES      
+    statement/com/Delayed insert                              YES      
+    statement/com/Change user                                 YES      
+    statement/com/Binlog Dump                                 YES      
+    statement/com/Table Dump                                  YES      
+    statement/com/Connect Out                                 YES      
+    statement/com/Register Replica                            YES      
+    statement/com/Prepare                                     YES      
+    statement/com/Execute                                     YES      
+    statement/com/Long Data                                   YES      
+    statement/com/Close stmt                                  YES      
+    statement/com/Reset stmt                                  YES      
+    statement/com/Set option                                  YES      
+    statement/com/Fetch                                       YES      
+    statement/com/Daemon                                      YES      
+    statement/com/Binlog Dump GTID                            YES      
+    statement/com/Reset Connection                            YES      
+    statement/com/Group Replication Data Stream subscription  YES      
+    statement/com/Error                                       YES      
+    statement/abstract/Query                                  YES      
+    statement/abstract/new_packet                             YES      
+    statement/abstract/relay_log                              YES          
+    ```
+    * stage
+    ```
+    $> SELECT NAME, ENABLED FROM performance_schema.setup_instruments
+    WHERE NAME LIKE '%stage/%'
+    ORDER BY ENABLED DESC;
+    
+    NAME                                                                        ENABLED  
+    --------------------------------------------------------------------------  ---------
+    stage/sql/After create                                                      NO       
+    stage/sql/preparing for alter table                                         NO       
+    stage/sql/altering table                                                    NO       
+    stage/sql/committing alter table to storage engine                          NO       
+    stage/sql/Changing replication source                                       NO       
+    stage/sql/Checking source version                                           NO       
+    stage/sql/checking permissions                                              NO       
+    stage/sql/cleaning up                                                       NO       
+    stage/sql/closing tables                                                    NO       
+    stage/sql/Compressing gtid_executed table                                   NO       
+    stage/sql/Connecting to source                                              NO       
+    stage/sql/converting HEAP to ondisk                                         NO       
+    stage/sql/creating table                                                    NO       
+    stage/sql/Creating tmp table                                                NO       
+    stage/sql/deleting from main table                                          NO       
+    stage/sql/deleting from reference tables                                    NO       
+    stage/sql/discard_or_import_tablespace                                      NO       
+    stage/sql/end                                                               NO       
+    stage/sql/executing                                                         NO       
+    stage/sql/Execution of init_command                                         NO       
+    stage/sql/explaining                                                        NO       
+    stage/sql/Finished reading one binlog; switching to next binlog             NO       
+    stage/sql/Flushing relay log and source info repository.                    NO       
+    stage/sql/Flushing relay-log info file.                                     NO       
+    stage/sql/freeing items                                                     NO       
+    stage/sql/FULLTEXT initialization                                           NO       
+    stage/sql/init                                                              NO       
+    stage/sql/Killing replica                                                   NO       
+    stage/sql/logging slow query                                                NO       
+    stage/sql/Making temporary file (append) before replaying LOAD DATA INFILE  NO       
+    stage/sql/manage keys                                                       NO       
+    stage/sql/Source has sent all binlog to replica; waiting for more updates   NO       
+    stage/sql/Opening tables                                                    NO       
+    stage/sql/optimizing                                                        NO       
+    stage/sql/preparing                                                         NO       
+    stage/sql/Purging old relay logs                                            NO       
+    stage/sql/query end                                                         NO       
+    stage/sql/Queueing source event to the relay log                            NO       
+    stage/sql/Reading event from the relay log                                  NO       
+    stage/sql/Registering replica on source                                     NO       
+    stage/sql/removing tmp table                                                NO       
+    stage/sql/rename                                                            NO       
+    stage/sql/rename result table                                               NO       
+    stage/sql/Requesting binlog dump                                            NO       
+    stage/sql/Searching rows for update                                         NO       
+    stage/sql/Sending binlog event to replica                                   NO       
+    stage/sql/setup                                                             NO       
+    stage/sql/Replica has read all relay log; waiting for more updates          NO       
+    stage/sql/Reconnecting after a failed binlog dump request                   NO       
+    stage/sql/Reconnecting after a failed source event read                     NO       
+    stage/sql/Reconnecting after a failed registration on source                NO       
+    stage/sql/Waiting for an event from Coordinator                             NO       
+    stage/sql/Waiting for replica workers to process their queues               NO       
+    stage/sql/Waiting for Replica Worker queue                                  NO       
+    stage/sql/Waiting to reconnect after a failed binlog dump request           NO       
+    stage/sql/Waiting to reconnect after a failed source event read             NO       
+    stage/sql/Waiting to reconnect after a failed registration on source        NO       
+    stage/sql/Waiting for Replica Workers to free pending events                NO       
+    stage/sql/Waiting for Replica Worker to release partition                   NO       
+    stage/sql/Waiting for workers to exit                                       NO       
+    stage/sql/Waiting until SOURCE_DELAY seconds after source executed event    NO       
+    stage/sql/statistics                                                        NO       
+    stage/sql/System lock                                                       NO       
+    stage/sql/update                                                            NO       
+    stage/sql/updating                                                          NO       
+    stage/sql/updating main table                                               NO       
+    stage/sql/updating reference tables                                         NO       
+    stage/sql/User sleep                                                        NO       
+    stage/sql/verifying table                                                   NO       
+    stage/sql/Waiting for GTID to be committed                                  NO       
+    stage/sql/waiting for handler commit                                        NO       
+    stage/sql/Waiting for source to send event                                  NO       
+    stage/sql/Waiting for source update                                         NO       
+    stage/sql/Waiting for the replica SQL thread to free relay log space        NO       
+    stage/sql/Waiting for replica mutex on exit                                 NO       
+    stage/sql/Waiting for replica thread to start                               NO       
+    stage/sql/Waiting for table flush                                           NO       
+    stage/sql/Waiting for the next event in relay log                           NO       
+    stage/sql/Waiting for the replica SQL thread to advance position            NO       
+    stage/sql/Waiting to finalize termination                                   NO       
+    stage/sql/Waiting for preceding transaction to commit                       NO       
+    stage/sql/Waiting for dependent transaction to commit                       NO       
+    stage/sql/Suspending                                                        NO       
+    stage/sql/starting                                                          NO       
+    stage/sql/Waiting for no channel reference.                                 NO       
+    stage/sql/Executing hook on transaction begin.                              NO       
+    stage/sql/Waiting for disk space                                            NO       
+    stage/sql/Compressing transaction changes.                                  NO       
+    stage/sql/Decompressing transaction changes.                                NO       
+    stage/sql/Fetching source member details from connected source              NO       
+    stage/sql/Updating fetched source member details on receiver                NO       
+    stage/sql/Wait before trying to fetch next membership changes from source   NO       
+    stage/sql/Connection delegated to Group Replication                         NO       
+    stage/sql/Waiting for Binlog Group Commit ticket                            NO       
+    stage/mysys/Waiting for table level lock                                    NO       
+    stage/sql/Waiting on empty queue                                            NO       
+    stage/sql/Waiting for next activation                                       NO       
+    stage/sql/Waiting for the scheduler to stop                                 NO       
+    stage/sql/Waiting for global read lock                                      NO       
+    stage/sql/Waiting for backup lock                                           NO       
+    stage/sql/Waiting for tablespace metadata lock                              NO       
+    stage/sql/Waiting for schema metadata lock                                  NO       
+    stage/sql/Waiting for table metadata lock                                   NO       
+    stage/sql/Waiting for stored function metadata lock                         NO       
+    stage/sql/Waiting for stored procedure metadata lock                        NO       
+    stage/sql/Waiting for trigger metadata lock                                 NO       
+    stage/sql/Waiting for event metadata lock                                   NO       
+    stage/sql/Waiting for commit lock                                           NO       
+    stage/sql/User lock                                                         NO       
+    stage/sql/Waiting for locking service lock                                  NO       
+    stage/sql/Waiting for spatial reference system lock                         NO       
+    stage/sql/Waiting for acl cache lock                                        NO       
+    stage/sql/Waiting for column statistics lock                                NO       
+    stage/sql/Waiting for resource groups metadata lock                         NO       
+    stage/sql/Waiting for foreign key metadata lock                             NO       
+    stage/sql/Waiting for check constraint metadata lock                        NO       
+    stage/sql/copy to tmp table                                                 YES      
+    stage/sql/Applying batch of row changes (write)                             YES      
+    stage/sql/Applying batch of row changes (update)                            YES      
+    stage/sql/Applying batch of row changes (delete)                            YES      
+    stage/innodb/alter table (end)                                              YES      
+    stage/innodb/alter table (flush)                                            YES      
+    stage/innodb/alter table (insert)                                           YES      
+    stage/innodb/alter table (log apply index)                                  YES      
+    stage/innodb/alter table (log apply table)                                  YES      
+    stage/innodb/alter table (merge sort)                                       YES      
+    stage/innodb/alter table (read PK and internal sort)                        YES      
+    stage/innodb/alter tablespace (encryption)                                  YES      
+    stage/innodb/buffer pool load                                               YES      
+    stage/innodb/clone (file copy)                                              YES      
+    stage/innodb/clone (redo copy)                                              YES      
+    stage/innodb/clone (page copy)                                              YES      
+    ```
+
 
 * 开启events_statements_*、events_stages_*消费者(consumers)
     ```mysql
@@ -1012,6 +1378,32 @@ Status中出现下列情况
     SET ENABLED = 'YES'
     WHERE NAME LIKE '%events_stages_%';
     ```
+   原始值
+    * events_statements_
+    ```mysql
+    $> SELECT NAME, ENABLED FROM performance_schema.setup_consumers
+    WHERE NAME LIKE '%events_statements_%'
+    ORDER BY ENABLED DESC;
+    
+    NAME                            ENABLED  
+    ------------------------------  ---------
+    events_statements_cpu           NO       
+    events_statements_history_long  NO       
+    events_statements_current       YES      
+    events_statements_history       YES      
+    ```
+    * events_stages_
+    ```mysql
+    $> SELECT NAME, ENABLED FROM performance_schema.setup_consumers
+       WHERE NAME LIKE '%events_stages_%'
+       ORDER BY ENABLED DESC;
+    
+    NAME                        ENABLED  
+    --------------------------  ---------
+    events_stages_current       NO       
+    events_stages_history       NO       
+    events_stages_history_long  NO       
+    ```
 
 ### 执行要分析性能的SQL语句
 ```mysql
@@ -1027,8 +1419,8 @@ SELECT * FROM emp ORDER BY id % 10, LENGTH(ename) LIMIT 150000;
     SELECT EVENT_ID, TRUNCATE(TIMER_WAIT/1000000000000,6) AS "Duration (s)", SQL_TEXT
     FROM performance_schema.events_statements_history_long;
     ```
-    ![](../images/performance_schema_3.png)  
-    
+  ![](../images/performance_schema_3.png)
+
 * 查看单条SQL性能
     ```mysql
     SELECT event_name AS Stage, TRUNCATE(TIMER_WAIT/1000000000000,6) AS "Duration (s)"
@@ -1038,7 +1430,7 @@ SELECT * FROM emp ORDER BY id % 10, LENGTH(ename) LIMIT 150000;
     NESTING_EVENT_ID 为上面查询到的 EVENT_ID
     */
     ```
-    ![](../images/performance_schema_4.png)  
+  ![](../images/performance_schema_4.png)
 
 
 ## sys Schema性能查看与分析
@@ -1051,7 +1443,7 @@ MySQL sys Schema是一个由一系列对象(视图、存储过程、函数、触
 它本身不采集和存储什么信息，而是将 performance_schema 和 information_schema 数据库中的数据以更容易理解的方式总结出来归纳为“视图”。
 DBA 和 开发人员 可以通过 sys Schema 方便、快速地读取 Performance Schema 收集的数据。
 ```
-[sys Schema官网使用说明](https://dev.mysql.com/doc/refman/8.0/en/sys-schema-usage.html)  
+[sys Schema官网使用说明](https://dev.mysql.com/doc/refman/8.0/en/sys-schema-usage.html)
 
 * 查看表的访问量(可以监控每张表访问量的情况，或者监控某个库的访问量的变化)
     ```mysql
@@ -1073,7 +1465,7 @@ DBA 和 开发人员 可以通过 sys Schema 方便、快速地读取 Performanc
     ```mysql
     SELECT * FROM sys.schema_unused_indexes;
     ```
-    
+
 * 查看表自增ID使用情况
     ```mysql
     SELECT * FROM sys.schema_auto_increment_columns;
@@ -1210,7 +1602,7 @@ $> SELECT * FROM information_schema.routines
 
 $> SELECT SPECIFIC_NAME FROM information_schema.routines
    WHERE routine_schema = 'sys' AND routine_type = 'PROCEDURE';
-                     
+
 -------------------------------------
 create_synonym_db                    
 diagnostics                          
@@ -1278,7 +1670,7 @@ $> SHOW TRIGGERS;
 Trigger                     Event   Table        ...
 --------------------------  ------  ----------   ...
 sys_config_insert_set_user  INSERT  sys_config   ...
-sys_config_update_set_user  UPDATE  sys_config   ...
+    sys_config_update_set_user  UPDATE  sys_config   ...
 ```
 
 ## 全局日志
@@ -1299,7 +1691,7 @@ sys_config_update_set_user  UPDATE  sys_config   ...
     SET GLOBAL log_output = 'TABLE';
     ```
 * 配置文件方式开启全局日志  
-    my.cnf文件的[mysqld]块中添加如下配置，然后重启mysql服务
+  my.cnf文件的[mysqld]块中添加如下配置，然后重启mysql服务
     ```mysql
     [mysqld]
     general_log = 1
@@ -1310,9 +1702,9 @@ sys_config_update_set_user  UPDATE  sys_config   ...
     ```mysql
     SELECT * FROM mysql.general_log;
     ```
-    ![](../images/general_log.png)  
-    
+  ![](../images/general_log.png)
+
     ```bash
     more /var/lib/mysql/general_log.log
     ```
-    ![](../images/general_log_file.png)  
+  ![](../images/general_log_file.png)  

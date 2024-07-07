@@ -2,15 +2,15 @@ view视图
 ==
 
 
-# view视图
+## view 视图是什么
 ```text
-概念：虚拟表，值保存了sql语句逻辑，不保存结果，使用视图时动态生成表数据。
+概念：虚拟表，只保存了 SQL 语句逻辑，不保存结果，使用视图时动态生成表数据。
 相当于给一组sql语句起了别名，保存在数据库中
 
 view视图主要用于表数据的查询。
 
-使用与普通表一样。
-mysql 5.1开始添加此特性
+view 的使用与 普通表 一样。
+MySQL 5.1开始添加此特性
 ```
 
 ## 使用场景
@@ -267,7 +267,7 @@ FROM employees;
     
     UPDATE myv11 SET `name` = 'aotuo';  -- 不可更新
     ```
-1. select中包含字查询的视图
+1. select中包含子查询的视图
     ```mysql
     CREATE OR REPLACE VIEW myv13
     AS

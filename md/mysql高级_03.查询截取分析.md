@@ -1047,7 +1047,7 @@ SELECT * FROM emp ORDER BY id % 10, LENGTH(ename) LIMIT 150000;
 sys 数据库 下有很多内置的view视图、存储过程、函数、触发器
 
 在 MySQL5.7 中新增了sys Schema。
-MySQL sys Schema是一个由一系列对象(视图、存储过程、存储方法、表和触发器) 组成的database schema，
+MySQL sys Schema是一个由一系列对象(视图、存储过程、函数、触发器) 组成的database schema，
 它本身不采集和存储什么信息，而是将 performance_schema 和 information_schema 数据库中的数据以更容易理解的方式总结出来归纳为“视图”。
 DBA 和 开发人员 可以通过 sys Schema 方便、快速地读取 Performance Schema 收集的数据。
 ```

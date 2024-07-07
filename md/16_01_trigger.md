@@ -122,14 +122,27 @@ trigger_body: 需要执行的语句。当有多个 SQL 语句要执行的，则�
 * NEW.col_name  
     引用要 insert 的新行 或 update 后的现有行的列。  
 
-
 ## 查看触发器
-```mysql
-SELECT * FROM INFORMATION_SCHEMA.TRIGGERS
-    WHERE TRIGGER_SCHEMA='schema_name' AND TRIGGER_NAME='trigger_name'\G
-```
-schema_name  // 数据库名
+* 查看所有的触发器
+    ```mysql
+    SELECT * FROM INFORMATION_SCHEMA.TRIGGERS
+    WHERE TRIGGER_SCHEMA='<schema_name>'
+    ```
+    <schema_name>  // 数据库名
 
+* 查看单个触发器
+    ```mysql
+    SELECT * FROM INFORMATION_SCHEMA.TRIGGERS
+    WHERE TRIGGER_SCHEMA='<schema_name>' 
+    AND TRIGGER_NAME='<trigger_name>';
+    ```
+    <schema_name>  // 数据库名
+    <trigger_name>  // 触发器名称
+* 列出当前库所有的触发器
+    ```mysql
+    $> USE <数据库名>;
+    $> SHOW TRIGGERS;
+    ```
 
 ## 删除触发器
 ```mysql

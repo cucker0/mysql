@@ -18,7 +18,7 @@ mysql 5.1开始添加此特性
 * 该查询结果使用的sql语句比较复杂
 
 ## 使用视图好处
-* 重用sql语句
+* 重复使用sql语句
 * 简化复杂的sql语句，不必知道它的查询细节
 * 保护数据，提高安全性
 
@@ -238,9 +238,9 @@ FROM employees;
     DELETE FROM myv1 WHERE last_name = '张飞'; 
     ```
 
-## 具备以下特点的视图不可更行(增删改)
+## 具备以下特点的视图不可更新(增删改)
 1. 包含下列关键字的sql语句
-    ```text
+    ```mysql
     -- 分组函数、distinct、group by、having、 union、union all
     USE myemployees;
     
@@ -253,7 +253,7 @@ FROM employees;
     SELECT * FROM myv10;
     
     -- 
-    UPDATE myv10 SET mx = 20000 WHERE department_id = 10; -- The target table myv10 of the UPDATE is not updatable
+    UPDATE myv10 SET mx = 20000 WHERE department_id = 10;  -- The target table myv10 of the UPDATE is not updatable
     ```
 
 1. 常量视图
@@ -265,7 +265,7 @@ FROM employees;
     --
     SELECT * FROM myv11;
     
-    UPDATE myv11 SET `name` = 'aotuo'; -- 不可更新
+    UPDATE myv11 SET `name` = 'aotuo';  -- 不可更新
     ```
 1. select中包含字查询的视图
     ```mysql
@@ -276,7 +276,7 @@ FROM employees;
     
     --
     SELECT * FROM myv13;
-    UPDATE myv13 SET max_salary = 30000; -- 不可更新
+    UPDATE myv13 SET max_salary = 30000;  -- 不可更新
 
     ```
 1. join连表的视图
@@ -290,9 +290,9 @@ FROM employees;
     
     -- 
     SELECT * FROM myv14;
-    INSERT INTO myv14 (last_name, department_name) VALUES ('汪洋', 'Adm'); -- 不可插入数据
-    UPDATE myv14 SET last_name = 'daerwen' WHERE last_name = 'Whalen'; -- 更新成功
-    UPDATE myv14 SET department_name = 'IT' WHERE department_name = 'Adm'; -- 更新成功
+    INSERT INTO myv14 (last_name, department_name) VALUES ('汪洋', 'Adm');  -- 不可插入数据
+    UPDATE myv14 SET last_name = 'daerwen' WHERE last_name = 'Whalen';  -- 更新成功
+    UPDATE myv14 SET department_name = 'IT' WHERE department_name = 'Adm';  -- 更新成功
     ```
     
 1. from 一个不能更新的视图
@@ -321,5 +321,5 @@ FROM employees;
     
     --
     SELECT * FROM myv16;
-    UPDATE myv16 SET salary = 90000 WHERE last_name = 'Weiss'; -- 不可更新
+    UPDATE myv16 SET salary = 90000 WHERE last_name = 'Weiss';  -- 不可更新
     ```

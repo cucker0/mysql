@@ -209,7 +209,8 @@ mysql备份与还原
     常用source命令，用use进入到某个数据库，后面的参数为脚本文件。
     ```
     ```bash
-    mysql>source /data/test.sql;
+    mysql> use <database_name>;
+    mysql> source /data/test.sql;
     ```
 
 ## 增量备份

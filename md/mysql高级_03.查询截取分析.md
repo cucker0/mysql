@@ -1447,7 +1447,7 @@ DBA 和 开发人员 可以通过 sys Schema 方便、快速地读取 Performanc
 
 * 查看表的访问量(可以监控每张表访问量的情况，或者监控某个库的访问量的变化)
     ```mysql
-    SELECT table_schema, table_name, SUM(io_read_requests, io_write_requests)
+    SELECT table_schema, table_name, SUM(io_read_requests + io_write_requests)
     FROM sys.schema_table_statistics
     GROUP BY table_schema, table_name;
     
